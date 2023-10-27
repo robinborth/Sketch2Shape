@@ -1,0 +1,14 @@
+# dev
+lightning
+torch
+wandb
+hydra-core
+jupyter
+
+# test
+black
+flake8
+mypy
+isort
+pytest
+pre-commit

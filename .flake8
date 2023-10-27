@@ -1,0 +1,10 @@
+[flake8]
+# making isort line length compatible with black
+max-line-length = 88
+select = B,C,E,F,W,T4,B9
+max-complexity = 18
+exclude = .git,__pychache__,venv
+# these are errors that will be ignored by flake8
+# check out their meaning here
+# https://flake8.pycqa.org/en/latest/user/error-codes.html
+extend-ignore = E203,E999,E265,E266,E731,W503,F403,F401,F841,E402,C901

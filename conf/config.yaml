@@ -1,0 +1,60 @@
+########################################################################
+# General Settings
+########################################################################
+
+seed: 123
+root_path: /home/borth/sketch2shape
+data_path: ${root_path}/data
+checkpoint_path: ${root_path}/checkpoint
+
+
+########################################################################
+# Model Setting
+########################################################################
+
+# ...
+
+########################################################################
+# Trainer Settings
+########################################################################
+
+trainer:
+  _target_: lightning.pytorch.trainer.Trainer
+  accelerator: gpu
+  overfit_batches: 1
+  profiler: simple
+  max_epochs: 1
+  enable_checkpointing: False
+  log_every_n_steps: 50
+
+monitor: train/loss
+early_stopping_patience: 5
+
+########################################################################
+# Data Settings
+########################################################################
+
+batch_size: 64
+num_workers: 0
+pin_memory: False
+
+########################################################################
+# Default Settings
+########################################################################
+
+defaults:
+  - data: shapenet13 # shapenet13 
+  - logging: disabled # wandb, disabled
+  - callbacks:
+    - early_stopping
+    # - model_checkpoint
+  - model: sketch2shape 
+  - _self_
+
+########################################################################
+# Hydra Settings
+########################################################################
+
+hydra:
+  run:
+    dir: ${root_path}/wandb/hydra

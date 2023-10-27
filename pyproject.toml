@@ -1,0 +1,23 @@
+# Formatter & Linter
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 88
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.tox
+  | venv
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | thesis
+)/
+'''
+
+[tool.mypy]
+ignore_missing_imports = true
