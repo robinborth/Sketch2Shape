@@ -43,12 +43,12 @@ pin_memory: False
 ########################################################################
 
 defaults:
-  - data: shapenet13 # shapenet13 
+  - data: shapenet_chairs_sketch # shapenet13 
   - logging: disabled # wandb, disabled
   - callbacks:
     - early_stopping
-    # - model_checkpoint
-  - model: sketch2shape 
+    - model_checkpoint
+  - model: siamese 
   - _self_
 
 ########################################################################

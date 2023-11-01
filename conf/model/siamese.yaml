@@ -1,0 +1,2 @@
+# @package model
+_target_: lib.models.siamese.Siamese

@@ -4,6 +4,9 @@ torch
 wandb
 hydra-core
 jupyter
+pandas
+open3d
+pytorch-metric-learning
 
 # test
 black
