@@ -28,6 +28,8 @@ trainer:
   log_every_n_steps: 50
 
 monitor: train/loss
+learning_rate: 1e-03
+weight_decay: 1e-04
 early_stopping_patience: 5
 
 ########################################################################
@@ -37,6 +39,7 @@ early_stopping_patience: 5
 batch_size: 64
 num_workers: 0
 pin_memory: False
+drop_last: True
 
 ########################################################################
 # Default Settings
@@ -47,7 +50,7 @@ defaults:
   - logging: disabled # wandb, disabled
   - callbacks:
     - early_stopping
-    - model_checkpoint
+    # - model_checkpoint
   - model: siamese 
   - _self_
 

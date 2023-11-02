@@ -1,14 +1,14 @@
 import os
+from pathlib import Path
 
 import cv2
 import hydra
+import pandas as pd
 from omegaconf import DictConfig
 from tqdm import tqdm
 
 from lib.data.sketch import (
     cartesian_elev_azim,
-    default_elev_azim,
-    image_grid,
     image_path,
     image_to_sketch,
     images_folder,
@@ -48,12 +48,31 @@ def main(cfg: DictConfig) -> None:
             if not os.path.exists(images_folder(obj_id, config=cfg)):
                 os.mkdir(images_folder(obj_id, config=cfg))
             _image_path = image_path(obj_id, index=index, config=cfg)
-            cv2.imwrite(_image_path, sketch)
+            cv2.imwrite(_image_path, image)
 
             if not os.path.exists(sketches_folder(obj_id, config=cfg)):
                 os.mkdir(sketches_folder(obj_id, config=cfg))
             _sketch_path = sketch_path(obj_id, index=index, config=cfg)
             cv2.imwrite(_sketch_path, sketch)
+
+    logger.debug(f"==> creating metainfo for {len(cfg.obj_ids)} shapes...")
+    data = []
+    label = 0
+    for obj_id in tqdm(cfg.obj_ids, total=len(cfg.obj_ids)):
+        sketch_paths = Path(cfg.dataset_path, obj_id, "sketches").glob("*.jpg")
+        for sketch_id in sorted(list(path.stem for path in sketch_paths)):
+            image_paths = Path(cfg.dataset_path, obj_id, "images").glob("*.jpg")
+            for image_id in sorted(list(path.stem for path in image_paths)):
+                data.append(
+                    {
+                        "obj_id": str(obj_id),
+                        "sketch_id": str(sketch_id),
+                        "image_id": str(image_id),
+                        "label": label,
+                    }
+                )
+        label += 1
+    pd.DataFrame(data).to_csv(cfg.metainfo_path, index=None)
 
 
 if __name__ == "__main__":
