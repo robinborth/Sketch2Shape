@@ -32,7 +32,7 @@ trainer:
 monitor: train/loss
 learning_rate: 1e-03
 weight_decay: 1e-04
-early_stopping_patience: 100
+early_stopping_patience: 3
 
 ########################################################################
 # Data Settings
@@ -53,7 +53,7 @@ drop_last: True
 defaults:
   - _self_
   - data: shapenet_chairs_sketch_small # shapenet13 
-  - logging: disabled # wandb, disabled
+  - logging: wandb # wandb, disabled
   - callbacks:
     - early_stopping
     # - model_checkpoint
