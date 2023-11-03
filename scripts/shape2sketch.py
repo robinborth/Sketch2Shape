@@ -72,7 +72,8 @@ def main(cfg: DictConfig) -> None:
                     }
                 )
         label += 1
-    pd.DataFrame(data).to_csv(cfg.metainfo_path, index=None)
+    df = pd.DataFrame(data).sample(frac=1.0)
+    df.to_csv(cfg.metainfo_path, index=None)
 
 
 if __name__ == "__main__":

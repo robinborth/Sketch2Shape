@@ -18,7 +18,7 @@
             "request": "launch",
             "program": "scripts/run_train.py",
             "console": "integratedTerminal",
-            "justMyCode": true,
+            "justMyCode": false,
         },
         {
             "name": "Debug: Shape2Sketch",

@@ -12,7 +12,9 @@ checkpoint_path: ${root_path}/checkpoint
 # Model Setting
 ########################################################################
 
-# ...
+embedding_size: 32
+margin: 0.2
+type_of_triplets: semihard 
 
 ########################################################################
 # Trainer Settings
@@ -21,22 +23,25 @@ checkpoint_path: ${root_path}/checkpoint
 trainer:
   _target_: lightning.pytorch.trainer.Trainer
   accelerator: gpu
-  overfit_batches: 1
   profiler: simple
-  max_epochs: 1
+  # overfit_batches: 4
+  max_epochs: 100
   enable_checkpointing: False
-  log_every_n_steps: 50
+  log_every_n_steps: 1
 
 monitor: train/loss
 learning_rate: 1e-03
 weight_decay: 1e-04
-early_stopping_patience: 5
+early_stopping_patience: 100
 
 ########################################################################
 # Data Settings
 ########################################################################
 
-batch_size: 64
+batch_size: 512 
+samples_per_class: 256
+iteration_length: 2560 
+
 num_workers: 0
 pin_memory: False
 drop_last: True
@@ -46,13 +51,13 @@ drop_last: True
 ########################################################################
 
 defaults:
-  - data: shapenet_chairs_sketch # shapenet13 
+  - _self_
+  - data: shapenet_chairs_sketch_small # shapenet13 
   - logging: disabled # wandb, disabled
   - callbacks:
     - early_stopping
     # - model_checkpoint
   - model: siamese 
-  - _self_
 
 ########################################################################
 # Hydra Settings

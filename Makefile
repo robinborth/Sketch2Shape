@@ -25,3 +25,6 @@ clean:
 
 shape2sketch:
 	python scripts/shape2sketch.py
+
+train:
+	python scripts/run_train.py
