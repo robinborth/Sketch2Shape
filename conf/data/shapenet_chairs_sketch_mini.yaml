@@ -1,0 +1,35 @@
+# @package _global_
+
+batch_size: 2 
+samples_per_class: 1
+iteration_length: 200
+
+dataset_name: shapenet_chairs_sketch_mini
+dataset_path: ${data_path}/${dataset_name}
+metainfo_path: ${dataset_path}/metainfo.csv
+
+# objects that are used
+obj_ids:
+  - 3c4ed9c8f76c7a5ef51f77a6d7299806
+  - ffd9387a533fe59e251990397636975f
+
+# rendering
+dist: 1.0
+elev: [0] 
+azim: [0] 
+color: 0.65
+image_size: 32
+device: "cuda"
+
+# sketch
+t_lower: 100
+t_upper: 150
+aperture_size: 3  # 3, 5, 7
+L2gradient: True
+
+# sampler for the batch
+sampler:
+  _target_: pytorch_metric_learning.samplers.MPerClassSampler
+  m: ${samples_per_class}
+  length_before_new_iter: ${iteration_length} 
+  batch_size: ${batch_size}
