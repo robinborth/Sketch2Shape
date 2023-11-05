@@ -3,7 +3,7 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
-from lib.data.dataset import ShapeNetDataset
+from lib.data.dataset import ShapeNetDatasetDefault
 from lib.data.metainfo import MetaInfo
 
 
@@ -19,10 +19,10 @@ class ShapeNetDataModule(L.LightningDataModule):
 
     def setup(self, stage: str) -> None:
         if stage == "fit":
-            self.train_dataset = ShapeNetDataset(stage="train", cfg=self.cfg)
-            self.val_dataset = ShapeNetDataset(stage="val", cfg=self.cfg)
+            self.train_dataset = ShapeNetDatasetDefault(stage="train", cfg=self.cfg)
+            self.val_dataset = ShapeNetDatasetDefault(stage="val", cfg=self.cfg)
         elif stage == "validate":
-            self.val_dataset = ShapeNetDataset(stage="val", cfg=self.cfg)
+            self.val_dataset = ShapeNetDatasetDefault(stage="val", cfg=self.cfg)
         else:
             raise NotImplementedError()
 

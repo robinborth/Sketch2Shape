@@ -17,6 +17,10 @@ embedding_size: 32
 margin: 0.2
 type_of_triplets: semihard 
 
+# only used for debugging dataloading
+dummy_decoder: True
+model_size_in_gb: 5
+
 ########################################################################
 # Trainer Settings
 ########################################################################
@@ -25,8 +29,8 @@ trainer:
   _target_: lightning.pytorch.trainer.Trainer
   accelerator: gpu
   profiler: simple
-  # overfit_batches: 4
-  max_epochs: 100
+  max_epochs: 1
+  limit_val_batches: 0
   enable_checkpointing: False
   log_every_n_steps: 1
 
@@ -39,11 +43,11 @@ early_stopping_patience: 3
 # Data Settings
 ########################################################################
 
-batch_size: 512
-samples_per_class: 256
-iteration_length: 100000
+batch_size: 256
+samples_per_class: 128
+iteration_length: 10000
 
-num_workers: 7
+num_workers: 0
 pin_memory: False
 drop_last: True
 
@@ -53,8 +57,8 @@ drop_last: True
 
 defaults:
   - _self_
-  - data: shapenet_chairs_sketch_small
-  - logging: wandb # wandb, disable
+  - data: shapenet_chairs_sketch_medium
+  - logging: disabled # wandb, disabled
   - callbacks:
     - early_stopping
     - model_summary

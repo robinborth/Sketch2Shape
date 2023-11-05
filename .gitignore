@@ -164,3 +164,4 @@ notebooks/tutorials/*
 data/shapenet_chairs_sketch_mini
 data/shapenet_chairs_sketch_small
 data/shapenet_chairs_sketch_medium
+data/shapenet_chairs_sketch_large

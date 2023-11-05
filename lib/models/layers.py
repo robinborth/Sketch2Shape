@@ -3,6 +3,41 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+class DummyDecoder(nn.Module):
+    def __init__(
+        self,
+        image_size: int = 256,
+        model_size_in_gb: int = 1,  # 1000 MB
+    ):
+        super().__init__()
+        self.cnn = nn.Sequential(
+            nn.Conv2d(3, 1, 1),
+            nn.MaxPool2d(4, 4),
+            nn.Flatten(1),
+        )
+        # calculate the dimension of the input mlp
+        x = torch.randn(1, 3, image_size, image_size)
+        flatten_dim = self.cnn(x).shape[-1]
+
+        bottle_dim = 1000
+
+        self.up = nn.Sequential(nn.Linear(flatten_dim, 1), nn.Linear(1, bottle_dim))
+
+        layers = []
+        for _ in range(model_size_in_gb):
+            layers.append(nn.Linear(bottle_dim, bottle_dim))
+        self.mlp = nn.Sequential(*layers)
+
+        self.down = nn.Linear(bottle_dim, 1)
+
+    def forward(self, x):
+        x = self.cnn(x)
+        x = self.up(x)
+        x = self.mlp(x)
+        x = self.down(x)
+        return x
+
+
 class SimpleDecoder(nn.Module):
     def __init__(
         self,

@@ -31,3 +31,6 @@ train:
 
 copy_shapenet:
 	python scripts/copy_shapenet.py
+
+memory:
+	memray run --live scripts/memory.py

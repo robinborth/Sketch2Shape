@@ -3,7 +3,7 @@ import torch
 from omegaconf import DictConfig
 from pytorch_metric_learning import losses, miners, reducers
 
-from lib.models.layers import SimpleDecoder
+from lib.models.layers import DummyDecoder, SimpleDecoder
 
 
 class Siamese(L.LightningModule):
@@ -16,10 +16,17 @@ class Siamese(L.LightningModule):
         self.cfg = cfg
 
         # note that we share the weights of the decoder for sketches and images
-        self.decoder = SimpleDecoder(
-            image_size=cfg.image_size,
-            embedding_size=cfg.embedding_size,
-        )
+        if cfg.dummy_decoder:
+            self.decoder: torch.nn.Module = DummyDecoder(
+                image_size=cfg.image_size,
+                model_size_in_gb=cfg.model_size_in_gb,
+            )
+        else:
+            self.decoder: torch.nn.Module = SimpleDecoder(
+                image_size=cfg.image_size,
+                embedding_size=cfg.embedding_size,
+            )
+
         self.miner = miners.TripletMarginMiner(
             margin=cfg.margin,
             type_of_triplets=cfg.type_of_triplets,
