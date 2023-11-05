@@ -18,13 +18,25 @@
             "request": "launch",
             "program": "scripts/run_train.py",
             "console": "integratedTerminal",
-            "justMyCode": false,
+            "justMyCode": true,
         },
         {
             "name": "Debug: Shape2Sketch",
             "type": "python",
             "request": "launch",
             "program": "scripts/shape2sketch.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+        },
+        {
+            "name": "Debug: CopyShapenet",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/copy_shapenet.py",
+            "args": [
+                "+num_obj=10",
+                "++dataset_name=shapenet_chairs_sketch_medium",
+            ],
             "console": "integratedTerminal",
             "justMyCode": true,
         }

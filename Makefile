@@ -28,3 +28,6 @@ shape2sketch:
 
 train:
 	python scripts/run_train.py
+
+copy_shapenet:
+	python scripts/copy_shapenet.py

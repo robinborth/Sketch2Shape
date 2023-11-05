@@ -1,12 +1,12 @@
 import os
-import shutil
+from pathlib import Path
 from typing import Union
 
-import cv2
 import cv2 as cv
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from omegaconf import DictConfig
 from pytorch3d.io import load_obj
 from pytorch3d.renderer import (
     FoVPerspectiveCameras,
@@ -87,13 +87,13 @@ def render_shapenet(
 
     # get the correct batch_size to cast the mash
     if torch.is_tensor(elev) and torch.is_tensor(azim):
-        assert len(elev) == len(azim)
+        assert elev.shape[0] == azim.shape[0]  # type: ignore
 
     batch_size = 1
     if torch.is_tensor(elev):
-        batch_size = len(elev)
+        batch_size = elev.shape[0]  # type: ignore
     elif torch.is_tensor(azim):
-        batch_size = len(azim)
+        batch_size = azim.shape[0]  # type: ignore
 
     mesh = mesh.extend(batch_size)
 
@@ -102,11 +102,7 @@ def render_shapenet(
     cameras = FoVPerspectiveCameras(device=device, R=R, T=T)
 
     # initilizing the rasterization
-    raster_settings = RasterizationSettings(
-        image_size=image_size,
-        blur_radius=0.0,
-        faces_per_pixel=1,
-    )
+    raster_settings = RasterizationSettings(image_size=image_size, bin_size=0)
 
     # initilizing the lights
     lights = PointLights(device=device, location=[[0.0, 0.0, 0.0]])
@@ -162,7 +158,7 @@ def cartesian_elev_azim(elev, azim):
 
 
 def obj_path(obj_id: str, config) -> str:
-    return os.path.join(config.dataset_path, obj_id, "models/model_normalized.obj")
+    return os.path.join(config.dataset_path, obj_id, "model_normalized.obj")
 
 
 def sketches_folder(obj_id: str, config):

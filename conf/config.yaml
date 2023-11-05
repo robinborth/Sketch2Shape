@@ -3,6 +3,7 @@
 ########################################################################
 
 seed: 123
+shapenet_folder: /shared/data/ShapeNetCore/Chair/03001627
 root_path: /home/borth/sketch2shape
 data_path: ${root_path}/data
 checkpoint_path: ${root_path}/checkpoint
@@ -38,11 +39,11 @@ early_stopping_patience: 3
 # Data Settings
 ########################################################################
 
-batch_size: 512 
+batch_size: 512
 samples_per_class: 256
-iteration_length: 2560 
+iteration_length: 100000
 
-num_workers: 0
+num_workers: 7
 pin_memory: False
 drop_last: True
 
@@ -52,11 +53,11 @@ drop_last: True
 
 defaults:
   - _self_
-  - data: shapenet_chairs_sketch_small # shapenet13 
-  - logging: disabled # wandb, disabled
+  - data: shapenet_chairs_sketch_small
+  - logging: wandb # wandb, disable
   - callbacks:
     - early_stopping
-    # - model_checkpoint
+    - model_summary
   - model: siamese 
 
 ########################################################################

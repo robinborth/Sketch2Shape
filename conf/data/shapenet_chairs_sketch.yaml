@@ -1,0 +1,61 @@
+# @package _global_
+
+########################################################################
+# Path Setting
+########################################################################
+
+dataset_path: ${data_path}/${dataset_name}
+dataset_splits_path: ${dataset_path}/dataset_splits.csv
+sketch_image_pairs_path: ${dataset_path}/sketch_image_pairs.csv
+
+########################################################################
+# Rendering Setting
+########################################################################
+
+dist: 1.0
+elev: [-22.5, 0, 22.5, 45.0, 90] 
+azim: [-140, -100, -60, -20, 0, 20, 60, 100, 140, 180] 
+color: 0.65
+image_size: 256
+device: "cuda"
+
+########################################################################
+# Sketch Setting
+########################################################################
+
+t_lower: 100
+t_upper: 150
+aperture_size: 3  # 3, 5, 7
+L2gradient: True
+
+########################################################################
+# Sampler Setting
+########################################################################
+
+sampler:
+  _target_: pytorch_metric_learning.samplers.MPerClassSampler
+  m: ${samples_per_class}
+  length_before_new_iter: ${iteration_length} 
+  batch_size: ${batch_size}
+
+########################################################################
+# Transform  Setting
+########################################################################
+
+transform:
+  to_tensor:
+    _target_: torchvision.transforms.ToTensor
+  normalize: 
+    _target_: torchvision.transforms.Normalize
+    mean: [0.5, 0.5, 0.5]
+    std: [0.5, 0.5, 0.5]
+    
+  
+
+########################################################################
+# Dataset Setting
+########################################################################
+
+num_obj_train: 0
+num_obj_val: 0
+num_obj_test: 0

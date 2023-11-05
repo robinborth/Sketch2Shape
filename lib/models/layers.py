@@ -11,12 +11,15 @@ class SimpleDecoder(nn.Module):
     ):
         super().__init__()
         self.cnn = nn.Sequential(
-            nn.Conv2d(3, 4, 5),
+            nn.Conv2d(3, 16, 5),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
             nn.ReLU(),
-            nn.Conv2d(4, 8, 5),
+            nn.Conv2d(16, 32, 5),
             nn.MaxPool2d(2, 2),
+            nn.Conv2d(32, 64, 5),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(64, 1, 1),
             nn.Flatten(1),
         )
         # calculate the dimension of the input mlp

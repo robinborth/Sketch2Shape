@@ -1,10 +1,9 @@
 from collections import defaultdict
 from pathlib import Path
-from typing import Optional
 
 import cv2
-import numpy as np
 import torchvision.transforms as transforms
+from hydra.utils import instantiate
 from omegaconf import DictConfig
 from torch.utils.data import Dataset
 
@@ -19,18 +18,19 @@ class ShapeNetDataset(Dataset):
     ) -> None:
         self.stage = stage
         self.cfg = cfg
-        self.metainfo = MetaInfo(cfg=cfg)
-        self.transform = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-            ]
-        )
+        self.metainfo = MetaInfo(cfg=cfg, split=stage)
+        self.transform = self._load_transform(cfg=cfg)
         self.data = self._load_data(cfg=cfg)
+
+    def _load_transform(self, cfg: DictConfig):
+        trans = []
+        if "transform" in cfg:
+            trans = [instantiate(trans) for trans in cfg.transform.values()]
+        return transforms.Compose(trans)
 
     def _load_data(self, cfg: DictConfig):
         data = defaultdict(lambda: defaultdict(dict))  # type: ignore
-        for obj_id in cfg.obj_ids:
+        for obj_id in self.metainfo.obj_ids:
             for path in Path(cfg.dataset_path, obj_id, "images").glob("*.jpg"):
                 image = cv2.imread(path.as_posix())
                 data[obj_id]["images"][path.stem] = self.transform(image)
@@ -40,10 +40,10 @@ class ShapeNetDataset(Dataset):
         return data
 
     def __len__(self):
-        return len(self.metainfo)
+        return self.metainfo.pair_count
 
     def __getitem__(self, index):
-        info = self.metainfo[index]
+        info = self.metainfo.get_pair(index)
         obj_id = info["obj_id"]
         image_id = info["image_id"]
         sketch_id = info["sketch_id"]

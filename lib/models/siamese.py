@@ -49,6 +49,24 @@ class Siamese(L.LightningModule):
         self.log("train/loss", loss, prog_bar=True, batch_size=self.cfg.batch_size)
         return loss
 
+    def validation_step(self, batch, batch_idx):
+        output = self.forward(batch)
+        miner_output = self.miner(
+            embeddings=output["sketch_emb"],
+            labels=batch["label"],
+            ref_emb=output["image_emb"],
+            ref_labels=batch["label"],
+        )
+        loss = self.loss(
+            embeddings=output["sketch_emb"],
+            labels=batch["label"],
+            indices_tuple=miner_output,
+            ref_emb=output["image_emb"],
+            ref_labels=batch["label"],
+        )
+        self.log("val/loss", loss, prog_bar=True, batch_size=self.cfg.batch_size)
+        return loss
+
     def configure_optimizers(self) -> torch.optim.Optimizer:
         return torch.optim.Adam(
             params=self.parameters(),

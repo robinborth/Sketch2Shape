@@ -16,8 +16,6 @@ class ShapeNetDataModule(L.LightningDataModule):
         super().__init__()
         self.batch_size = batch_size
         self.cfg = cfg
-        self.metainfo = MetaInfo(cfg=cfg)
-        self.sampler = instantiate(cfg.sampler, self.metainfo.labels)
 
     def setup(self, stage: str) -> None:
         if stage == "fit":
@@ -29,6 +27,8 @@ class ShapeNetDataModule(L.LightningDataModule):
             raise NotImplementedError()
 
     def train_dataloader(self) -> DataLoader:
+        metainfo = MetaInfo(cfg=self.cfg, split="train")
+        self.sampler = instantiate(self.cfg.sampler, metainfo.labels)
         return DataLoader(
             dataset=self.train_dataset,
             batch_size=self.batch_size,
