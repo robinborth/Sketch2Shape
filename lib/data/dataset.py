@@ -56,7 +56,7 @@ class ShapeNetDatasetBase(Dataset):
         }
 
 
-class ShapeNetDatasetDefault(ShapeNetDatasetBase):
+class ShapeNetDatasetPreLoadPreTransform(ShapeNetDatasetBase):
     def _load(self, cfg: DictConfig):
         data = defaultdict(lambda: defaultdict(dict))  # type: ignore
         for obj_id in self.metainfo.obj_ids:
@@ -72,7 +72,7 @@ class ShapeNetDatasetDefault(ShapeNetDatasetBase):
         return self.data[obj_id][folder][image_id]
 
 
-class ShapeNetDatasetTransform(ShapeNetDatasetBase):
+class ShapeNetDatasetPreLoadDynamicTransform(ShapeNetDatasetBase):
     def _load(self, cfg: DictConfig):
         data = defaultdict(lambda: defaultdict(dict))  # type: ignore
         for obj_id in self.metainfo.obj_ids:
@@ -88,7 +88,7 @@ class ShapeNetDatasetTransform(ShapeNetDatasetBase):
         return self.transform(self.data[obj_id][folder][image_id])
 
 
-class ShapeNetDatasetFetch(ShapeNetDatasetBase):
+class ShapeNetDatasetDynamicLoadDynamicTransform(ShapeNetDatasetBase):
     def _fetch(self, folder: str, obj_id: str, image_id: str):
         path = Path(self.cfg.dataset_path, obj_id, f"{folder}/{image_id}.jpg")
         image = cv2.imread(path.as_posix())

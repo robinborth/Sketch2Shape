@@ -18,8 +18,8 @@ margin: 0.2
 type_of_triplets: semihard 
 
 # only used for debugging dataloading
-dummy_decoder: True
-model_size_in_gb: 5
+dummy_decoder: False
+model_size_in_gb: null
 
 ########################################################################
 # Trainer Settings
@@ -57,12 +57,14 @@ drop_last: True
 
 defaults:
   - _self_
+  - profiler: null
   - data: shapenet_chairs_sketch_medium
   - logging: disabled # wandb, disabled
   - callbacks:
     - early_stopping
     - model_summary
   - model: siamese 
+  - optional local: defaults
 
 ########################################################################
 # Hydra Settings

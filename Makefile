@@ -34,3 +34,31 @@ copy_shapenet:
 
 memory:
 	memray run --live scripts/memory.py
+
+
+preprocessing:
+	python scripts/copy_shapenet.py data=shapenet_chairs_sketch_small
+	python scripts/shape2sketch.py data=shapenet_chairs_sketch_small
+	python scripts/copy_shapenet.py data=shapenet_chairs_sketch_medium
+	python scripts/shape2sketch.py data=shapenet_chairs_sketch_medium
+	python scripts/copy_shapenet.py data=shapenet_chairs_sketch_large
+	python scripts/shape2sketch.py data=shapenet_chairs_sketch_large
+	python scripts/copy_shapenet.py data=shapenet_chairs_sketch_xl_large
+	python scripts/shape2sketch.py data=shapenet_chairs_sketch_xl_large
+
+
+experiments_dataloading:
+	python scripts/run_train.py +experiments=pre_load_pre_transform_small_1gb 
+	python scripts/run_train.py +experiments=pre_load_pre_transform_medium_1gb 
+	# python scripts/run_train.py +experiments=pre_load_pre_transform_large_1gb 
+	# python scripts/run_train.py +experiments=pre_load_pre_transform_xl_large_1gb 
+
+	python scripts/run_train.py +experiments=pre_load_dynamic_transform_small_1gb 
+	python scripts/run_train.py +experiments=pre_load_dynamic_transform_medium_1gb 
+	# python scripts/run_train.py +experiments=pre_load_dynamic_transform_large_1gb 
+	# python scripts/run_train.py +experiments=pre_load_dynamic_transform_xl_large_1gb 
+
+	python scripts/run_train.py +experiments=dynamic_load_dynamic_transform_small_1gb 
+	python scripts/run_train.py +experiments=dynamic_load_dynamic_transform_medium_1gb 
+	# python scripts/run_train.py +experiments=dynamic_load_dynamic_transform_large_1gb 
+	# python scripts/run_train.py +experiments=dynamic_load_dynamic_transform_xl_large_1gb 

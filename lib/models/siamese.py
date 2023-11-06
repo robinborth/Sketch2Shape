@@ -1,7 +1,7 @@
 import lightning as L
 import torch
 from omegaconf import DictConfig
-from pytorch_metric_learning import losses, miners, reducers
+from pytorch_metric_learning import losses, miners
 
 from lib.models.layers import DummyDecoder, SimpleDecoder
 
@@ -22,7 +22,7 @@ class Siamese(L.LightningModule):
                 model_size_in_gb=cfg.model_size_in_gb,
             )
         else:
-            self.decoder: torch.nn.Module = SimpleDecoder(
+            self.decoder: torch.nn.Module = SimpleDecoder(  # type: ignore
                 image_size=cfg.image_size,
                 embedding_size=cfg.embedding_size,
             )

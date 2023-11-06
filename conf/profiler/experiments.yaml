@@ -1,0 +1,4 @@
+# @package profiler
+_target_: lightning.pytorch.profilers.SimpleProfiler
+dirpath: ${root_path}/profile
+filename: ${experiment_name}

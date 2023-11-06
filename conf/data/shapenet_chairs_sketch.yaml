@@ -50,11 +50,12 @@ transform:
     mean: [0.5, 0.5, 0.5]
     std: [0.5, 0.5, 0.5]
     
-  
-
 ########################################################################
 # Dataset Setting
 ########################################################################
+
+dataset: 
+  _target_: lib.data.dataset.ShapeNetDatasetPreLoadPreTransform
 
 num_obj_train: 0
 num_obj_val: 0

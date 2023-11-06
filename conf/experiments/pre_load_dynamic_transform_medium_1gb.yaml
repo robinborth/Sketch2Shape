@@ -1,0 +1,16 @@
+# @package _global_
+
+# meta information
+experiment_name: pre_load_dynamic_transform_medium_1gb
+
+# model size
+model_size_in_gb: 1
+
+# dataset type
+dataset: 
+  _target_: lib.data.dataset.ShapeNetDatasetPreLoadDynamicTransform
+
+# dataset size
+defaults:
+  - default_dataloading_experiment
+  - override /data: shapenet_chairs_sketch_medium

@@ -1,0 +1,8 @@
+# @package _global_
+batch_size: 256
+samples_per_class: 32
+iteration_length: 5120
+dummy_decoder: True
+  
+defaults:
+  - override /profiler: experiments 
