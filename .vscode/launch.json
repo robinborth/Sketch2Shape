@@ -27,6 +27,14 @@
             "program": "scripts/shape2sketch.py",
             "console": "integratedTerminal",
             "justMyCode": true,
+        },
+        {
+            "name": "Debug: SDF Training",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/train_deepsdf.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
         }
     ]
 }

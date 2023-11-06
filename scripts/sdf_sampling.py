@@ -1,3 +1,4 @@
+# %%
 import matplotlib.pyplot as plt
 import numpy as np
 import open3d as o3d
@@ -36,5 +37,5 @@ def create_sdf_samples_grid(
 
 cfg = load_config()
 obj_id = cfg.obj_ids[0]
-sdf = create_sdf_samples_grid(obj_id=obj_id, cfg=cfg, grid_size=256)
+sdf = create_sdf_samples_grid(obj_id=obj_id, cfg=cfg, grid_size=10)
 plt.imshow(sdf[:, :, 0])

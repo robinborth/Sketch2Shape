@@ -1,0 +1,14 @@
+latent_vector_size: 1 #256
+latent_size: 256 #512
+
+dropout: False
+dropout_p: 0.2
+
+lr_decoder: 0.01
+lr_lat_vecs: 0.1
+sigma: 0.01
+
+clamp: False #False
+clamp_delta: 0.1
+
+reg_loss: False

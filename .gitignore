@@ -163,3 +163,5 @@ wandb/
 notebooks/tutorials/*
 data/shapenet_chairs_sketch_mini
 data/shapenet_chairs_sketch_small
+lightning_logs/
+checkpoint/

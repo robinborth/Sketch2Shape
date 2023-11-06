@@ -3,7 +3,7 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
-from lib.data.dataset import ShapeNetDataset
+from lib.data.dataset import SDFDataset, ShapeNetDataset
 from lib.data.metainfo import MetaInfo
 
 
@@ -45,4 +45,26 @@ class ShapeNetDataModule(L.LightningDataModule):
             shuffle=False,
             num_workers=self.cfg.num_workers,
             pin_memory=self.cfg.pin_memory,
+        )
+
+
+class SDFDataModule(L.LightningDataModule):
+    def __init__(
+        self,
+        cfg: DictConfig,
+    ) -> None:
+        super().__init__()
+        self.cfg = cfg
+
+    def setup(self, stage: str) -> None:
+        self.train_dataset = SDFDataset(cfg=self.cfg)
+        self.num_scenes = len(self.train_dataset.npy_paths)
+
+    def train_dataloader(self) -> DataLoader:
+        return DataLoader(
+            dataset=self.train_dataset,
+            batch_size=self.cfg.batch_size,
+            num_workers=self.cfg.num_workers,
+            drop_last=self.cfg.drop_last,
+            shuffle=self.cfg.shuffle,
         )

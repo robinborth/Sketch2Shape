@@ -58,4 +58,4 @@ def load_config() -> DictConfig:
         DictConfig: The initialized config.
     """
     with initialize(config_path="../conf", version_base=None):
-        return compose(config_name="config")
+        return compose(config_name="config_sdf")
