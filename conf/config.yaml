@@ -14,8 +14,8 @@ checkpoint_path: ${root_path}/checkpoint
 ########################################################################
 
 embedding_size: 32
-margin: 0.2
-type_of_triplets: semihard 
+margin: 0.005
+type_of_triplets: all
 
 # only used for debugging dataloading
 dummy_decoder: False
@@ -27,14 +27,16 @@ model_size_in_gb: null
 
 trainer:
   _target_: lightning.pytorch.trainer.Trainer
-  accelerator: gpu
+  accelerator: cpu
   profiler: simple
   max_epochs: 1
-  limit_val_batches: 0
-  enable_checkpointing: False
+  val_check_interval: 10
+  # limit_val_batches: 0
+  enable_checkpointing: True
   log_every_n_steps: 1
 
 monitor: train/loss
+tags: ["siamese"]
 learning_rate: 1e-03
 weight_decay: 1e-04
 early_stopping_patience: 3
@@ -43,8 +45,8 @@ early_stopping_patience: 3
 # Data Settings
 ########################################################################
 
-batch_size: 256
-samples_per_class: 128
+batch_size: 64
+samples_per_class: 16
 iteration_length: 10000
 
 num_workers: 0
@@ -57,11 +59,12 @@ drop_last: True
 
 defaults:
   - _self_
-  - profiler: null
-  - data: shapenet_chairs_sketch_medium
-  - logging: disabled # wandb, disabled
+  # - profiler: null
+  - data: shapenet_chairs_sketch_large
+  - logging: wandb # wandb, disabled
   - callbacks:
     - early_stopping
+    - model_checkpoint
     - model_summary
   - model: siamese 
   - optional local: defaults

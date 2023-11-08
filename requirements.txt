@@ -7,6 +7,9 @@ jupyter
 pandas
 open3d
 pytorch-metric-learning
+fvcore
+iopath
+pytorch3d
 
 # test
 black

@@ -27,15 +27,15 @@ def train(cfg: DictConfig) -> None:
     wandb_logger = instantiate(cfg.logging)
     wandb_logger.watch(model, log="all", log_freq=10, log_graph=False)
 
-    logger.debug("==> initializing profiler ...")
-    profiler = instantiate(cfg.profiler)
+    # logger.debug("==> initializing profiler ...")
+    # profiler = instantiate(cfg.profiler)
 
     logger.debug("==> initializing trainer ...")
     trainer = instantiate(
         cfg.trainer,
         callbacks=callbacks,
         logger=wandb_logger,
-        profiler=profiler,
+        # profiler=profiler,
     )
 
     logger.debug("==> start training ...")

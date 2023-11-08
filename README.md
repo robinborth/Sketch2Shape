@@ -25,15 +25,14 @@ In order to disable that the base environment is set:
 conda config --set auto_activate_base false
 ```
 
-Then you can create an environment for python3.11 like that:
-
-```bash
-conda create --name sketch2shape python=3.10
-```
-
 Then install the requirements.txt like following:
+
 ```bash
+conda create --name sketch2shape python=3.9
 conda activate sketch2shape
+conda install pytorch=2.1 torchvision -c pytorch
+conda install -c fvcore -c iopath -c conda-forge fvcore iopath
+conda install pytorch3d -c pytorch3d
 pip install -r requirements.txt
 pip install -e .
 ```

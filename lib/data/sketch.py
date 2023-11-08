@@ -1,12 +1,10 @@
 import os
-from pathlib import Path
 from typing import Union
 
 import cv2 as cv
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from omegaconf import DictConfig
 from pytorch3d.io import load_obj
 from pytorch3d.renderer import (
     FoVPerspectiveCameras,

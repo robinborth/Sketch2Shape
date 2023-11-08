@@ -12,7 +12,7 @@ dataset_name: shapenet_chairs_sketch_small
 # Dataset Setting
 ########################################################################
 
-num_obj_train: 10
+num_obj_train: 5
 
 ########################################################################
 # Default Setting

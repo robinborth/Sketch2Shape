@@ -10,7 +10,8 @@ dataset_name: shapenet_chairs_sketch_large
 # Dataset Setting
 ########################################################################
 
-num_obj_train: 500
+num_obj_train: 100
+num_obj_val: 10
 
 ########################################################################
 # Default Setting
