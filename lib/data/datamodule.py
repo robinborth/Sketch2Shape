@@ -67,4 +67,5 @@ class SDFDataModule(L.LightningDataModule):
             num_workers=self.cfg.num_workers,
             drop_last=self.cfg.drop_last,
             shuffle=self.cfg.shuffle,
+            persistent_workers=self.cfg.persistent_workers,
         )

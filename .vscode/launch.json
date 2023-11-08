@@ -35,6 +35,14 @@
             "program": "scripts/train_deepsdf.py",
             "console": "integratedTerminal",
             "justMyCode": false,
+        },
+        {
+            "name": "Debug: SDF Extraction",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/extract_sdf.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
         }
     ]
 }

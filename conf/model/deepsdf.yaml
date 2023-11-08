@@ -1,10 +1,10 @@
-latent_vector_size: 1 #256
-latent_size: 256 #512
+latent_vector_size: 32 #256
+latent_size: 64 #512
 
 dropout: False
 dropout_p: 0.2
 
-lr_decoder: 0.01
+lr_decoder: 0.1
 lr_lat_vecs: 0.1
 sigma: 0.01
 

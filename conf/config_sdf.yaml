@@ -3,7 +3,7 @@
 ########################################################################
 
 seed: 42
-root_path: /home/korth/sketch2shape
+root_path: /Users/korth/TUM/09/NiessnerLab/sketch2shape #/home/korth/sketch2shape
 data_path: ${root_path}/data/deepsdf
 checkpoint_path: ${root_path}/checkpoint/deepsdf
 
@@ -15,19 +15,19 @@ trainer:
   _target_: lightning.pytorch.trainer.Trainer
   accelerator: cpu #gpu
   profiler: simple
-  max_epochs: 1000
+  max_epochs: 500
   enable_checkpointing: True
-  log_every_n_steps: 20
 
 ### Dataloader
-batch_size: 5000
+batch_size: 16384
 num_workers: 1
 drop_last: False
 shuffle: True
+persistent_workers: True
 
 monitor: train/loss
 dataset_name: shapenet_chair_single
-early_stopping_patience: 30
+early_stopping_patience: 1000
 ########################################################################
 # Default Settings
 ########################################################################
@@ -35,9 +35,9 @@ early_stopping_patience: 30
 defaults:
   - _self_
   - data: extract_sdf # shapenet13
-  - logging: disabled # wandb, disabled
+  - logging: wandb # wandb, disabled
   - callbacks:
-      - early_stopping
+      # - early_stopping
       - model_checkpoint
   - model: deepsdf
 
