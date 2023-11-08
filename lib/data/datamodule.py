@@ -57,7 +57,7 @@ class SDFDataModule(L.LightningDataModule):
         self.cfg = cfg
 
     def setup(self, stage: str) -> None:
-        self.dataset = SDFDataset(cfg=self.cfg)
+        self.dataset = instantiate(self.cfg.dataset, self.cfg)
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(

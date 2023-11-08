@@ -82,3 +82,49 @@ class SDFDataset(Dataset):
             "xyz": data[:3],
             "sd": data[3],
         }
+
+
+class SDFDummySimple(Dataset):
+    def __init__(
+        self,
+        cfg: DictConfig,
+    ) -> None:
+        self.cfg = cfg
+        self._load(cfg=cfg)
+
+    def _load(self, cfg: DictConfig):
+        self.data = np.array([[-1, -1, -1, -0.8], [1, 1, 1, 0.8]], dtype=np.float32)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        data = self.data[idx].copy()
+        return {
+            "xyz": data[:3],
+            "sd": data[3],
+        }
+
+
+class SDFDummyMedium(Dataset):
+    def __init__(
+        self,
+        cfg: DictConfig,
+    ) -> None:
+        self.cfg = cfg
+        self._load(cfg=cfg)
+
+    def _load(self, cfg: DictConfig):
+        path = Path(cfg.data_path)
+        data = [np.load(obj_file) for obj_file in path.glob("**/*.npy")]
+        self.data = np.stack(data).reshape(-1, 4)[:256]
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        data = self.data[idx].copy()
+        return {
+            "xyz": data[:3],
+            "sd": data[3],
+        }

@@ -27,7 +27,7 @@ shape2sketch:
 	python scripts/shape2sketch.py
 
 train:
-	python scripts/run_train.py
+	python scripts/train_deepsdf.py
 
 experiment_deep_sdf_batch_size:
 	python scripts/train_deepsdf.py batch_size=128 tags=['deep_sdf,experiment:batch_size,batch_size:2048']

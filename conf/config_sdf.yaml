@@ -11,8 +11,8 @@ checkpoint_path: ${root_path}/checkpoint/deepsdf
 # Model Setting
 ########################################################################
 
-embedding_size: 512
-num_hidden_layers: 8
+embedding_size: 64
+num_hidden_layers: 2
 loss:
   _target_: torch.nn.L1Loss
   reduction: mean
@@ -22,28 +22,48 @@ loss:
 # Trainer Settings
 ########################################################################
 
+# scheduler:
+#   _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+#   factor: 0.5
+#   patience: 500
+#   min_lr: 1e-05
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.StepLR
+  step_size: 5000
+  gamma: 0.95
+
+
 trainer:
   _target_: lightning.pytorch.trainer.Trainer
   accelerator: cpu #gpu
   # profiler: simple
-  max_epochs: 100
+  # max_epochs: 100
+  max_steps: 1000000 
   enable_checkpointing: False
 
+
 monitor: train/loss
-learning_rate: 1e-04
-early_stopping_patience: 10
+learning_rate: 1e-03
+
+early_stopping_patience: 100
+
+
 tags: ["deep_sdf"]
 
 ########################################################################
 # Data Settings
 ########################################################################
 
+dataset:
+  _target_: lib.data.dataset.SDFDummyMedium
+
 dataset_name: shapenet_chair_single
-batch_size: 1024
-num_workers: 9
+batch_size: 256
+num_workers: 0
 drop_last: True
-shuffle: True
-persistent_workers: True
+shuffle: False
+persistent_workers: False
 
 ########################################################################
 # Default Settings
@@ -52,10 +72,10 @@ persistent_workers: True
 defaults:
   - _self_
   - data: extract_sdf # shapenet13
-  - logging: wandb # wandb, disabled
-  - callbacks:
-      - early_stopping
-      # - model_checkpoint
+  - logging: disabled # wandb, disabled
+  - callbacks :
+      - model_summary 
+  #     - model_checkpoint
   - model: deepsdf
 
 ########################################################################

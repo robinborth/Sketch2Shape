@@ -24,21 +24,30 @@ class DeepSDF(L.LightningModule):
             layers.append(nn.Linear(cfg.embedding_size, cfg.embedding_size))
             layers.append(nn.ReLU())
         layers.append(nn.Linear(cfg.embedding_size, 1))
+        layers.append(nn.Tanh())
         self.backbone = nn.Sequential(*layers)
 
     def forward(self, batch):
         out = {}
-        out["sd"] = self.backbone(batch["xyz"])
+        out["sd"] = self.backbone(batch["xyz"]).flatten()
         return out
 
     def training_step(self, batch, batch_idx):
         output = self.forward(batch)
-        loss = self.loss(output["sd"], batch["sd"].reshape(-1, 1))
+        loss = self.loss(output["sd"], batch["sd"])
+        # state = self.trainer.optimizers[0].state
         self.log("train/loss", loss, prog_bar=True, batch_size=self.cfg.batch_size)
         return loss
 
-    def configure_optimizers(self) -> torch.optim.Optimizer:
-        return torch.optim.Adam(
+    def configure_optimizers(self):
+        optim = torch.optim.Adam(
             params=self.parameters(),
             lr=self.cfg.learning_rate,
         )
+        # return optim
+        scheduler = instantiate(self.cfg.scheduler, optimizer=optim)
+        return {
+            "optimizer": optim,
+            "lr_scheduler": scheduler,
+            "monitor": self.cfg.monitor,
+        }
