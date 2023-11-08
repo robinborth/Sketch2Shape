@@ -48,17 +48,17 @@ preprocessing:
 
 
 experiments_dataloading:
-	python scripts/run_train.py +experiments=pre_load_pre_transform_small_1gb 
-	python scripts/run_train.py +experiments=pre_load_pre_transform_medium_1gb 
-	# python scripts/run_train.py +experiments=pre_load_pre_transform_large_1gb 
+	# python scripts/run_train.py +experiments=pre_load_pre_transform_small_1gb 
+	# python scripts/run_train.py +experiments=pre_load_pre_transform_medium_1gb 
+	python scripts/run_train.py +experiments=pre_load_pre_transform_large_1gb 
 	# python scripts/run_train.py +experiments=pre_load_pre_transform_xl_large_1gb 
 
-	python scripts/run_train.py +experiments=pre_load_dynamic_transform_small_1gb 
-	python scripts/run_train.py +experiments=pre_load_dynamic_transform_medium_1gb 
-	# python scripts/run_train.py +experiments=pre_load_dynamic_transform_large_1gb 
+	# python scripts/run_train.py +experiments=pre_load_dynamic_transform_small_1gb 
+	# python scripts/run_train.py +experiments=pre_load_dynamic_transform_medium_1gb 
+	python scripts/run_train.py +experiments=pre_load_dynamic_transform_large_1gb 
 	# python scripts/run_train.py +experiments=pre_load_dynamic_transform_xl_large_1gb 
 
-	python scripts/run_train.py +experiments=dynamic_load_dynamic_transform_small_1gb 
-	python scripts/run_train.py +experiments=dynamic_load_dynamic_transform_medium_1gb 
-	# python scripts/run_train.py +experiments=dynamic_load_dynamic_transform_large_1gb 
+	# python scripts/run_train.py +experiments=dynamic_load_dynamic_transform_small_1gb 
+	# python scripts/run_train.py +experiments=dynamic_load_dynamic_transform_medium_1gb 
+	python scripts/run_train.py +experiments=dynamic_load_dynamic_transform_large_1gb 
 	# python scripts/run_train.py +experiments=dynamic_load_dynamic_transform_xl_large_1gb 
