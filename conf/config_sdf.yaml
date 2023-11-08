@@ -11,7 +11,7 @@ checkpoint_path: ${root_path}/checkpoint/deepsdf
 # Model Setting
 ########################################################################
 
-embedding_size: 64
+embedding_size: 128
 num_hidden_layers: 2
 loss:
   _target_: torch.nn.L1Loss
@@ -37,9 +37,9 @@ scheduler:
 trainer:
   _target_: lightning.pytorch.trainer.Trainer
   accelerator: cpu #gpu
-  # profiler: simple
+  profiler: simple
   # max_epochs: 100
-  max_steps: 1000000 
+  max_steps: 10000
   enable_checkpointing: False
 
 
@@ -60,10 +60,10 @@ dataset:
 
 dataset_name: shapenet_chair_single
 batch_size: 256
-num_workers: 0
+num_workers: 1
 drop_last: True
 shuffle: False
-persistent_workers: False
+persistent_workers: True
 
 ########################################################################
 # Default Settings
