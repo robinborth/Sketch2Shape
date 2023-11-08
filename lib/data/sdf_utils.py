@@ -1,11 +1,7 @@
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import open3d as o3d
-import trimesh
-from mesh_to_sdf import sample_sdf_near_surface
-from omegaconf import DictConfig
 
 # from lib.data.sketch import obj_path
 
@@ -60,12 +56,12 @@ def create_sdf_samples_grid(path: str, num_samples: int = 10000):
     return np.column_stack((points, signed_distance))
 
 
-def get_sdf_samples(obj_id: Path, number_of_points=50000):
-    # import os
+# def get_sdf_samples(obj_id: Path, number_of_points=50000):
+#     # import os
 
-    # os.environ["PYOPENGL_PLATFORM"] = "egl"
+#     # os.environ["PYOPENGL_PLATFORM"] = "egl"
 
-    mesh = trimesh.load(obj_id, force="mesh")
-    points, sdf = sample_sdf_near_surface(mesh, number_of_points=number_of_points)
+#     mesh = trimesh.load(obj_id, force="mesh")
+#     points, sdf = sample_sdf_near_surface(mesh, number_of_points=number_of_points)
 
-    return np.column_stack((points, sdf))
+#     return np.column_stack((points, sdf))

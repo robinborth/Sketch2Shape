@@ -163,6 +163,11 @@ wandb/
 notebooks/tutorials/*
 data/shapenet_chairs_sketch_mini
 data/shapenet_chairs_sketch_small
+data/shapenet_chairs_sketch_debug
+data/shapenet_chairs_sketch_large
+data/shapenet_chairs_sketch_xl_large
+data/shapenet_chairs_sketch_medium
+data/deepsdf
 lightning_logs/
 checkpoint/
 data/
