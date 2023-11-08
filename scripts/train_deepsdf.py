@@ -1,11 +1,9 @@
 import hydra
 import lightning as L
-import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 
 from lib.data.datamodule import SDFDataModule
-from lib.models.deepsdf import MLP, DeepSDF
 from lib.utils import create_logger
 
 logger = create_logger("train_deepsdf")
@@ -20,9 +18,7 @@ def train(cfg: DictConfig) -> None:
     datamodule = SDFDataModule(cfg=cfg)
 
     logger.debug("==> initializing model ...")
-    # 1 is hardcoded for now
-    # model = DeepSDF(cfg, 1)
-    model = MLP()
+    model = instantiate(cfg.model, cfg)
 
     logger.debug("==> initializing callbacks ...")
     callbacks = [instantiate(callback) for callback in cfg.callbacks.values()]
@@ -32,8 +28,6 @@ def train(cfg: DictConfig) -> None:
     wandb_logger.watch(model, log="all", log_freq=10, log_graph=False)
 
     logger.debug("==> initializing trainer ...")
-    # trainer = L.Trainer(max_epochs=300, accelerator="cpu", callbacks=callbacks)
-
     trainer = instantiate(
         cfg.trainer,
         callbacks=callbacks,

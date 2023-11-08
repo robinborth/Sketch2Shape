@@ -1,6 +1,5 @@
 from collections import defaultdict
 from pathlib import Path
-from typing import Optional
 
 import cv2
 import numpy as np
@@ -67,42 +66,19 @@ class SDFDataset(Dataset):
         cfg: DictConfig,
     ) -> None:
         self.cfg = cfg
-        self._load_datapaths(cfg=cfg)
+        self._load(cfg=cfg)
 
-    def _load_datapaths(self, cfg: DictConfig):
-        p = Path(cfg.data_path)
-        paths = list()
-        shape2idx = dict()
-        data = list()
-
-        for idx, file in enumerate(p.glob("**/*.npy")):
-            paths.append(file)
-            shape2idx[file] = idx
-            samples = load_samples(file)
-            # append shape_idx information
-            samples = np.column_stack((samples, np.repeat(idx, samples.shape[0])))
-            data.append(samples)
-
-        data = np.stack(data).reshape(-1, 5)
-        self.npy_paths = paths
-        self.shape2idx = shape2idx
-        self.idx2shape = {v: k for k, v in shape2idx.items()}
-        # data: [x, y, z, sdf, shape_idx]
-        self.data = data
+    def _load(self, cfg: DictConfig):
+        path = Path(cfg.data_path)
+        data = [np.load(obj_file) for obj_file in path.glob("**/*.npy")]
+        self.data = np.stack(data).reshape(-1, 4)
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        # self.data: [500_000, 5]
-        # collate_fn
         data = self.data[idx].copy()
-        xyz = data[:3]
-        sd = data[3]
-        key = data[4].astype(np.int32)
-        return {"xyz": xyz, "sd": sd, "key": key}
-
-
-def load_samples(filename, subsample=None):
-    npz = np.load(filename)
-    return npz
+        return {
+            "xyz": data[:3],
+            "sd": data[3],
+        }

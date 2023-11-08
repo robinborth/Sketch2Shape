@@ -57,12 +57,11 @@ class SDFDataModule(L.LightningDataModule):
         self.cfg = cfg
 
     def setup(self, stage: str) -> None:
-        self.train_dataset = SDFDataset(cfg=self.cfg)
-        self.num_scenes = len(self.train_dataset.npy_paths)
+        self.dataset = SDFDataset(cfg=self.cfg)
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
-            dataset=self.train_dataset,
+            dataset=self.dataset,
             batch_size=self.cfg.batch_size,
             num_workers=self.cfg.num_workers,
             drop_last=self.cfg.drop_last,
