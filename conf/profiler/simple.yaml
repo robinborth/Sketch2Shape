@@ -1,0 +1,2 @@
+# @package profiler
+_target_: lightning.pytorch.profilers.SimpleProfiler

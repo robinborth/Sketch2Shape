@@ -3,11 +3,6 @@
 ########################################################################
 
 seed: 123
-shapenet_folder: /shared/data/ShapeNetCore/Chair/03001627
-root_path: /home/borth/sketch2shape
-data_path: ${root_path}/data
-checkpoint_path: ${root_path}/checkpoint
-
 
 ########################################################################
 # Model Setting
@@ -30,8 +25,8 @@ trainer:
   accelerator: cpu
   profiler: simple
   max_epochs: 1
-  val_check_interval: 10
-  # limit_val_batches: 0
+  # val_check_interval: 10
+  limit_val_batches: 0
   enable_checkpointing: True
   log_every_n_steps: 1
 
@@ -47,32 +42,30 @@ early_stopping_patience: 3
 
 batch_size: 64
 samples_per_class: 16
-iteration_length: 10000
+iteration_length: 1000
 
 num_workers: 0
 pin_memory: False
 drop_last: True
+persistent_workers: False
 
 ########################################################################
 # Default Settings
 ########################################################################
 
+# task name, determines output directory path
+task_name: "train"
+
 defaults:
   - _self_
-  # - profiler: null
-  - data: shapenet_chairs_sketch_large
-  - logging: wandb # wandb, disabled
-  - callbacks:
-    - early_stopping
-    - model_checkpoint
-    - model_summary
+  - profiler: simple 
+  - data: shapenet_chairs_sketch_small
   - model: siamese 
+  - callbacks: default
+  # - logger: wandb # wandb
+  - logger: null # wandb
+  # - trainer
+  - hydra: default
+  - paths: default
   - optional local: defaults
-
-########################################################################
-# Hydra Settings
-########################################################################
-
-hydra:
-  run:
-    dir: ${root_path}/wandb/hydra
+  # - debug: default

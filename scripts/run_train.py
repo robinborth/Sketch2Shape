@@ -1,44 +1,41 @@
+from typing import List
+
 import hydra
 import lightning as L
-from hydra.utils import instantiate
+from lightning import Callback, LightningDataModule, LightningModule, Trainer
+from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 
-from lib.data.datamodule import ShapeNetDataModule
-from lib.utils import create_logger
+from lib.utils import create_logger, instantiate_callbacks, instantiate_loggers
 
-logger = create_logger("run_train")
+log = create_logger()
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def train(cfg: DictConfig) -> None:
-    logger.debug("==> loading config ...")
+    log.info("==> loading config ...")
     L.seed_everything(cfg.seed)
 
-    logger.debug("==> initializing datamodule ...")
-    datamodule = ShapeNetDataModule(cfg=cfg, batch_size=cfg.batch_size)
+    log.info(f"==> initializing datamodule <{cfg.data._target_}>")
+    datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
 
-    logger.debug("==> initializing model ...")
-    model = instantiate(cfg.model, cfg)
+    log.info(f"==> initializing model <{cfg.model._target_}>")
+    model: LightningModule = hydra.utils.instantiate(cfg.model)
 
-    logger.debug("==> initializing callbacks ...")
-    callbacks = [instantiate(callback) for callback in cfg.callbacks.values()]
+    log.info("==> initializing callbacks ...")
+    callbacks: List[Callback] = instantiate_callbacks(cfg.get("callbacks"))
 
-    logger.debug("==> initializing logger ...")
-    wandb_logger = instantiate(cfg.logging)
-    wandb_logger.watch(model, log="all", log_freq=10, log_graph=False)
+    log.info("==> initializing logger ...")
+    logger: List[Logger] = instantiate_loggers(cfg.get("logger"))
 
-    # logger.debug("==> initializing profiler ...")
-    # profiler = instantiate(cfg.profiler)
-
-    logger.debug("==> initializing trainer ...")
-    trainer = instantiate(
+    log.info("==> initializing trainer ...")
+    trainer: Trainer = hydra.utils.instantiate(
         cfg.trainer,
         callbacks=callbacks,
-        logger=wandb_logger,
-        # profiler=profiler,
+        logger=logger,
     )
 
-    logger.debug("==> start training ...")
+    log.debug("==> start training ...")
     trainer.fit(model=model, datamodule=datamodule)
 
 

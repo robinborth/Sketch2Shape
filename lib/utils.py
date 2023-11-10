@@ -1,54 +1,14 @@
-import logging
-from logging import Logger
+from typing import List
 
-import pandas as pd
 from hydra import compose, initialize
+from hydra.utils import instantiate
+from lightning import Callback
+from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 
+from lib.logger import create_logger
 
-def create_logger(name: str) -> Logger:
-    """
-    Create and configure a custom logger with the given name.
-
-    Parameters:
-        name (str): The name of the logger. It helps identify the logger when used in
-            different parts of the application.
-
-    Returns:
-        logging.Logger: A configured logger object that can be used to log messages.
-
-    Usage:
-        Use this function to create custom loggers with different names and settings
-        throughout your application. Each logger can be accessed using its unique name.
-
-    Example:
-        >>> my_logger = create_logger("my_logger")
-        >>> my_logger.debug("This is a debug message")
-        >>> my_logger.info("This is an info message")
-        >>> my_logger.warning("This is a warning message")
-        >>> my_logger.error("This is an error message")
-        >>> my_logger.critical("This is a critical message")
-    """
-    # Create a logger with the given name
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
-    logger.propagate = False
-
-    # Create a log message formatter
-    formatter = logging.Formatter(
-        fmt="%(asctime)s %(message)s",
-        datefmt="[%Y-%m-%d %H:%M:%S]",
-    )
-
-    # Create a console handler and set the formatter
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-
-    # Add the console handler to the logger
-    logger.addHandler(console_handler)
-
-    # Return the configured logger
-    return logger
+log = create_logger("utils")
 
 
 def load_config() -> DictConfig:
@@ -59,3 +19,30 @@ def load_config() -> DictConfig:
     """
     with initialize(config_path="../conf", version_base=None):
         return compose(config_name="config")
+
+
+def instantiate_callbacks(callbacks_cfg: DictConfig) -> List[Callback]:
+    callbacks: List[Callback] = []
+
+    if callbacks_cfg is None:
+        log.info("No callbacks specified.")
+        return callbacks
+
+    for callback in callbacks_cfg.values():
+        if "_target_" in callback.keys():
+            callbacks.append(instantiate(callback))
+
+    return callbacks
+
+
+def instantiate_loggers(loggers_cfg: DictConfig) -> List[Logger]:
+    loggers: List[Logger] = []
+
+    if loggers_cfg is None:
+        log.info("No loggers specified.")
+        return loggers
+
+    for logger in loggers_cfg.values():
+        if "_target_" in logger.keys():
+            loggers.append(instantiate(logger))
+    return loggers

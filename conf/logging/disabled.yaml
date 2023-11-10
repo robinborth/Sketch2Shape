@@ -1,3 +1,0 @@
-_target_: lightning.pytorch.loggers.WandbLogger
-project: sketch2shape
-mode: disabled

@@ -4,7 +4,7 @@ import numpy as np
 import open3d as o3d
 from omegaconf import DictConfig
 
-from lib.data.sketch import obj_path
+from lib.data.preprocess_sketch import obj_path
 from lib.utils import load_config
 
 

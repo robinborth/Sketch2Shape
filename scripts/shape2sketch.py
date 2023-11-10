@@ -9,7 +9,7 @@ from omegaconf import DictConfig
 from tqdm import tqdm
 
 from lib.data.metainfo import MetaInfo
-from lib.data.sketch import (
+from lib.data.preprocess_sketch import (
     cartesian_elev_azim,
     image_path,
     image_to_sketch,

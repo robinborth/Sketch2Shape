@@ -170,3 +170,5 @@ data/shapenet_chairs_sketch_xl_large
 conf/local/defaults.yaml
 
 profile/
+deepsdf/
+logs

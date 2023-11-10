@@ -1,7 +1,18 @@
+# https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.callbacks.ModelCheckpoint.html
+
 model_checkpoint:
   _target_: lightning.pytorch.callbacks.ModelCheckpoint
-  save_last: True
-  monitor: ${monitor}
-  mode: min
-  dirpath: ${checkpoint_path}
-  filename: ${dataset_name}
+  dirpath: null # directory to save the model file
+  filename: null # checkpoint filename
+  monitor: null # name of the logged metric which determines when model is improving
+  verbose: False # verbosity mode
+  save_last: null # additionally always save an exact copy of the last checkpoint to a file last.ckpt
+  save_top_k: 1 # save k best models (determined by above metric)
+  save_weights_only: False # if True, then only the model’s weights will be saved
+  mode: "min" # "max" means higher metric value is better, can be also "min"
+  auto_insert_metric_name: True # when True, the checkpoints filenames will contain the metric name
+  every_n_train_steps: null # number of training steps between checkpoints
+  train_time_interval: null # checkpoints are monitored at the specified time interval
+  every_n_epochs: null # number of epochs between checkpoints
+  save_on_train_epoch_end: null # whether to run checkpointing at the end of the training epoch or the end of validation
+  enable_version_counter: True # append a version to the existing file name

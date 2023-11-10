@@ -1,34 +1,29 @@
 from collections import defaultdict
 from pathlib import Path
+from typing import Callable, Optional
 
 import cv2
-import torchvision.transforms as transforms
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 from torch.utils.data import Dataset
+from torchvision.transforms import Compose
 
 from lib.data.metainfo import MetaInfo
 
 
-class ShapeNetDatasetBase(Dataset):
+class ShapeNetSketchDatasetBase(Dataset):
     def __init__(
         self,
-        cfg: DictConfig,
+        data_dir: str = "data/",
         stage: str = "train",
-    ) -> None:
-        self.stage = stage
-        self.cfg = cfg
-        self.metainfo = MetaInfo(cfg=cfg, split=stage)
-        self.transform = self._load_transform(cfg=cfg)
-        self._load(cfg=cfg)
+        transforms: Optional[Callable] = None,
+    ):
+        self.data_dir = data_dir
+        self.transforms = transforms if transforms else Compose()
+        self.metainfo = MetaInfo(data_dir=data_dir, split=stage)
+        self._load()
 
-    def _load_transform(self, cfg: DictConfig):
-        trans = []
-        if "transform" in cfg:
-            trans = [instantiate(trans) for trans in cfg.transform.values()]
-        return transforms.Compose(trans)
-
-    def _load(self, cfg: DictConfig):
+    def _load(self):
         pass
 
     def _fetch(self, folder: str, obj_id: str, image_id: str):
@@ -56,40 +51,40 @@ class ShapeNetDatasetBase(Dataset):
         }
 
 
-class ShapeNetDatasetPreLoadPreTransform(ShapeNetDatasetBase):
-    def _load(self, cfg: DictConfig):
+class ShapeNetSketchDatasetPreLoadPreTransform(ShapeNetSketchDatasetBase):
+    def _load(self):
         data = defaultdict(lambda: defaultdict(dict))  # type: ignore
         for obj_id in self.metainfo.obj_ids:
-            for path in Path(cfg.dataset_path, obj_id, "images").glob("*.jpg"):
+            for path in Path(self.data_dir, obj_id, "images").glob("*.jpg"):
                 image = cv2.imread(path.as_posix())
-                data[obj_id]["images"][path.stem] = self.transform(image)
-            for path in Path(cfg.dataset_path, obj_id, "sketches").glob("*.jpg"):
+                data[obj_id]["images"][path.stem] = self.transforms(image)
+            for path in Path(self.data_dir, obj_id, "sketches").glob("*.jpg"):
                 sketch = cv2.imread(path.as_posix())
-                data[obj_id]["sketches"][path.stem] = self.transform(sketch)
+                data[obj_id]["sketches"][path.stem] = self.transforms(sketch)
         self.data = data
 
     def _fetch(self, folder: str, obj_id: str, image_id: str):
         return self.data[obj_id][folder][image_id]
 
 
-class ShapeNetDatasetPreLoadDynamicTransform(ShapeNetDatasetBase):
-    def _load(self, cfg: DictConfig):
+class ShapeNetSketchDatasetPreLoadDynamicTransform(ShapeNetSketchDatasetBase):
+    def _load(self):
         data = defaultdict(lambda: defaultdict(dict))  # type: ignore
         for obj_id in self.metainfo.obj_ids:
-            for path in Path(cfg.dataset_path, obj_id, "images").glob("*.jpg"):
+            for path in Path(self.data_dir, obj_id, "images").glob("*.jpg"):
                 image = cv2.imread(path.as_posix())
                 data[obj_id]["images"][path.stem] = image
-            for path in Path(cfg.dataset_path, obj_id, "sketches").glob("*.jpg"):
+            for path in Path(self.data_dir, obj_id, "sketches").glob("*.jpg"):
                 sketch = cv2.imread(path.as_posix())
                 data[obj_id]["sketches"][path.stem] = sketch
         self.data = data
 
     def _fetch(self, folder: str, obj_id: str, image_id: str):
-        return self.transform(self.data[obj_id][folder][image_id])
+        return self.transforms(self.data[obj_id][folder][image_id])
 
 
-class ShapeNetDatasetDynamicLoadDynamicTransform(ShapeNetDatasetBase):
+class ShapeNetSketchDatasetDynamicLoadDynamicTransform(ShapeNetSketchDatasetBase):
     def _fetch(self, folder: str, obj_id: str, image_id: str):
-        path = Path(self.cfg.dataset_path, obj_id, f"{folder}/{image_id}.jpg")
+        path = Path(self.data_dir, obj_id, f"{folder}/{image_id}.jpg")
         image = cv2.imread(path.as_posix())
-        return self.transform(image)
+        return self.transforms(image)

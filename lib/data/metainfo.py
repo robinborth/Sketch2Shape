@@ -11,12 +11,17 @@ logger = create_logger("metainfo")
 
 
 class MetaInfo:
-    def __init__(self, cfg: DictConfig, split: Optional[str] = None):
-        self.split = split
-        self.cfg = cfg
-
+    def __init__(
+        self,
+        data_dir: str = "data/",
+        dataset_splits_file_name: str = "dataset_splits.csv",
+        sketch_image_pairs_file_name: str = "sketch_image_pairs.csv",
+        split: Optional[str] = None,
+    ):
+        dataset_splits_path = Path(data_dir, dataset_splits_file_name)
+        sketch_image_pairs_path = Path(data_dir, sketch_image_pairs_file_name)
         try:
-            dataset_splits = pd.read_csv(cfg.dataset_splits_path)
+            dataset_splits = pd.read_csv(dataset_splits_path)
             if split is not None:
                 dataset_splits = dataset_splits[dataset_splits["split"] == split]
             self._obj_ids = dataset_splits["obj_id"].to_list()
@@ -27,7 +32,7 @@ class MetaInfo:
         # load the sketch_image pairs file
         dtype = {"image_id": str, "sketch_id": str}
         try:
-            pairs = pd.read_csv(cfg.sketch_image_pairs_path, dtype=dtype)
+            pairs = pd.read_csv(sketch_image_pairs_path, dtype=dtype)
             if split is not None:
                 pairs = pairs[pairs["split"] == split]
             self._sketch_image_pairs = pairs
