@@ -11,70 +11,60 @@ checkpoint_path: ${root_path}/checkpoint/deepsdf
 # Model Setting
 ########################################################################
 
-latent_size: 256
+latent_size: 512
 num_hidden_layers: 8
 loss:
   _target_: torch.nn.L1Loss
   reduction: mean
-latent_vector_size: 32
-clamp: False
-clamp_val: 0.01
-
-########################################################################
-# Trainer Settings
-########################################################################
-
-# scheduler:
-#   _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
-#   factor: 0.9
-#   patience: 5000
-#   min_lr: 1e-06
-
-# scheduler:
-#   _target_: torch.optim.lr_scheduler.StepLR
-#   step_size: 1000
-#   gamma: 0.9
-
-trainer:
-  _target_: lightning.pytorch.trainer.Trainer
-  accelerator: cpu #gpu
-  profiler: simple
-  # max_epochs: 100
-  max_steps: 20000
-  enable_checkpointing: True
-  log_every_n_steps: 1
-
-# scheduler:
-#   _target_: torch.optim.lr_scheduler.CosineAnnealingLR
-#   eta_min: 1e-4
-#   T_max: ${trainer.max_steps}
-
-# scheduler:
-#   _target_: torch.optim.lr_scheduler.OneCycleLR
-#   max_lr: 1e-4
-#   total_steps: ${trainer.max_steps}
-
-monitor: train/loss
-learning_rate: 1e-4
-
-tags: ["deepsdf_overfitting"]
-group: "deepsdf"
+latent_vector_size: 256
+clamp: True
+clamp_val: 0.1
+reg_loss: True
+num_scenes: 1
+sigma: 1e-3
+skip_connection: [4]
+dropout_p: 0.2
 
 ########################################################################
 # Data Settings
 ########################################################################
 
 dataset:
-  _target_: lib.data.dataset.SDFDummyMedium
+  _target_: lib.data.dataset.DeepSDFDataset
 
-num_shapes: 1
-num_samples: 120000
 dataset_name: shapenet_chair_single
-batch_size: ${num_shapes}
-num_workers: 2
+load_ram: True
+subsample: 65536
+
+batch_size: 1
+num_workers: 4
 drop_last: True
 shuffle: False
 persistent_workers: True
+
+########################################################################
+# Optimizer Settings
+########################################################################
+
+lr_decoder: 1e-4
+lr_latents: 1e-3
+
+########################################################################
+# Trainer Settings
+########################################################################
+
+trainer:
+  _target_: lightning.pytorch.trainer.Trainer
+  accelerator: gpu #gpu
+  profiler: simple
+  max_epochs: 20000
+  enable_checkpointing: True
+  log_every_n_steps: 1
+
+monitor: train/loss
+
+tags: ["deepsdf_overfitting_correct_sampling"]
+group: "deepsdf"
 
 ########################################################################
 # Default Settings
@@ -86,7 +76,7 @@ defaults:
   - logging: wandb # wandb, disabled
   - callbacks:
       - model_summary
-      - lr_monitor
+      # - lr_monitor
       - model_checkpoint
   - model: deepsdf
   - optional local: defaults

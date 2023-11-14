@@ -1,8 +1,9 @@
 model_checkpoint:
   _target_: lightning.pytorch.callbacks.model_checkpoint.ModelCheckpoint
   save_last: True
+  save_top_k: -1
+  monitor: ${monitor}
   mode: min
   dirpath: ${checkpoint_path}
   filename: ${dataset_name}-{epoch:02d}-{${monitor}:.2f}
-  save_top_k: -1
-  every_n_epochs: 30
+  every_n_epochs: 1000

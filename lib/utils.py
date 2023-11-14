@@ -51,11 +51,11 @@ def create_logger(name: str) -> Logger:
     return logger
 
 
-def load_config() -> DictConfig:
+def load_config(config_name) -> DictConfig:
     """Loads the hydra config via code.
 
     Returns:
         DictConfig: The initialized config.
     """
     with initialize(config_path="../conf", version_base=None):
-        return compose(config_name="config_sdf")
+        return compose(config_name=config_name)

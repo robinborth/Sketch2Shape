@@ -1,1 +1,2 @@
-number_of_points: 50000
+number_of_points: 100000
+fix_mesh: True

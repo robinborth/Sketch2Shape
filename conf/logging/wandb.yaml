@@ -1,4 +1,5 @@
 _target_: lightning.pytorch.loggers.WandbLogger
-project: sketch2shape 
+project: sketch2shape
 log_model: True
-tags: ${tags} 
+tags: ${tags}
+group: ${group}

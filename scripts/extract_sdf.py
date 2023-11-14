@@ -2,7 +2,7 @@ from pathlib import Path
 
 import numpy as np
 
-from lib.data.sdf_utils import create_sdf_samples_grid
+from lib.data.sdf_utils import create_sdf_samples_grid, fix_mesh
 from lib.utils import load_config
 
 if __name__ == "__main__":
@@ -11,6 +11,8 @@ if __name__ == "__main__":
     print(p)
     for file in p.glob("**/*.obj"):
         print(file)
+        if cfg.data.fix_mesh:
+            file = Path(fix_mesh(str(file)))
         np_data = create_sdf_samples_grid(
             str(file), num_samples=cfg.data.number_of_points
         )
