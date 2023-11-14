@@ -11,8 +11,8 @@ checkpoint_path: ${root_path}/checkpoint/deepsdf
 # Model Setting
 ########################################################################
 
-latent_size: 256
-num_hidden_layers: 8
+embedding_size: 64
+num_hidden_layers: 2
 loss:
   _target_: torch.nn.L1Loss
   reduction: mean
@@ -74,6 +74,7 @@ batch_size: ${num_shapes}
 num_workers: 2
 drop_last: True
 shuffle: False
+persistent_workers: True
 persistent_workers: True
 
 ########################################################################
