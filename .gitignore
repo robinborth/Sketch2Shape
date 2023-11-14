@@ -172,3 +172,5 @@ lightning_logs/
 checkpoint/
 data/
 03001627/
+temp
+conf/local/

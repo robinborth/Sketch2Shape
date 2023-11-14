@@ -1,1 +1,1 @@
-_target_: lib.models.deepsdf.DeepSDF
+_target_: lib.models.deepsdf.ActualDeepSDF
