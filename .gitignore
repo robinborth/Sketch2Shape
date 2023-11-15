@@ -164,3 +164,4 @@ notebooks/tutorials/*
 data/*
 logs/*
 temp
+conf/local/*
