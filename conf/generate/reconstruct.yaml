@@ -1,0 +1,4 @@
+object_idx: 0
+resolution: 64
+visualize: False
+checkpoint_path:

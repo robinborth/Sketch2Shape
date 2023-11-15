@@ -1,3 +1,4 @@
+import json
 from collections import defaultdict
 from pathlib import Path
 
@@ -81,6 +82,9 @@ class SDFDataset(Dataset):
                 self.data.append(load_to_ram(path))
 
         self.shape2idx = {v: k for k, v in self.idx2shape.items()}
+        # save shape2idx file
+        with open(f"{self.cfg.data_path}/shape2idx", "w") as f:
+            f.write(json.dumps(self.shape2idx))
 
     def __len__(self):
         return len(self.npy_paths)

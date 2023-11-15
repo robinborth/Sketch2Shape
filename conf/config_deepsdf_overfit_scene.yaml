@@ -26,7 +26,7 @@ reg_loss: True
 num_scenes: 1
 sigma: 1e-4
 skip_connection: [4]
-dropout_p: 0.2
+dropout_p: 0.1
 
 ########################################################################
 # Data Settings
@@ -39,7 +39,7 @@ dataset_name: shapenet_chair_single
 load_ram: True
 subsample: 65536
 
-batch_size: 16
+batch_size: 1
 num_workers: 4
 drop_last: True
 shuffle: False
@@ -82,7 +82,7 @@ defaults:
       - model_checkpoint
   - model: deepsdf
   - optional local: defaults
-  # - reconstruct: training_data
+  - reconstruct: training_data
 
 ########################################################################
 # Hydra Settings

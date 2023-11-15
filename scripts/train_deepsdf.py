@@ -9,7 +9,9 @@ from lib.utils import create_logger
 logger = create_logger("train_deepsdf")
 
 
-@hydra.main(version_base=None, config_path="../conf", config_name="config_deepsdf")
+@hydra.main(
+    version_base=None, config_path="../conf", config_name="config_deepsdf_overfit_batch"
+)
 def train(cfg: DictConfig) -> None:
     logger.debug("==> loading config ...")
     L.seed_everything(cfg.seed)

@@ -5,5 +5,5 @@ model_checkpoint:
   monitor: ${monitor}
   mode: min
   dirpath: ${checkpoint_path}
-  filename: ${dataset_name}-{epoch:02d}-{${monitor}:.2f}
+  filename: ${experiment_name}-{epoch:02d}-{${monitor}:.2f}
   every_n_epochs: 1000

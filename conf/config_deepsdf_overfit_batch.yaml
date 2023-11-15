@@ -2,10 +2,11 @@
 # General Settings
 ########################################################################
 
+experiment_name: overfit_batch
 seed: 42
 root_path: /Users/robinborth/Code/sketch2shape #/home/korth/sketch2shape
-data_path: ${root_path}/data/deepsdf/03001627
-checkpoint_path: ${root_path}/checkpoint/deepsdf
+data_path: ${root_path}/data/deepsdf/overfit_batch/03001627/
+checkpoint_path: ${root_path}/checkpoint/deepsdf/overfit_batch/
 
 tags: ["deepsdf_overfitting_correct_sampling"]
 group: "deepsdf"
@@ -23,7 +24,7 @@ latent_vector_size: 256
 clamp: True
 clamp_val: 0.1
 reg_loss: True
-num_scenes: 1
+num_scenes: 16
 sigma: 1e-4
 skip_connection: [4]
 dropout_p: 0.2
@@ -35,9 +36,8 @@ dropout_p: 0.2
 dataset:
   _target_: lib.data.dataset.SDFDataset
 
-dataset_name: shapenet_chair_single
 load_ram: True
-subsample: 65536
+subsample: 16384
 
 batch_size: 16
 num_workers: 4
@@ -58,7 +58,7 @@ lr_latents: 1e-3
 
 trainer:
   _target_: lightning.pytorch.trainer.Trainer
-  accelerator: gpu #gpu
+  accelerator: cpu #gpu
   profiler: simple
   max_epochs: 20000
   enable_checkpointing: True
