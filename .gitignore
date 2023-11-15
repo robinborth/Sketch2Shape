@@ -163,3 +163,4 @@ cython_debug/
 notebooks/tutorials/*
 data/*
 logs/*
+temp
