@@ -10,6 +10,7 @@ pytorch-metric-learning
 fvcore
 iopath
 pytorch3d
+rich
 
 # test
 black

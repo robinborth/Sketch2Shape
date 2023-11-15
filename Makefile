@@ -23,42 +23,21 @@ clean:
 # Data Preprocessing
 ########################################################################
 
-shape2sketch:
-	python scripts/shape2sketch.py
-
-train:
+train_siamese:
 	python scripts/run_train.py
 
 copy_shapenet:
 	python scripts/copy_shapenet.py
 
-memory:
-	memray run --live scripts/memory.py
-
+create_sketches:
+	python scripts/create_sketches.py
 
 preprocessing:
 	python scripts/copy_shapenet.py data=shapenet_chairs_sketch_small
-	python scripts/shape2sketch.py data=shapenet_chairs_sketch_small
+	python scripts/create_sketches.py data=shapenet_chairs_sketch_small
 	python scripts/copy_shapenet.py data=shapenet_chairs_sketch_medium
-	python scripts/shape2sketch.py data=shapenet_chairs_sketch_medium
+	python scripts/create_sketches.py data=shapenet_chairs_sketch_medium
 	python scripts/copy_shapenet.py data=shapenet_chairs_sketch_large
-	python scripts/shape2sketch.py data=shapenet_chairs_sketch_large
+	python scripts/create_sketches.py data=shapenet_chairs_sketch_large
 	python scripts/copy_shapenet.py data=shapenet_chairs_sketch_xl_large
-	python scripts/shape2sketch.py data=shapenet_chairs_sketch_xl_large
-
-
-experiments_dataloading:
-	# python scripts/run_train.py +experiments=pre_load_pre_transform_small_1gb 
-	# python scripts/run_train.py +experiments=pre_load_pre_transform_medium_1gb 
-	python scripts/run_train.py +experiments=pre_load_pre_transform_large_1gb 
-	# python scripts/run_train.py +experiments=pre_load_pre_transform_xl_large_1gb 
-
-	# python scripts/run_train.py +experiments=pre_load_dynamic_transform_small_1gb 
-	# python scripts/run_train.py +experiments=pre_load_dynamic_transform_medium_1gb 
-	python scripts/run_train.py +experiments=pre_load_dynamic_transform_large_1gb 
-	# python scripts/run_train.py +experiments=pre_load_dynamic_transform_xl_large_1gb 
-
-	python scripts/run_train.py +experiments=dynamic_load_dynamic_transform_small_1gb 
-	# python scripts/run_train.py +experiments=dynamic_load_dynamic_transform_medium_1gb 
-	# python scripts/run_train.py +experiments=dynamic_load_dynamic_transform_large_1gb 
-	# python scripts/run_train.py +experiments=dynamic_load_dynamic_transform_xl_large_1gb 
+	python scripts/create_sketches.py data=shapenet_chairs_sketch_xl_large

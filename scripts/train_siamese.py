@@ -8,10 +8,10 @@ from omegaconf import DictConfig
 
 from lib.utils import create_logger, instantiate_callbacks, instantiate_loggers
 
-log = create_logger()
+log = create_logger("train_siamese")
 
 
-@hydra.main(version_base=None, config_path="../conf", config_name="config")
+@hydra.main(version_base=None, config_path="../conf", config_name="train_siamese")
 def train(cfg: DictConfig) -> None:
     log.info("==> loading config ...")
     L.seed_everything(cfg.seed)
@@ -28,15 +28,25 @@ def train(cfg: DictConfig) -> None:
     log.info("==> initializing logger ...")
     logger: List[Logger] = instantiate_loggers(cfg.get("logger"))
 
-    log.info("==> initializing trainer ...")
+    log.info(f"==> initializing trainer <{cfg.trainer._target_}>")
     trainer: Trainer = hydra.utils.instantiate(
         cfg.trainer,
         callbacks=callbacks,
         logger=logger,
     )
 
-    log.debug("==> start training ...")
-    trainer.fit(model=model, datamodule=datamodule)
+    if cfg.get("train"):
+        log.info("==> start training ...")
+        trainer.fit(model=model, datamodule=datamodule, ckpt_path=cfg.get("ckpt_path"))
+
+    if cfg.get("test"):
+        log.info("==> start testing ...")
+        ckpt_path = trainer.checkpoint_callback.best_model_path  # type: ignore
+        if ckpt_path == "":
+            log.warning("==> best ckpt not found! Using current weights for testing...")
+            ckpt_path = None
+        trainer.test(model=model, datamodule=datamodule, ckpt_path=ckpt_path)
+        log.info(f"Best ckpt path: {ckpt_path}")
 
 
 if __name__ == "__main__":

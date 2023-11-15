@@ -3,8 +3,6 @@ from pathlib import Path
 from typing import Callable, Optional
 
 import cv2
-from hydra.utils import instantiate
-from omegaconf import DictConfig
 from torch.utils.data import Dataset
 from torchvision.transforms import Compose
 

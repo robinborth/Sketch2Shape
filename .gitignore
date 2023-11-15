@@ -159,17 +159,15 @@ cython_debug/
 #.idea/
 
 .DS_Store
-wandb/
+
 notebooks/tutorials/*
-data/shapenet_chairs_sketch_debug
-data/shapenet_chairs_sketch_small
-data/shapenet_chairs_sketch_medium
-data/shapenet_chairs_sketch_large
-data/shapenet_chairs_sketch_xl_large
-data/deepsdf
 
-conf/local/defaults.yaml
+data/shapenet_sketch_chair
+data/shapenet_deepsdf_chair
 
-profile/
-deepsdf/
-logs
+conf/local/default.yaml
+
+logs/data
+logs/debug
+logs/eval
+logs/train

@@ -1,0 +1,26 @@
+# @package _global_
+
+defaults:
+  - _self_
+  - data: shapenet_sketch_chair
+  - model: siamese 
+  - callbacks: default
+  - logger: null 
+  - trainer: default
+  - hydra: default
+  - paths: default
+  - optional local: default
+
+# task name, determines output directory path
+task_name: "eval"
+
+# tags to help you identify your experiments
+# you can overwrite this in experiment configs
+# overwrite from command line with `python train.py tags="[first_tag, second_tag]"`
+tags: ["dev", "siamese"]
+
+# passing checkpoint path is necessary for evaluation
+ckpt_path: ???
+
+# seed for random number generators in pytorch, numpy and python.random
+seed: 123

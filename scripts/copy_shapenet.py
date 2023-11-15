@@ -3,7 +3,6 @@ import random
 import shutil
 from pathlib import Path
 
-import cv2
 import hydra
 import lightning as L
 import pandas as pd
@@ -21,8 +20,10 @@ def main(cfg: DictConfig) -> None:
     L.seed_everything(cfg.seed)
 
     # get the paths to the shapes
-    model_paths = list(Path(cfg.shapenet_folder).glob("*/models/model_normalized.obj"))
-    total_num = cfg.num_obj_train + cfg.num_obj_val + cfg.num_obj_test
+    model_paths = list(
+        Path(cfg.paths.shapenet_dir).glob("*/models/model_normalized.obj")
+    )
+    total_num = cfg.data.num_obj_train + cfg.data.num_obj_val + cfg.data.num_obj_test
     paths = random.choices(model_paths, k=total_num)
 
     logger.debug(f"==> start copy {total_num} sketches ... ")
@@ -34,7 +35,7 @@ def main(cfg: DictConfig) -> None:
             obj_ids.append(obj_id)
 
             # create the folder
-            destination_directory = Path(cfg.dataset_path, obj_id)
+            destination_directory = Path(cfg.data.data_dir, obj_id)
             os.makedirs(destination_directory, exist_ok=True)
 
             # copy the obj file to the folder
@@ -45,13 +46,13 @@ def main(cfg: DictConfig) -> None:
 
     logger.debug("==> save the dataset splits ... ")
     splits = (
-        ["train"] * cfg.num_obj_train
-        + ["val"] * cfg.num_obj_val
-        + ["test"] * cfg.num_obj_test
+        ["train"] * cfg.data.num_obj_train
+        + ["val"] * cfg.data.num_obj_val
+        + ["test"] * cfg.data.num_obj_test
     )
     assert len(splits) == len(paths)
     df = pd.DataFrame({"obj_id": obj_ids, "split": splits})
-    df.to_csv(cfg.dataset_splits_path, index=None)
+    df.to_csv(cfg.data.dataset_splits_path, index=None)
 
 
 if __name__ == "__main__":

@@ -65,8 +65,9 @@ def render_shapenet(
     azim: Union[int, torch.Tensor] = 0,
     color: float = 0.85,
     image_size: int = 256,
-    device: str = "cuda",
 ):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
     # load and prepare the shapenet objects
     verts, faces_idx, _ = load_obj(path, load_textures=False)
     faces = faces_idx.verts_idx
@@ -156,20 +157,20 @@ def cartesian_elev_azim(elev, azim):
 
 
 def obj_path(obj_id: str, config) -> str:
-    return os.path.join(config.dataset_path, obj_id, "model_normalized.obj")
+    return os.path.join(config.data.data_dir, obj_id, "model_normalized.obj")
 
 
 def sketches_folder(obj_id: str, config):
-    return os.path.join(config.dataset_path, obj_id, "sketches")
+    return os.path.join(config.data.data_dir, obj_id, "sketches")
 
 
 def images_folder(obj_id: str, config):
-    return os.path.join(config.dataset_path, obj_id, "images")
+    return os.path.join(config.data.data_dir, obj_id, "images")
 
 
 def sketch_path(obj_id: str, index: int, config):
-    return os.path.join(config.dataset_path, obj_id, f"sketches/{index:05}.jpg")
+    return os.path.join(config.data.data_dir, obj_id, f"sketches/{index:05}.jpg")
 
 
 def image_path(obj_id: str, index: int, config):
-    return os.path.join(config.dataset_path, obj_id, f"images/{index:05}.jpg")
+    return os.path.join(config.data.data_dir, obj_id, f"images/{index:05}.jpg")

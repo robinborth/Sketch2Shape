@@ -1,12 +1,6 @@
 import torch
-import torch.nn as nn
 from lightning import LightningModule
-from lightning_utilities.core.rank_zero import rank_zero_only
-from omegaconf import DictConfig
 from pytorch_metric_learning import losses, miners
-from torch.optim.adam import Adam
-
-from lib.models.layers import DummyDecoder, SimpleDecoder
 
 
 class Siamese(LightningModule):
@@ -33,7 +27,7 @@ class Siamese(LightningModule):
         image_emb = self.decoder(batch["image"])
         return {"sketch_emb": sketch_emb, "image_emb": image_emb}
 
-    def training_step(self, batch, batch_idx):
+    def model_step(self, batch):
         output = self.forward(batch)
         miner_output = self.miner(
             embeddings=output["sketch_emb"],
@@ -48,41 +42,32 @@ class Siamese(LightningModule):
             ref_emb=output["image_emb"],
             ref_labels=batch["label"],
         )
-        self.log(
-            "train/loss",
-            loss,
-            prog_bar=True,
-            batch_size=self.trainer.datamodule.hparams.batch_size,
-        )
+        return output, loss
+
+    def training_step(self, batch, batch_idx):
+        _, loss = self.model_step(batch)
+        self.log("train/loss", loss, prog_bar=True)
         return loss
 
-    # def validation_step(self, batch, batch_idx):
-    #     output = self.forward(batch)
-    #     miner_output = self.miner(
-    #         embeddings=output["sketch_emb"],
-    #         labels=batch["label"],
-    #         ref_emb=output["image_emb"],
-    #         ref_labels=batch["label"],
-    #     )
-    #     loss = self.loss(
-    #         embeddings=output["sketch_emb"],
-    #         labels=batch["label"],
-    #         indices_tuple=miner_output,
-    #         ref_emb=output["image_emb"],
-    #         ref_labels=batch["label"],
-    #     )
-    #     self.log("val/loss", loss, prog_bar=True, batch_size=self.cfg.batch_size)
-    #     return loss
+    def validation_step(self, batch, batch_idx):
+        _, loss = self.model_step(batch)
+        self.log("val/loss", loss, prog_bar=True)
+        return loss
 
-    def configure_optimizers(self) -> torch.optim.Optimizer:
-        optimizer = self.hparams.optimizer(params=self.parameters())
+    def test_step(self, batch, batch_idx):
+        _, loss = self.model_step(batch)
+        self.log("test/loss", loss, prog_bar=True)
+        return loss
+
+    def configure_optimizers(self):
+        optimizer = self.hparams["optimizer"](params=self.parameters())
         if self.hparams.scheduler is not None:
-            scheduler = self.hparams.scheduler(optimizer=optimizer)
+            scheduler = self.hparams["scheduler"](optimizer=optimizer)
             return {
                 "optimizer": optimizer,
                 "lr_scheduler": {
                     "scheduler": scheduler,
-                    "monitor": "train/loss",  # TODO change to val/loss
+                    "monitor": "val/loss",
                     "interval": "epoch",
                     "frequency": 1,
                 },

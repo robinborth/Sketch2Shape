@@ -21,22 +21,18 @@
             "justMyCode": true,
         },
         {
-            "name": "Debug: Shape2Sketch",
+            "name": "Debug: Create Sketches",
             "type": "python",
             "request": "launch",
-            "program": "scripts/shape2sketch.py",
+            "program": "scripts/create_sketches.py",
             "console": "integratedTerminal",
             "justMyCode": true,
         },
         {
-            "name": "Debug: CopyShapenet",
+            "name": "Debug: Copy Shapenet",
             "type": "python",
             "request": "launch",
             "program": "scripts/copy_shapenet.py",
-            "args": [
-                "+num_obj=10",
-                "++dataset_name=shapenet_chairs_sketch_medium",
-            ],
             "console": "integratedTerminal",
             "justMyCode": true,
         }

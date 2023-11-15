@@ -1,71 +1,16 @@
-########################################################################
-# General Settings
-########################################################################
-
-seed: 123
-
-########################################################################
-# Model Setting
-########################################################################
-
-embedding_size: 32
-margin: 0.005
-type_of_triplets: all
-
-# only used for debugging dataloading
-dummy_decoder: False
-model_size_in_gb: null
-
-########################################################################
-# Trainer Settings
-########################################################################
-
-trainer:
-  _target_: lightning.pytorch.trainer.Trainer
-  accelerator: cpu
-  profiler: simple
-  max_epochs: 1
-  # val_check_interval: 10
-  limit_val_batches: 0
-  enable_checkpointing: True
-  log_every_n_steps: 1
-
-monitor: train/loss
-tags: ["siamese"]
-learning_rate: 1e-03
-weight_decay: 1e-04
-early_stopping_patience: 3
-
-########################################################################
-# Data Settings
-########################################################################
-
-batch_size: 64
-samples_per_class: 16
-iteration_length: 1000
-
-num_workers: 0
-pin_memory: False
-drop_last: True
-persistent_workers: False
-
-########################################################################
-# Default Settings
-########################################################################
-
-# task name, determines output directory path
-task_name: "train"
+# @package _global_
 
 defaults:
   - _self_
-  - profiler: simple 
-  - data: shapenet_chairs_sketch_small
-  - model: siamese 
-  - callbacks: default
-  # - logger: wandb # wandb
-  - logger: null # wandb
-  # - trainer
+  - data: shapenet_sketch_chair
   - hydra: default
   - paths: default
-  - optional local: defaults
-  # - debug: default
+  # optional local config for machine/user specific settings
+  # it's optional since it doesn't need to exist and is excluded from version control
+  - optional local: default
+
+# task name, determines output directory path
+task_name: "data"
+
+# seed for random number generators in pytorch, numpy and python.random
+seed: 123

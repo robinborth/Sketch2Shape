@@ -1,8 +1,6 @@
 from typing import Optional
 
-import hydra
 from lightning import LightningDataModule
-from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import Sampler
 from torchvision import transforms
@@ -44,34 +42,64 @@ class ShapeNetSketchDataModule(LightningDataModule):
 
     def setup(self, stage: str):
         if stage == "fit":
-            self.train_dataset = self.hparams.dataset(
+            self.train_dataset = self.hparams["dataset"](
                 stage="train",
-                data_dir=self.hparams.data_dir,
+                data_dir=self.hparams["data_dir"],
                 transforms=self.transforms,
             )
-        #     self.val_dataset = self.hparams.dataset(
-        #         stage="val",
-        #         data_dir=self.hparams.data_dir,
-        #         transforms=self.transforms,
-        #     )
-        # elif stage == "validate":
-        #     self.val_dataset = self.hparams.dataset(
-        #         stage="val",
-        #         data_dir=self.hparams.data_dir,
-        #         transforms=self.transforms,
-        #     )
-        # else:
-        #     raise NotImplementedError()
+            self.val_dataset = self.hparams["dataset"](
+                stage="val",
+                data_dir=self.hparams["data_dir"],
+                transforms=self.transforms,
+            )
+        elif stage == "validate":
+            self.val_dataset = self.hparams["dataset"](
+                stage="val",
+                data_dir=self.hparams["data_dir"],
+                transforms=self.transforms,
+            )
+        elif stage == "test":
+            self.test_dataset = self.hparams["dataset"](
+                stage="test",
+                data_dir=self.hparams["data_dir"],
+                transforms=self.transforms,
+            )
 
     def train_dataloader(self) -> DataLoader:
-        metainfo = MetaInfo(data_dir=self.hparams.data_dir, split="train")
-        sampler = self.hparams.sampler(labels=metainfo.labels)
+        metainfo = MetaInfo(data_dir=self.hparams["data_dir"], split="train")
+        sampler = self.hparams["sampler"](labels=metainfo.labels)
         return DataLoader(
             dataset=self.train_dataset,
-            batch_size=self.hparams.batch_size,
-            num_workers=self.hparams.num_workers,
-            pin_memory=self.hparams.pin_memory,
-            drop_last=self.hparams.drop_last,
-            persistent_workers=self.hparams.persistent_workers,
+            batch_size=self.hparams["batch_size"],
+            num_workers=self.hparams["num_workers"],
+            pin_memory=self.hparams["pin_memory"],
+            drop_last=self.hparams["drop_last"],
+            persistent_workers=self.hparams["persistent_workers"],
+            sampler=sampler,
+        )
+
+    def val_dataloader(self) -> DataLoader:
+        metainfo = MetaInfo(data_dir=self.hparams["data_dir"], split="val")
+        sampler = self.hparams["sampler"](labels=metainfo.labels)
+        return DataLoader(
+            dataset=self.val_dataset,
+            batch_size=self.hparams["batch_size"],
+            num_workers=self.hparams["num_workers"],
+            pin_memory=self.hparams["pin_memory"],
+            drop_last=self.hparams["drop_last"],
+            persistent_workers=self.hparams["persistent_workers"],
+            sampler=sampler,
+        )
+
+    def test_dataloader(self) -> DataLoader:
+        metainfo = MetaInfo(data_dir=self.hparams["data_dir"], split="test")
+        sampler = self.hparams["sampler"](labels=metainfo.labels)
+        return DataLoader(
+            dataset=self.test_dataset,
+            batch_size=self.hparams["batch_size"],
+            num_workers=self.hparams["num_workers"],
+            pin_memory=self.hparams["pin_memory"],
+            drop_last=self.hparams["drop_last"],
+            persistent_workers=self.hparams["persistent_workers"],
             sampler=sampler,
         )
