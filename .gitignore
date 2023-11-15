@@ -166,6 +166,7 @@ data/shapenet_chairs_sketch_small
 data/shapenet_chairs_sketch_medium
 data/shapenet_chairs_sketch_large
 data/shapenet_chairs_sketch_xl_large
+data/deepsdf
 
 conf/local/defaults.yaml
 
