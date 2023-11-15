@@ -2,8 +2,8 @@
 
 defaults:
   - _self_
-  - data: siamese_chair
-  - model: siamese 
+  - data: deepsdf_chair
+  - model: deepsdf
   - callbacks: default
   - logger: null 
   - trainer: default
@@ -27,14 +27,10 @@ task_name: "train"
 # tags to help you identify your experiments
 # you can overwrite this in experiment configs
 # overwrite from command line with `python train.py tags="[first_tag, second_tag]"`
-tags: ["dev", "siamese"]
+tags: ["dev", "deepsdf"]
 
 # set False to skip model training
 train: True
-
-# evaluate on test set, using best model weights achieved during training
-# lightning chooses best weights based on the metric specified in checkpoint callback
-test: True
 
 # simply provide checkpoint path to resume training
 ckpt_path: null

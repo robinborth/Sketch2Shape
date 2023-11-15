@@ -13,10 +13,18 @@
             "justMyCode": false
         },
         {
-            "name": "Debug: Training",
+            "name": "Debug: Training Siamese",
             "type": "python",
             "request": "launch",
-            "program": "scripts/run_train.py",
+            "program": "scripts/train_siamese.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+        },
+        {
+            "name": "Debug: Training DeepSDF",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/train_deepsdf.py",
             "console": "integratedTerminal",
             "justMyCode": true,
         },
@@ -35,6 +43,22 @@
             "program": "scripts/copy_shapenet.py",
             "console": "integratedTerminal",
             "justMyCode": true,
+        },
+        {
+            "name": "Debug: SDF Training",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/train_deepsdf.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
+            "name": "Debug: SDF Extraction",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/extract_sdf.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
         }
     ]
 }

@@ -2,7 +2,7 @@
 
 defaults:
   - _self_
-  - data: shapenet_sketch_chair
+  - data: siamese_chair 
   - hydra: default
   - paths: default
   # optional local config for machine/user specific settings

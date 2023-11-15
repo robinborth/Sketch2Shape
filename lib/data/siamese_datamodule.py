@@ -6,10 +6,10 @@ from torch.utils.data.sampler import Sampler
 from torchvision import transforms
 
 from lib.data.metainfo import MetaInfo
-from lib.data.shapenet_sketch_dataset import ShapeNetSketchDatasetBase
+from lib.data.siamese_dataset import SiameseDatasetBase
 
 
-class ShapeNetSketchDataModule(LightningDataModule):
+class SiameseDataModule(LightningDataModule):
     def __init__(
         self,
         # paths
@@ -24,7 +24,7 @@ class ShapeNetSketchDataModule(LightningDataModule):
         persistent_workers: bool = False,
         sampler: Optional[Sampler] = None,
         # dataset
-        dataset: Optional[ShapeNetSketchDatasetBase] = None,
+        dataset: Optional[SiameseDatasetBase] = None,
         **kwargs,
     ) -> None:
         super().__init__()

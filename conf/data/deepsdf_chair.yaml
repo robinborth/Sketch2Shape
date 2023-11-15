@@ -1,0 +1,39 @@
+# @package data
+
+_target_: lib.data.deepsdf_datamodule.DeepSDFDataModule
+data_dir: ${paths.data_dir}/deepsdf_chair
+load_ram: True
+subsample: 16384
+
+batch_size: 1
+num_workers: 4
+pin_memory: False
+drop_last: True
+persistent_workers: True
+shuffle: False
+
+dataset: 
+  _target_: lib.data.deepsdf_dataset.DeepSDFDataset
+  _partial_: True
+
+########################################################################
+# Generation Settings
+########################################################################
+
+sample_points:
+  number_of_points: 100000
+  fix_mesh: True
+
+########################################################################
+# Inference Settings
+########################################################################
+
+generate:
+  object_idx: 0
+  resolution: 64
+  visualize: False
+
+num_obj_train: 4
+num_obj_val: 0
+num_obj_test: 0
+dataset_splits_path: ${data.data_dir}/dataset_splits.csv

@@ -1,0 +1,100 @@
+########################################################################
+# General Settings
+########################################################################
+
+seed: 42
+root_path: /Users/robinborth/Code/sketch2shape #/home/korth/sketch2shape
+data_path: ${root_path}/data/deepsdf
+checkpoint_path: ${root_path}/checkpoint/deepsdf
+
+########################################################################
+# Model Setting
+########################################################################
+
+embedding_size: 64
+num_hidden_layers: 2
+loss:
+  _target_: torch.nn.L1Loss
+  reduction: mean
+latent_vector_size: 32
+clamp: False
+clamp_val: 0.01
+
+########################################################################
+# Trainer Settings
+########################################################################
+
+# scheduler:
+#   _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+#   factor: 0.9
+#   patience: 5000
+#   min_lr: 1e-06
+
+# scheduler:
+#   _target_: torch.optim.lr_scheduler.StepLR
+#   step_size: 1000
+#   gamma: 0.9
+
+trainer:
+  _target_: lightning.pytorch.trainer.Trainer
+  accelerator: cpu #gpu
+  profiler: simple
+  # max_epochs: 100
+  max_steps: 20000
+  enable_checkpointing: True
+  log_every_n_steps: 1
+
+# scheduler:
+#   _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+#   eta_min: 1e-4
+#   T_max: ${trainer.max_steps}
+
+# scheduler:
+#   _target_: torch.optim.lr_scheduler.OneCycleLR
+#   max_lr: 1e-4
+#   total_steps: ${trainer.max_steps}
+
+monitor: train/loss
+learning_rate: 1e-4
+
+tags: ["deepsdf_overfitting"]
+group: "deepsdf"
+
+########################################################################
+# Data Settings
+########################################################################
+
+dataset:
+  _target_: lib.data.dataset.SDFDummyMedium
+
+num_shapes: 1
+num_samples: 120000
+dataset_name: shapenet_chair_single
+batch_size: ${num_shapes}
+num_workers: 2
+drop_last: True
+shuffle: False
+persistent_workers: True
+
+########################################################################
+# Default Settings
+########################################################################
+
+defaults:
+  - _self_
+  - data: extract_sdf # shapenet13
+  - logging: wandb # wandb, disabled
+  - callbacks:
+      - model_summary
+      - lr_monitor
+      - model_checkpoint
+  - model: deepsdf
+  - optional local: defaults
+
+########################################################################
+# Hydra Settings
+########################################################################
+
+hydra:
+  run:
+    dir: ${root_path}/wandb/hydra

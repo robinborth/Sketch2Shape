@@ -9,7 +9,7 @@ from torchvision.transforms import Compose
 from lib.data.metainfo import MetaInfo
 
 
-class ShapeNetSketchDatasetBase(Dataset):
+class SiameseDatasetBase(Dataset):
     def __init__(
         self,
         data_dir: str = "data/",
@@ -49,7 +49,7 @@ class ShapeNetSketchDatasetBase(Dataset):
         }
 
 
-class ShapeNetSketchDatasetPreLoadPreTransform(ShapeNetSketchDatasetBase):
+class SiameseDatasetPreLoadPreTransform(SiameseDatasetBase):
     def _load(self):
         data = defaultdict(lambda: defaultdict(dict))  # type: ignore
         for obj_id in self.metainfo.obj_ids:
@@ -65,7 +65,7 @@ class ShapeNetSketchDatasetPreLoadPreTransform(ShapeNetSketchDatasetBase):
         return self.data[obj_id][folder][image_id]
 
 
-class ShapeNetSketchDatasetPreLoadDynamicTransform(ShapeNetSketchDatasetBase):
+class SiameseDatasetPreLoadDynamicTransform(SiameseDatasetBase):
     def _load(self):
         data = defaultdict(lambda: defaultdict(dict))  # type: ignore
         for obj_id in self.metainfo.obj_ids:
@@ -81,7 +81,7 @@ class ShapeNetSketchDatasetPreLoadDynamicTransform(ShapeNetSketchDatasetBase):
         return self.transforms(self.data[obj_id][folder][image_id])
 
 
-class ShapeNetSketchDatasetDynamicLoadDynamicTransform(ShapeNetSketchDatasetBase):
+class SiameseDatasetDynamicLoadDynamicTransform(SiameseDatasetBase):
     def _fetch(self, folder: str, obj_id: str, image_id: str):
         path = Path(self.data_dir, obj_id, f"{folder}/{image_id}.jpg")
         image = cv2.imread(path.as_posix())

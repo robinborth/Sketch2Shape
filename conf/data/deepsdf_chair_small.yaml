@@ -1,0 +1,6 @@
+data_dir: ${paths.data_dir}/deepsdf_chair_small
+num_obj_train: 4
+
+defaults:
+  - deepsdf_chair
+  - _self_

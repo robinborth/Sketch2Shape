@@ -11,6 +11,8 @@ fvcore
 iopath
 pytorch3d
 rich
+opencv-python
+scikit-image
 
 # test
 black

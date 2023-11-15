@@ -1,0 +1,26 @@
+_target_: lib.models.deepsdf.DeepSDF
+
+latent_size: 512
+num_hidden_layers: 8
+latent_vector_size: 256
+clamp: True
+clamp_val: 0.1
+reg_loss: True
+num_scenes: 1
+sigma: 1e-4
+skip_connection: [4]
+dropout_p: 0.2
+
+loss:
+  _target_: torch.nn.L1Loss
+  reduction: mean
+
+decoder_optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 5e-4
+
+latents_optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 1e-3

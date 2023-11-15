@@ -1,0 +1,5 @@
+# @package _global_
+
+paths:
+  root_dir: /Users/robinborth/Code/sketch2shape
+  shapenet_dir: /Users/robinborth/Code/shapenetcore/03001627

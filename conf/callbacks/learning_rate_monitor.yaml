@@ -1,0 +1,7 @@
+# https://lightning.ai/docs/pytorch/stable/_modules/lightning/pytorch/callbacks/lr_monitor.html#LearningRateMonitor
+
+learning_rate_monitor:
+  _target_: lightning.pytorch.callbacks.LearningRateMonitor
+  logging_interval: epoch
+  log_momentum: False
+  log_weight_decay: False
