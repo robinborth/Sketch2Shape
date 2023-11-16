@@ -38,8 +38,8 @@ class DeepSDFDataset(Dataset):
         data = np.load(path)
         if self.subsample is None:
             return data
-        pos_tensor = torch.from_numpy(data["pos"])
-        neg_tensor = torch.from_numpy(data["neg"])
+        pos_tensor = self._remove_nans(torch.from_numpy(data["pos"]))
+        neg_tensor = self._remove_nans(torch.from_numpy(data["neg"]))
 
         hlf = self.subsample // 2
 
@@ -62,11 +62,14 @@ class DeepSDFDataset(Dataset):
 
         return samples
 
-    @staticmethod
-    def _load_to_ram(path):
+    def _remove_nans(self, tensor):
+        tensor_nan = torch.isnan(tensor[:, 3])
+        return tensor[~tensor_nan, :]
+
+    def _load_to_ram(self, path):
         data = np.load(path)
-        pos_tensor = torch.from_numpy(data["pos"])
-        neg_tensor = torch.from_numpy(data["neg"])
+        pos_tensor = self._remove_nans(torch.from_numpy(data["pos"]))
+        neg_tensor = self._remove_nans(torch.from_numpy(data["neg"]))
         return [pos_tensor, neg_tensor]
 
     def __len__(self):

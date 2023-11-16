@@ -16,7 +16,7 @@ tags: ["overfit_batch"]
 
 trainer:
   accelerator: gpu
-  max_epochs: 100000
+  max_epochs: 50000
   precision: "bf16-mixed" #on 3090
   log_every_n_steps: 1
 

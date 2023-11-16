@@ -50,7 +50,7 @@
             "request": "launch",
             "program": "scripts/train_deepsdf.py",
             "console": "integratedTerminal",
-            "justMyCode": false,
+            "justMyCode": true,
         },
         {
             "name": "Debug: SDF Extraction",
