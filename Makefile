@@ -31,3 +31,13 @@ copy_shapenet:
 
 create_sketches:
 	python scripts/create_sketches.py
+
+
+
+########################################################################
+# Experiments
+########################################################################
+
+train_deepsdf:
+	python scripts/train_deepsdf.py +experiment=deepsdf_overfit_scene logger=wandb
+	python scripts/train_deepsdf.py +experiment=deepsdf_overfit_batch logger=wandb

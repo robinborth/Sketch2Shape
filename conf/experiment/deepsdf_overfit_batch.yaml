@@ -12,7 +12,7 @@ defaults:
 # all parameters below will be merged with parameters from default configurations set above
 # this allows you to overwrite only specified parameters
 
-tags: ["overfit_scene"]
+tags: ["overfit_batch"]
 
 trainer:
   accelerator: gpu
@@ -21,13 +21,13 @@ trainer:
   log_every_n_steps: 1
 
 data:
-  data_dir: ${paths.data_dir}/deepsdf/overfit_scene
-  batch_size: 1
+  data_dir: ${paths.data_dir}/deepsdf/overfit_batch
+  batch_size: 16
   num_workers: 4
   pin_memory: False
   drop_last: True
   persistent_workers: True
-  subsample: 65536
+  subsample: 16384
 
 model:
   latent_size: 512
@@ -36,10 +36,10 @@ model:
   clamp: True
   clamp_val: 0.1
   reg_loss: True
-  num_scenes: 1
+  num_scenes: 16
   sigma: 1e-4
   skip_connection: [4]
-  dropout_p: 0.1
+  dropout_p: 0.2
 
 callbacks:
   model_checkpoint:

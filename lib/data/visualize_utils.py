@@ -16,7 +16,7 @@ def visualize_pointcloud(points: np.ndarray, sdf=None) -> None:
     o3d.visualization.draw_plotly([pcd])
 
 
-def visualize_obj(path: str, normalize=True) -> None:
+def visualize_obj(path: str, normalize=False) -> None:
     mesh = o3d.io.read_triangle_mesh(path)
     if normalize:
         mesh_ = o3d.t.geometry.TriangleMesh.from_legacy(mesh)

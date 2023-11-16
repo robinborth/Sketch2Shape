@@ -31,7 +31,7 @@ class DeepSDFDataset(Dataset):
 
         self.shape2idx = {v: k for k, v in self.idx2shape.items()}
         # save shape2idx file
-        with open(f"{self.data_dir}/shape2idx", "w") as f:
+        with open(f"{self.data_dir}/shape2idx.json", "w") as f:
             f.write(json.dumps(self.shape2idx))
 
     def _load_sdf_samples(self, path):
