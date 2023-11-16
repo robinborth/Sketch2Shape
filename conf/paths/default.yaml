@@ -1,5 +1,5 @@
 # path to root directory
-root_dir: /home/borth/sketch2shape
+root_dir: /root/sketch2shape
 
 # path to data directory
 data_dir: ${paths.root_dir}/data
