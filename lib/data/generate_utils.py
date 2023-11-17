@@ -1,5 +1,6 @@
 import numpy as np
-import open3d as o3d
+import trimesh
+# import open3d as o3d
 import torch
 from skimage.measure import marching_cubes
 from pathlib import Path
@@ -11,11 +12,12 @@ def reconstruct_training_data(
     model,
     checkpoint_path: str,
     resolution: int = 256,
+    chunck_size: int = 1_000_000, #based on RTX3090 / 16GB RAM (very rough estimate)
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     path = Path(checkpoint_path)
-    save_path = str(path.parent) + "/reconstructions"
+    save_path = str(path.parent.parent) + "/reconstructions"
 
     decoder = model.load_from_checkpoint(checkpoint_path).to(device)
     decoder.eval()
@@ -26,28 +28,44 @@ def reconstruct_training_data(
     xyz = (
         torch.stack((grid[0].ravel(), grid[1].ravel(), grid[2].ravel()))
         .transpose(1, 0)
-        .to(device)
     )
+    n_chunks = (xyz.shape[0] // chunck_size) + 1
+    #    a.element_size() * a.nelement()
 
     num_latents = decoder.lat_vecs.weight.shape[0]
     for i in range(num_latents):
         lat_vec = torch.Tensor([i]).int().repeat(xyz.shape[0]).to(device)
-        lat_vec = decoder.lat_vecs(lat_vec)
-        sd = decoder((xyz.unsqueeze(0), lat_vec.unsqueeze(0)))
-        sd_r = sd.reshape(resolution, resolution, resolution).detach().cpu().numpy()
+        lat_vec = decoder.lat_vecs(lat_vec).cpu()
+
+        # chunking 
+        xyz_chunks = xyz.unsqueeze(0).chunk(n_chunks, dim=1)
+        lat_vec_chunks = lat_vec.unsqueeze(0).chunk(n_chunks, dim=1)
+        sd_list = list()
+        for _xyz, _lat_vec in zip(xyz_chunks, lat_vec_chunks):
+            sd = decoder.predict((_xyz.to(device), _lat_vec.to(device))).squeeze().cpu().numpy()
+            sd_list.append(sd)
+        sd = np.concatenate(sd_list)
+        sd_r = sd.reshape(resolution, resolution, resolution)
 
         verts, faces, _, _ = marching_cubes(sd_r, level=0.0)
 
         x_max = np.array([1, 1, 1])
         x_min = np.array([-1, -1, -1])
         verts = verts * ((x_max - x_min) / (resolution)) + x_min
-        mesh = o3d.geometry.TriangleMesh()
-        mesh.vertices = o3d.utility.Vector3dVector(verts)
-        mesh.triangles = o3d.utility.Vector3iVector(faces)
-        o3d.io.write_triangle_mesh(f"{save_path}/{i}.obj", mesh)
 
-reconstruct_training_data(
-    DeepSDF,
-    "/root/sketch2shape/logs/train/runs/2023-11-16_10-59-43/checkpoints/last.ckpt",
-    256
-)
+        # Create a trimesh object
+        mesh = trimesh.Trimesh(vertices=verts, faces=faces)
+
+        # Save the mesh as an OBJ file
+        mesh.export(f"{save_path}/{i}_{resolution}.obj")
+        # mesh = o3d.geometry.TriangleMesh()
+        # mesh.vertices = o3d.utility.Vector3dVector(verts)
+        # mesh.triangles = o3d.utility.Vector3iVector(faces)
+        # o3d.io.write_triangle_mesh(f"{save_path}/{i}.obj", mesh)
+
+for i in [64, 128, 256]:
+    reconstruct_training_data(
+        DeepSDF,
+        "/root/sketch2shape/sketch2shape/logs/train/runs/2023-11-16_12-54-48/checkpoints/last.ckpt",
+        i 
+    )
