@@ -4,7 +4,7 @@
 # python train.py experiment=example
 
 defaults:
-  - override /data: shapenet_chairs_sketch_small
+  - override /data: siamese_chair_small
   - override /model: siamese
   - override /callbacks: default
   - override /trainer: default
@@ -12,24 +12,32 @@ defaults:
 # all parameters below will be merged with parameters from default configurations set above
 # this allows you to overwrite only specified parameters
 
-tags: ["dev", "performace"]
+tags: ["siamese", "dev", "speed"]
 
-seed: 12345
+callbacks: null
+logger: null
 
 trainer:
-  accelerator: mps 
+  accelerator: gpu
   max_epochs: 1
-  limit_train_batches: 20
-  profiler: simple
+  # profiler: simple
 
 data:
-  batch_size: 64
+  batch_size: 4
   num_workers: 9
   pin_memory: False
   drop_last: True
   persistent_workers: True
+  sampler: null
+  dataset:
+    _target_: lib.data.siamese_dataset.SiameseChunkDataset
+  collate_fn:
+    _target_: lib.data.siamese_datamodule.chunk_collate_fn
+    _partial_: True
 
-logger:
-  wandb:
-    tags: ${tags}
-    group: "dev"
+model:
+  scheduler: null
+  decoder:
+    _target_: lib.models.layers.ResNet18
+    embedding_size: 64
+

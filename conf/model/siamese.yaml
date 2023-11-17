@@ -3,7 +3,7 @@ _target_: lib.models.siamese.Siamese
 
 decoder:
   _target_: lib.models.layers.SimpleDecoder
-  image_size: ${data.image_size}
+  # image_size: ${data.image_size}
   embedding_size: 64
 
 miner:
