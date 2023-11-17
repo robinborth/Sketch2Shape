@@ -13,6 +13,7 @@ pytorch3d
 rich
 opencv-python
 scikit-image
+h5py
 
 # test
 black

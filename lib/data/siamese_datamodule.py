@@ -1,12 +1,21 @@
-from typing import Optional
+from typing import Callable, Optional
 
 from lightning import LightningDataModule
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, default_collate
 from torch.utils.data.sampler import Sampler
 from torchvision import transforms
 
 from lib.data.metainfo import MetaInfo
 from lib.data.siamese_dataset import SiameseDatasetBase
+
+
+def chunk_collate_fn(batch):
+    batch = default_collate(batch)
+    return {
+        "sketch": batch["sketch"].flatten(0, 1),
+        "image": batch["image"].flatten(0, 1),
+        "label": batch["label"].flatten(0, 1),
+    }
 
 
 class SiameseDataModule(LightningDataModule):
@@ -22,9 +31,10 @@ class SiameseDataModule(LightningDataModule):
         pin_memory: bool = False,
         drop_last: bool = True,
         persistent_workers: bool = False,
-        sampler: Optional[Sampler] = None,
         # dataset
+        sampler: Optional[Sampler] = None,
         dataset: Optional[SiameseDatasetBase] = None,
+        collate_fn: Optional[Callable] = None,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -65,9 +75,14 @@ class SiameseDataModule(LightningDataModule):
                 transforms=self.transforms,
             )
 
+    def build_sampler(self, split: str = "train"):
+        sampler = None
+        if self.hparams["sampler"]:
+            metainfo = MetaInfo(data_dir=self.hparams["data_dir"], split=split)
+            sampler = self.hparams["sampler"](labels=metainfo.labels)
+        return sampler
+
     def train_dataloader(self) -> DataLoader:
-        metainfo = MetaInfo(data_dir=self.hparams["data_dir"], split="train")
-        sampler = self.hparams["sampler"](labels=metainfo.labels)
         return DataLoader(
             dataset=self.train_dataset,
             batch_size=self.hparams["batch_size"],
@@ -75,12 +90,11 @@ class SiameseDataModule(LightningDataModule):
             pin_memory=self.hparams["pin_memory"],
             drop_last=self.hparams["drop_last"],
             persistent_workers=self.hparams["persistent_workers"],
-            sampler=sampler,
+            sampler=self.build_sampler("train"),
+            collate_fn=self.hparams["collate_fn"],
         )
 
     def val_dataloader(self) -> DataLoader:
-        metainfo = MetaInfo(data_dir=self.hparams["data_dir"], split="val")
-        sampler = self.hparams["sampler"](labels=metainfo.labels)
         return DataLoader(
             dataset=self.val_dataset,
             batch_size=self.hparams["batch_size"],
@@ -88,12 +102,11 @@ class SiameseDataModule(LightningDataModule):
             pin_memory=self.hparams["pin_memory"],
             drop_last=self.hparams["drop_last"],
             persistent_workers=self.hparams["persistent_workers"],
-            sampler=sampler,
+            sampler=self.build_sampler("val"),
+            collate_fn=self.hparams["collate_fn"],
         )
 
     def test_dataloader(self) -> DataLoader:
-        metainfo = MetaInfo(data_dir=self.hparams["data_dir"], split="test")
-        sampler = self.hparams["sampler"](labels=metainfo.labels)
         return DataLoader(
             dataset=self.test_dataset,
             batch_size=self.hparams["batch_size"],
@@ -101,5 +114,6 @@ class SiameseDataModule(LightningDataModule):
             pin_memory=self.hparams["pin_memory"],
             drop_last=self.hparams["drop_last"],
             persistent_workers=self.hparams["persistent_workers"],
-            sampler=sampler,
+            sampler=self.build_sampler("test"),
+            collate_fn=self.hparams["collate_fn"],
         )

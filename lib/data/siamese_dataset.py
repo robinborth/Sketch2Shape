@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 import cv2
+import numpy as np
 from torch.utils.data import Dataset
 from torchvision.transforms import Compose
 
@@ -86,3 +87,37 @@ class SiameseDatasetDynamicLoadDynamicTransform(SiameseDatasetBase):
         path = Path(self.data_dir, obj_id, f"{folder}/{image_id}.jpg")
         image = cv2.imread(path.as_posix())
         return self.transforms(image)
+
+
+class SiameseChunkDataset(Dataset):
+    def __init__(
+        self,
+        data_dir: str = "data/",
+        stage: str = "train",
+        transforms: Optional[Callable] = None,
+    ):
+        self.data_dir = data_dir
+        self.transforms = transforms if transforms else Compose()
+        self.metainfo = MetaInfo(data_dir=data_dir, split=stage)
+
+    def _fetch(self, folder: str, obj_id: str):
+        paths = Path(self.data_dir, obj_id, folder).glob("*.jpg")
+        images = []
+        for path in paths:
+            image = cv2.imread(path.as_posix())
+            images.append(self.transforms(image))
+        return np.stack(images)
+
+    def __len__(self):
+        return self.metainfo.obj_id_count
+
+    def __getitem__(self, index):
+        obj_id = self.metainfo.obj_ids[index]
+        sketch = self._fetch("sketches", obj_id)
+        image = self._fetch("images", obj_id)
+        label = np.repeat(index, len(sketch))
+        return {
+            "sketch": sketch,
+            "image": image,
+            "label": label,
+        }

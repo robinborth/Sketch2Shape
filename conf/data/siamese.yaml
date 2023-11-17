@@ -2,27 +2,32 @@
 
 _target_: lib.data.siamese_datamodule.SiameseDataModule
 
-data_dir: ${paths.data_dir}/siamese_chair 
+dataset_name: siamese
+data_dir: ${paths.data_dir}/${data.dataset_name}
 dataset_splits_path: ${data.data_dir}/dataset_splits.csv
 sketch_image_pairs_path: ${data.data_dir}/sketch_image_pairs.csv
 
-batch_size: 32
+batch_size: 8
 num_workers: 0
 pin_memory: False
 drop_last: True
 persistent_workers: False
 
-sampler:
-  _target_: pytorch_metric_learning.samplers.MPerClassSampler
-  _partial_: True
-  m: 16
-  length_before_new_iter: 10000
-  batch_size: ${data.batch_size}
-
+sampler: null
 dataset: 
-  _target_: lib.data.siamese_dataset.SiameseDatasetDynamicLoadDynamicTransform
+  _target_: lib.data.siamese_dataset.SiameseChunkDataset
+  _partial_: True
+collate_fn:
+  _target_: lib.data.siamese_datamodule.chunk_collate_fn
   _partial_: True
 
+########################################################################
+# Split Settings
+########################################################################
+
+num_obj_train: 100
+num_obj_val: 50
+num_obj_test: 50
 
 ########################################################################
 # Rendering Setting
@@ -30,8 +35,8 @@ dataset:
 
 image_size: 128
 dist: 1.0
-elev: [0, 45] 
-azim: [-60, 0, 60, 120, 180] 
+elev: [-22.5, 0, 22.5, 45] 
+azim: [-70, -35, 0, 35, 70, 105, 140, 175] 
 color: 0.65
 
 ########################################################################
@@ -42,11 +47,3 @@ t_lower: 100
 t_upper: 150
 aperture_size: 3  # 3, 5, 7
 L2gradient: True
-
-########################################################################
-# Split Settings
-########################################################################
-
-num_obj_train: 100
-num_obj_val: 50
-num_obj_test: 50

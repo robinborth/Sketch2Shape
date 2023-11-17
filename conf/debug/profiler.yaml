@@ -7,6 +7,16 @@ defaults:
 
 trainer:
   max_epochs: 1
-  profiler: "simple"
-  # profiler: "advanced"
-  # profiler: "pytorch"
+  accelerator: cpu
+  profiler: simple
+
+data:
+  batch_size: 16
+  num_workers: 0
+  pin_memory: False
+  drop_last: True
+  persistent_workers: False
+  sampler: null
+
+model:
+  scheduler: null
