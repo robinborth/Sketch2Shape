@@ -12,24 +12,18 @@ defaults:
 # all parameters below will be merged with parameters from default configurations set above
 # this allows you to overwrite only specified parameters
 
-tags: ["siamese", "dev", "speed"]
-
-callbacks: null
-logger: null
+tags: ["siamese", "chair_small"]
 
 trainer:
   accelerator: gpu
-  max_epochs: 10
-  profiler:
-    _target_: lightning.pytorch.profilers.SimpleProfiler 
-    dirpath: ${paths.output_dir}/profiler
-    filename: simple_profiler
+  max_epochs: 20
+
 
 data:
-  batch_size: 16
-  num_workers: 8
-  pin_memory: False
-  drop_last: True
+  batch_size: 32
+  num_workers: 2
+  pin_memory: True
+  drop_last: False
   persistent_workers: True
   sampler: null
   dataset:
@@ -40,7 +34,13 @@ data:
 
 model:
   scheduler: null
+  optimizer:
+    lr: 0.0001
   decoder:
     _target_: lib.models.layers.ResNet18
     embedding_size: 64
 
+logger:
+  wandb:
+    tags: ${tags}
+    group: "siamese"

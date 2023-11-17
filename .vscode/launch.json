@@ -18,7 +18,7 @@
             "request": "launch",
             "program": "scripts/train_siamese.py",
             "args": [
-                "+experiment=dataset"
+                "+experiment=siamese_speed"
             ],
             "console": "integratedTerminal",
             "justMyCode": true,

@@ -8,7 +8,9 @@ defaults:
 trainer:
   max_epochs: 1
   accelerator: cpu
-  profiler: simple
+  profiler:
+    _target_: lightning.pytorch.profilers.SimpleProfiler 
+    dirpath: ${paths.output_dir}/profiler
 
 data:
   batch_size: 16

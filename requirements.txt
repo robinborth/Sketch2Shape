@@ -9,7 +9,7 @@ open3d
 pytorch-metric-learning
 fvcore
 iopath
-pytorch3d
+# pytorch3d
 rich
 opencv-python
 scikit-image
