@@ -21,6 +21,8 @@ class DeepSDF(L.LightningModule):
         sigma: float = 1e-4,
         skip_connection: list[int] = [4],
         dropout_p: float = 0.2,
+        decoder_scheduler = None,
+        latents_scheduler = None
     ):
         super().__init__()
         # this line allows to access init params with 'self.hparams' attribute
@@ -75,6 +77,8 @@ class DeepSDF(L.LightningModule):
         )
         torch.nn.init.normal_(self.lat_vecs.weight.data, 0.0, 0.01)
 
+        self.schedulers = decoder_scheduler is not None
+
     def forward(self, x):
         out = torch.cat(x, dim=2)
         for i, layer in enumerate(self.decoder):
@@ -117,7 +121,11 @@ class DeepSDF(L.LightningModule):
         self.manual_backward(loss)
         opt1.step()
         opt2.step()
-        # state = self.trainer.optimizers[0].state
+        if self.schedulers:
+            sch1, sch2 = self.lr_schedulers()
+            sch1.step()
+            sch2.step()
+            # state = self.trainer.optimizers[0].state
         self.log(
             "train/loss",
             loss,
@@ -140,4 +148,9 @@ class DeepSDF(L.LightningModule):
     def configure_optimizers(self):
         optim_decoder = self.hparams["decoder_optimizer"](self.decoder.parameters())
         optim_latents = self.hparams["latents_optimizer"](self.lat_vecs.parameters())
+        if self.schedulers:
+            scheduler_decoder = self.hparams["decoder_scheduler"](optim_decoder)
+            scheduler_latens = self.hparams["latents_scheduler"](optim_latents)
+            return ({"optimizer": optim_decoder, "lr_scheduler": scheduler_decoder},
+                    {"optimizer": optim_latents, "lr_scheduler": scheduler_latens})
         return [optim_decoder, optim_latents]

@@ -21,8 +21,8 @@ trainer:
   log_every_n_steps: 1
 
 data:
-  data_dir: ${paths.data_dir}/deepsdf/overfit_batch
-  batch_size: 16
+  data_dir: ${paths.data_dir}/deepsdf/overfit_batch4
+  batch_size: 4
   num_workers: 4
   pin_memory: False
   drop_last: True
@@ -36,10 +36,22 @@ model:
   clamp: True
   clamp_val: 0.1
   reg_loss: True
-  num_scenes: 16
+  num_scenes: 4
   sigma: 1e-4
   skip_connection: [4]
   dropout_p: 0.2
+
+  decoder_scheduler:
+    _target_: torch.optim.lr_scheduler.StepLR
+    _partial_: true
+    step_size: 7500
+    gamma: 0.5
+
+  latents_scheduler:
+    _target_: torch.optim.lr_scheduler.StepLR
+    _partial_: true
+    step_size: 7500
+    gamma: 0.5
 
 callbacks:
   model_checkpoint:

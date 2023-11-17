@@ -49,6 +49,9 @@
             "type": "python",
             "request": "launch",
             "program": "scripts/train_deepsdf.py",
+            "args": [
+                "+experiment=deepsdf_overfit_scene_scheduler",
+            ],
             "console": "integratedTerminal",
             "justMyCode": true,
         },

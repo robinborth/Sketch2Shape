@@ -9,7 +9,7 @@ import torch
 
 from lib.utils import create_logger, instantiate_callbacks, instantiate_loggers
 
-log = create_logger("train_siamese")
+log = create_logger("train_deepsdf")
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="train_deepsdf")
