@@ -8,7 +8,6 @@ defaults:
   - override /model: siamese
   - override /callbacks: default
   - override /trainer: default
-  - override /logger: wandb
 
 # all parameters below will be merged with parameters from default configurations set above
 # this allows you to overwrite only specified parameters
@@ -23,7 +22,7 @@ trainer:
 data:
   batch_size: 8
   num_workers: 4
-  pin_memory: True
+  pin_memory: True 
   drop_last: True
   persistent_workers: True
   sampler: null
@@ -36,12 +35,19 @@ data:
 model:
   scheduler: null
   optimizer:
-    lr: 0.0001
+    lr: 1e-03
   decoder:
     _target_: lib.models.layers.ResNet18
     embedding_size: 64
+  loss:
+    embedding_regularizer:
+      _target_: pytorch_metric_learning.regularizers.LpRegularizer
+      p: 1
+      power: 1
 
-logger:
-  wandb:
-    tags: ${tags}
-    group: "siamese"
+# logger:
+#   wandb:
+#     tags: ${tags}
+#     group: "siamese"
+
+logger: null

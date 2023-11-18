@@ -18,7 +18,7 @@
             "request": "launch",
             "program": "scripts/train_siamese.py",
             "args": [
-                "+experiment=siamese_speed"
+                "+experiment=siamese_overfit_small"
             ],
             "console": "integratedTerminal",
             "justMyCode": true,
