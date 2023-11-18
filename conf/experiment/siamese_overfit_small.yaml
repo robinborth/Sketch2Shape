@@ -8,6 +8,7 @@ defaults:
   - override /model: siamese
   - override /callbacks: default
   - override /trainer: default
+  - override /logger: wandb
 
 # all parameters below will be merged with parameters from default configurations set above
 # this allows you to overwrite only specified parameters
@@ -16,7 +17,12 @@ tags: ["siamese", "chair_small"]
 
 trainer:
   accelerator: gpu
-  max_epochs: 100
+  max_epochs: 10
+  profiler:
+    _target_: lightning.pytorch.profilers.SimpleProfiler 
+    dirpath: ${paths.output_dir}/profiler
+    filename: simple_profiler
+  # overfit_batches: 8
 
 
 data:
@@ -26,6 +32,9 @@ data:
   drop_last: True
   persistent_workers: True
   sampler: null
+  # dataset:
+  #   _target_: lib.data.siamese_dataset.SiameseDatasetDynamicLoadDynamicTransform
+  # collate_fn: null
   dataset:
     _target_: lib.data.siamese_dataset.SiameseChunkDataset
   collate_fn:
@@ -35,19 +44,21 @@ data:
 model:
   scheduler: null
   optimizer:
-    lr: 1e-03
+    lr: 1e-05
   decoder:
     _target_: lib.models.layers.ResNet18
-    embedding_size: 64
+    embedding_size: 32
   loss:
-    embedding_regularizer:
-      _target_: pytorch_metric_learning.regularizers.LpRegularizer
-      p: 1
-      power: 1
+    reducer: 
+      _target_: pytorch_metric_learning.reducers.MeanReducer
+    # embedding_regularizer:
+    #   _target_: pytorch_metric_learning.regularizers.LpRegularizer
+    #   p: 1
+    #   power: 1
 
-# logger:
-#   wandb:
-#     tags: ${tags}
-#     group: "siamese"
+logger:
+  wandb:
+    tags: ${tags}
+    group: "siamese"
 
-logger: null
+# logger: null

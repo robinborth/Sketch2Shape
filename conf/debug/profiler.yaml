@@ -11,6 +11,7 @@ trainer:
   profiler:
     _target_: lightning.pytorch.profilers.SimpleProfiler 
     dirpath: ${paths.output_dir}/profiler
+    filename: simple_profiler
 
 data:
   batch_size: 16
