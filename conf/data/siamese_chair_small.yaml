@@ -4,5 +4,5 @@ defaults:
 
 dataset_name: siamese_chair_small
 num_obj_train: 128
-num_obj_val: 16 
+num_obj_val: 16
 num_obj_test: 64
