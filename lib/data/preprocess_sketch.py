@@ -8,6 +8,8 @@ import torch
 from pytorch3d.io import load_obj
 from pytorch3d.renderer import (
     FoVPerspectiveCameras,
+    HardGouraudShader,
+    HardPhongShader,
     MeshRasterizer,
     MeshRenderer,
     PointLights,
@@ -104,7 +106,7 @@ def render_shapenet(
     raster_settings = RasterizationSettings(image_size=image_size, bin_size=0)
 
     # initilizing the lights
-    lights = PointLights(device=device, location=[[0.0, 0.0, 0.0]])
+    # lights = PointLights(device=device, location=[[0.0, 0.0, 0.0]])
 
     # initilizing the renderer
     renderer = MeshRenderer(
@@ -112,10 +114,10 @@ def render_shapenet(
             cameras=cameras,
             raster_settings=raster_settings,
         ),
-        shader=SoftPhongShader(
+        shader=HardGouraudShader(
             device=device,
             cameras=cameras,
-            lights=lights,
+            # lights=lights,
         ),
     )
 
