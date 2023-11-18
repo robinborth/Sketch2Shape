@@ -67,9 +67,8 @@ def render_shapenet(
     azim: Union[int, torch.Tensor] = 0,
     color: float = 0.85,
     image_size: int = 256,
+    device: str = "cpu",
 ):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
     # load and prepare the shapenet objects
     verts, faces_idx, _ = load_obj(path, load_textures=False)
     faces = faces_idx.verts_idx
