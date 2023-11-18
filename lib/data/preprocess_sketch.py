@@ -104,7 +104,7 @@ def render_shapenet(
     raster_settings = RasterizationSettings(image_size=image_size, bin_size=0)
 
     # initilizing the lights
-    lights = PointLights(device=device, location=[[0.0, 0.0, 0.0]])
+    # lights = PointLights(device=device, location=[[0.0, 0.0, 0.0]])
 
     # initilizing the renderer
     renderer = MeshRenderer(
@@ -115,7 +115,7 @@ def render_shapenet(
         shader=SoftPhongShader(
             device=device,
             cameras=cameras,
-            lights=lights,
+            # lights=lights,
         ),
     )
 

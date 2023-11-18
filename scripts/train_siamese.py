@@ -2,6 +2,7 @@ from typing import List
 
 import hydra
 import lightning as L
+import torch
 from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
@@ -15,6 +16,7 @@ log = create_logger("train_siamese")
 def train(cfg: DictConfig) -> None:
     log.info("==> loading config ...")
     L.seed_everything(cfg.seed)
+    torch.set_float32_matmul_precision("medium")
 
     log.info(f"==> initializing datamodule <{cfg.data._target_}>")
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
