@@ -17,6 +17,7 @@ class MetaInfo:
         sketch_image_pairs_file_name: str = "sketch_image_pairs.csv",
         split: Optional[str] = None,
     ):
+        self.data_dir = data_dir
         dataset_splits_path = Path(data_dir, dataset_splits_file_name)
         sketch_image_pairs_path = Path(data_dir, sketch_image_pairs_file_name)
         try:
@@ -61,3 +62,6 @@ class MetaInfo:
 
     def get_pair(self, index: int):
         return self._sketch_image_pairs.iloc[index].to_dict()
+
+    def obj_path(self, obj_id: str) -> Path:
+        return Path(self.data_dir, obj_id, "model_normalized.obj")
