@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import trimesh
 # import open3d as o3d
 import torch
@@ -53,19 +54,18 @@ def reconstruct_training_data(
         x_min = np.array([-1, -1, -1])
         verts = verts * ((x_max - x_min) / (resolution)) + x_min
 
+        # If it doesn't exist, create the directory
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+
         # Create a trimesh object
         mesh = trimesh.Trimesh(vertices=verts, faces=faces)
-
         # Save the mesh as an OBJ file
         mesh.export(f"{save_path}/{i}_{resolution}.obj")
-        # mesh = o3d.geometry.TriangleMesh()
-        # mesh.vertices = o3d.utility.Vector3dVector(verts)
-        # mesh.triangles = o3d.utility.Vector3iVector(faces)
-        # o3d.io.write_triangle_mesh(f"{save_path}/{i}.obj", mesh)
 
 for i in [64, 128, 256]:
     reconstruct_training_data(
         DeepSDF,
-        "/root/sketch2shape/sketch2shape/logs/train/runs/2023-11-16_12-54-48/checkpoints/last.ckpt",
+        "/root/sketch2shape/logs/train/runs/2023-11-17_18-47-56/checkpoints/last.ckpt",
         i 
     )

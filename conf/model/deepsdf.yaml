@@ -9,7 +9,11 @@ reg_loss: True
 num_scenes: 1
 sigma: 1e-4
 skip_connection: [4]
+dropout: True
 dropout_p: 0.2
+dropout_latent: False
+dropout_latent_p: 0.2
+weight_norm: False
 
 loss:
   _target_: torch.nn.L1Loss

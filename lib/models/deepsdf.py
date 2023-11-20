@@ -20,7 +20,11 @@ class DeepSDF(L.LightningModule):
         num_scenes: int = 1,
         sigma: float = 1e-4,
         skip_connection: list[int] = [4],
+        dropout: bool = True,
         dropout_p: float = 0.2,
+        dropout_latent: bool = False,
+        dropout_latent_p: float = 0.2,
+        weight_norm: bool = False,
         decoder_scheduler = None,
         latents_scheduler = None
     ):
@@ -32,54 +36,29 @@ class DeepSDF(L.LightningModule):
 
         self.loss = loss
 
-        # build the mlp
-        layers: List[Any] = []
-        layers.append(
-            nn.Sequential(
-                nn.Linear(
-                    3 + self.hparams["latent_vector_size"], self.hparams["latent_size"]
-                ),
-                nn.ReLU(),
-            )
-        )
-        for i in range(2, self.hparams["num_hidden_layers"]):
-            if i in self.hparams["skip_connection"]:
-                layers.append(
-                    nn.Sequential(
-                        nn.Linear(
-                            self.hparams["latent_size"],
-                            self.hparams["latent_size"]
-                            - self.hparams["latent_vector_size"]
-                            - 3,
-                        ),
-                        nn.ReLU(),
-                        nn.Dropout(p=self.hparams["dropout_p"]),
-                    )
-                )
-            else:
-                layers.append(
-                    nn.Sequential(
-                        nn.Linear(
-                            self.hparams["latent_size"], self.hparams["latent_size"]
-                        ),
-                        nn.ReLU(),
-                        nn.Dropout(p=self.hparams["dropout_p"]),
-                    )
-                )
-        layers.append(
-            nn.Sequential(nn.Linear(self.hparams["latent_size"], 1), nn.Tanh())
-        )
-        self.decoder = nn.Sequential(*layers)
+        self._build_model()
 
         # latent vectors
         self.lat_vecs = nn.Embedding(
             self.hparams["num_scenes"], self.hparams["latent_vector_size"]
         )
-        torch.nn.init.normal_(self.lat_vecs.weight.data, 0.0, 0.01)
+        std_lat_vec = 1.0 / self.hparams['latent_vector_size']
+        torch.nn.init.normal_(self.lat_vecs.weight.data, 0.0, std_lat_vec)
 
+        # Whether to use schedulers or not 
         self.schedulers = decoder_scheduler is not None
 
+        # latent dropout
+        if self.hparams['dropout_latent']:
+            self.latent_dropout = nn.Dropout(p=self.hparams['dropout_latent_p'])
+
+ 
     def forward(self, x):
+        """
+        x is a tuple with the coordinates at position 0 and latent_vectors at position 1
+        """
+        if self.hparams['dropout_latent']:
+            x[1] = self.latent_dropout(x[1])
         out = torch.cat(x, dim=2)
         for i, layer in enumerate(self.decoder):
             if i in self.hparams["skip_connection"]:
@@ -111,8 +90,8 @@ class DeepSDF(L.LightningModule):
         self.log("train/l1_loss", l1_loss)
 
         if self.hparams["reg_loss"]:
-            reg_loss = torch.mean(torch.linalg.norm(lat_vec)) * self.hparams["sigma"]
-            reg_loss /= y.shape[0]
+            reg_loss_sum = torch.sum(torch.linalg.norm(lat_vec))
+            reg_loss = (reg_loss_sum * min(1, 1/(self.current_epoch + 1)) * self.hparams["sigma"]) / y.shape[0]
             self.log("train/reg_loss", reg_loss)
             loss = l1_loss + reg_loss
         else:
@@ -154,3 +133,53 @@ class DeepSDF(L.LightningModule):
             return ({"optimizer": optim_decoder, "lr_scheduler": scheduler_decoder},
                     {"optimizer": optim_latents, "lr_scheduler": scheduler_latens})
         return [optim_decoder, optim_latents]
+
+
+    def _build_model(self):
+         # build the mlp
+        layers: List[Any] = []
+        layers.append(
+            nn.Sequential(
+                nn.utils.weight_norm(nn.Linear(
+                    3 + self.hparams["latent_vector_size"], self.hparams["latent_size"]
+                )) if self.hparams['weight_norm'] else nn.Linear(
+                    3 + self.hparams["latent_vector_size"], self.hparams["latent_size"]
+                ),
+                nn.ReLU(),
+            )
+        )
+        for i in range(2, self.hparams["num_hidden_layers"]):
+            if i in self.hparams["skip_connection"]:
+                layers.append(
+                    nn.Sequential(
+                        nn.utils.weight_norm(nn.Linear(
+                            self.hparams["latent_size"],
+                            self.hparams["latent_size"]
+                            - self.hparams["latent_vector_size"]
+                            - 3,
+                        )) if self.hparams['weight_norm'] else nn.Linear(
+                            self.hparams["latent_size"],
+                            self.hparams["latent_size"]
+                            - self.hparams["latent_vector_size"]
+                            - 3,
+                        ),
+                        nn.ReLU(),
+                        nn.Dropout(p=self.hparams["dropout_p"]),
+                    )
+                )
+            else:
+                layers.append(
+                    nn.Sequential(
+                        nn.utils.weight_norm(nn.Linear(
+                            self.hparams["latent_size"], self.hparams["latent_size"]
+                        )) if self.hparams['weight_norm'] else nn.Linear(
+                            self.hparams["latent_size"], self.hparams["latent_size"]
+                        ),
+                        nn.ReLU(),
+                        nn.Dropout(p=self.hparams["dropout_p"]),
+                    )
+                )
+        layers.append(
+            nn.Sequential(nn.Linear(self.hparams["latent_size"], 1), nn.Tanh())
+        )
+        self.decoder = nn.Sequential(*layers)

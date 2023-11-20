@@ -16,7 +16,7 @@ tags: ["overfit_scene"]
 
 trainer:
   accelerator: gpu
-  max_epochs: 150000
+  max_epochs: 100000
   precision: "bf16-mixed" #on 3090
   log_every_n_steps: 1
 
@@ -40,8 +40,7 @@ model:
   sigma: 1e-4
   skip_connection: [4]
   dropout_p: 0.1
-  decoder_optimizer:
-    lr: 5e-5
+  weight_norm: True
 
 callbacks:
   model_checkpoint:
