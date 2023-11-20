@@ -1,6 +1,7 @@
 # dev
 lightning
-torch
+# torch
+# torchvision
 wandb
 hydra-core
 jupyter

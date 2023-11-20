@@ -18,10 +18,10 @@
             "request": "launch",
             "program": "scripts/train_siamese.py",
             "args": [
-                "+experiment=siamese_overfit_small"
+                "+experiment=siamese"
             ],
             "console": "integratedTerminal",
-            "justMyCode": true,
+            "justMyCode": false,
         },
         {
             "name": "Debug: Training DeepSDF",
@@ -36,6 +36,14 @@
             "type": "python",
             "request": "launch",
             "program": "scripts/create_sketches.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+        },
+        {
+            "name": "Debug: Create H5py",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/create_h5py.py",
             "console": "integratedTerminal",
             "justMyCode": true,
         },

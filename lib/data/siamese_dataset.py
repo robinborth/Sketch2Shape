@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 import cv2
+import h5py
 import numpy as np
 from torch.utils.data import Dataset
 from torchvision.transforms import Compose
@@ -107,6 +108,38 @@ class SiameseChunkDataset(Dataset):
             image = cv2.imread(path.as_posix())
             images.append(self.transforms(image))
         return np.stack(images)
+
+    def __len__(self):
+        return self.metainfo.obj_id_count
+
+    def __getitem__(self, index):
+        obj_id = self.metainfo.obj_ids[index]
+        sketch = self._fetch("sketches", obj_id)
+        image = self._fetch("images", obj_id)
+        label = np.repeat(index, len(sketch))
+        return {
+            "sketch": sketch,
+            "image": image,
+            "label": label,
+        }
+
+
+class SiameseH5pyDataset(Dataset):
+    def __init__(
+        self,
+        data_dir: str = "data/",
+        stage: str = "train",
+        transforms: Optional[Callable] = None,
+    ):
+        self.data_dir = data_dir
+        self.transforms = transforms if transforms else Compose()
+        self.metainfo = MetaInfo(data_dir=data_dir, split=stage)
+
+    def _fetch(self, folder: str, obj_id: str):
+        hd5py_file_name = f"{Path(self.data_dir).stem}.h5"
+        h5_file = h5py.File(Path(self.data_dir, obj_id, hd5py_file_name), "r+")
+        data = np.array(h5_file[folder].astype(np.uint8))
+        return np.stack([self.transforms(img) for img in data])
 
     def __len__(self):
         return self.metainfo.obj_id_count

@@ -31,6 +31,7 @@ class SiameseDataModule(LightningDataModule):
         pin_memory: bool = False,
         drop_last: bool = True,
         persistent_workers: bool = False,
+        shuffle: bool = True,
         # dataset
         sampler: Optional[Sampler] = None,
         dataset: Optional[SiameseDatasetBase] = None,
@@ -90,6 +91,7 @@ class SiameseDataModule(LightningDataModule):
             pin_memory=self.hparams["pin_memory"],
             drop_last=self.hparams["drop_last"],
             persistent_workers=self.hparams["persistent_workers"],
+            shuffle=self.hparams["shuffle"],
             sampler=self.build_sampler("train"),
             collate_fn=self.hparams["collate_fn"],
         )

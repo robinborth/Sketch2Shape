@@ -41,6 +41,7 @@ def main(cfg: DictConfig) -> None:
             elev=elevs,
             azim=azims,
             image_size=cfg.data.image_size,
+            device=cfg.data.render_device
         )
         sketches = image_to_sketch(
             images,

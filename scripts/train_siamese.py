@@ -29,6 +29,8 @@ def train(cfg: DictConfig) -> None:
 
     log.info("==> initializing logger ...")
     logger: List[Logger] = instantiate_loggers(cfg.get("logger"))
+    for wandb_logger in logger:
+        wandb_logger.watch(model, log="all")
 
     log.info(f"==> initializing trainer <{cfg.trainer._target_}>")
     trainer: Trainer = hydra.utils.instantiate(

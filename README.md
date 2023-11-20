@@ -28,16 +28,33 @@ conda config --set auto_activate_base false
 Then install the requirements.txt like following:
 
 ```bash
-conda create --name sketch2shape python=3.9
+conda create --name sketch2shape python=3.9 -y
 conda activate sketch2shape
-conda install pytorch=2.1 torchvision -c pytorch
-conda install -c fvcore -c iopath -c conda-forge fvcore iopath
-conda install pytorch3d -c pytorch3d
+conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+# conda install pytorch=2.1 torchvision -c pytorch
+# conda install -c fvcore -c iopath -c conda-forge fvcore iopath
+# conda install pytorch3d -c pytorch3d
 pip install -r requirements.txt
 pip install -e .
 ```
 
+Additional setup for vast.ai
+
+```bash
+apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
+```
+
+pytorch3d
+
+```bash
+git clone https://github.com/facebookresearch/pytorch3d.git
+cd pytorch3d
+apt-get install g++ -y
+pip install -e .
+```
+
 In order to find the interpreter path for VSCode do following:
+
 ```bash
 conda activate sketch2shape
 which python
