@@ -1,5 +1,5 @@
 from typing import Any, List
-
+import math
 import lightning as L
 import torch
 import torch.nn as nn
@@ -42,7 +42,7 @@ class DeepSDF(L.LightningModule):
         self.lat_vecs = nn.Embedding(
             self.hparams["num_scenes"], self.hparams["latent_vector_size"]
         )
-        std_lat_vec = 1.0 / self.hparams['latent_vector_size']
+        std_lat_vec = 1.0 / math.sqrt(self.hparams['latent_vector_size'])
         torch.nn.init.normal_(self.lat_vecs.weight.data, 0.0, std_lat_vec)
 
         # Whether to use schedulers or not 
