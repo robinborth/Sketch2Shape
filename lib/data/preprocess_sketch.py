@@ -95,34 +95,36 @@ def render_shapenet(
     elif torch.is_tensor(azim):
         batch_size = azim.shape[0]  # type: ignore
 
-    mesh = mesh.extend(batch_size)
+    # mesh = mesh.extend(batch_size)
+    images = []
+    for e, a in zip(elev, azim):  # type: ignore
+        # initilizing the camara
+        R, T = look_at_view_transform(dist=dist, elev=[e], azim=[a])
+        cameras = FoVPerspectiveCameras(device=device, R=R, T=T)
 
-    # initilizing the camara
-    R, T = look_at_view_transform(dist=dist, elev=elev, azim=azim)
-    cameras = FoVPerspectiveCameras(device=device, R=R, T=T)
+        # initilizing the rasterization
+        raster_settings = RasterizationSettings(image_size=image_size, bin_size=0)
 
-    # initilizing the rasterization
-    raster_settings = RasterizationSettings(image_size=image_size, bin_size=0)
+        # initilizing the lights
+        # lights = PointLights(device=device, location=[[0.0, 0.0, 0.0]])
 
-    # initilizing the lights
-    # lights = PointLights(device=device, location=[[0.0, 0.0, 0.0]])
+        # initilizing the renderer
+        renderer = MeshRenderer(
+            rasterizer=MeshRasterizer(
+                cameras=cameras,
+                raster_settings=raster_settings,
+            ),
+            shader=HardGouraudShader(
+                device=device,
+                cameras=cameras,
+                # lights=lights,
+            ),
+        )
 
-    # initilizing the renderer
-    renderer = MeshRenderer(
-        rasterizer=MeshRasterizer(
-            cameras=cameras,
-            raster_settings=raster_settings,
-        ),
-        shader=HardGouraudShader(
-            device=device,
-            cameras=cameras,
-            # lights=lights,
-        ),
-    )
-
-    # create the rendered image without the depth
-    images = renderer(mesh).cpu().numpy()[..., :3]
-    return (images * 255).astype(np.uint8)
+        # create the rendered image without the depth
+        img = renderer(mesh).cpu().numpy()[..., :3]
+        images.append((img * 255).astype(np.uint8))
+    return np.concatenate(images, axis=0)
 
 
 def image_to_sketch(

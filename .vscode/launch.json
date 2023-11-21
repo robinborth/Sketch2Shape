@@ -36,6 +36,9 @@
             "type": "python",
             "request": "launch",
             "program": "scripts/create_sketches.py",
+            "args": [
+                "data=siamese_chair_medium"
+            ],
             "console": "integratedTerminal",
             "justMyCode": true,
         },

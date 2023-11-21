@@ -1,0 +1,8 @@
+defaults:
+  - siamese
+  - _self_
+
+dataset_name: siamese_chair_large
+num_obj_train: 6400
+num_obj_val: 128
+num_obj_test: 250

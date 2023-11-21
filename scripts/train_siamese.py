@@ -16,7 +16,6 @@ log = create_logger("train_siamese")
 def train(cfg: DictConfig) -> None:
     log.info("==> loading config ...")
     L.seed_everything(cfg.seed)
-    torch.set_float32_matmul_precision("medium")
 
     log.info(f"==> initializing datamodule <{cfg.data._target_}>")
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
@@ -29,8 +28,8 @@ def train(cfg: DictConfig) -> None:
 
     log.info("==> initializing logger ...")
     logger: List[Logger] = instantiate_loggers(cfg.get("logger"))
-    for wandb_logger in logger:
-        wandb_logger.watch(model, log="all")
+    # for wandb_logger in logger:
+    #     wandb_logger.watch(model, log="all")
 
     log.info(f"==> initializing trainer <{cfg.trainer._target_}>")
     trainer: Trainer = hydra.utils.instantiate(

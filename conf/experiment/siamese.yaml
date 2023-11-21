@@ -4,7 +4,7 @@
 # python train.py experiment=example
 
 defaults:
-  - override /data: siamese_chair_small
+  - override /data: siamese_chair_large
   - override /model: siamese
   - override /callbacks: default
   - override /trainer: default
@@ -13,20 +13,20 @@ defaults:
 # all parameters below will be merged with parameters from default configurations set above
 # this allows you to overwrite only specified parameters
 
-tags: ["siamese", "chair_small"]
+tags: ["siamese", "chair_large", "save"]
 
 trainer:
   accelerator: gpu
-  max_epochs: 10
+  max_epochs: 3
   profiler:
     _target_: lightning.pytorch.profilers.SimpleProfiler 
     dirpath: ${paths.output_dir}/profiler
     filename: simple_profiler
-  # overfit_batches: 32
+  val_check_interval: 100
 
 
 data:
-  batch_size: 8
+  batch_size: 4
   num_workers: 4
   pin_memory: True 
   drop_last: True
@@ -35,10 +35,10 @@ data:
   # dataset:
   #   _target_: lib.data.siamese_dataset.SiameseDatasetDynamicLoadDynamicTransform
   # collate_fn: null
-  # dataset:
-  #   _target_: lib.data.siamese_dataset.SiameseChunkDataset
   dataset:
-    _target_: lib.data.siamese_dataset.SiameseH5pyDataset
+    _target_: lib.data.siamese_dataset.SiameseChunkDataset
+  # dataset:
+  #   _target_: lib.data.siamese_dataset.SiameseH5pyDataset
   collate_fn:
     _target_: lib.data.siamese_datamodule.chunk_collate_fn
     _partial_: True
@@ -58,7 +58,7 @@ model:
       _target_: pytorch_metric_learning.reducers.MeanReducer
     # embedding_regularizer:
     #   _target_: pytorch_metric_learning.regularizers.LpRegularizer
-    #   p: 1
+    #   p: 2
     #   power: 1
 
 logger:

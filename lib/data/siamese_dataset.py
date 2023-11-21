@@ -139,6 +139,7 @@ class SiameseH5pyDataset(Dataset):
         hd5py_file_name = f"{Path(self.data_dir).stem}.h5"
         h5_file = h5py.File(Path(self.data_dir, obj_id, hd5py_file_name), "r+")
         data = np.array(h5_file[folder].astype(np.uint8))
+        h5_file.close()
         return np.stack([self.transforms(img) for img in data])
 
     def __len__(self):
