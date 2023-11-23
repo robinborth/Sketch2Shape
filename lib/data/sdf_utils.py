@@ -27,6 +27,20 @@ def scale_to_unit_sphere_trimesh(mesh: trimesh.Trimesh):
     return trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
 
 
+def scale_to_unit_cube(mesh: trimesh.Trimesh):
+    centroid = np.mean(
+        mesh.vertices, axis=0
+    )  # this sounds more like the mean, but it is how ShapeNetV2 officially normalizes the shapes
+    min = np.min(mesh.vertices, axis=0)
+    max = np.max(mesh.vertices, axis=0)
+    diag = max - min
+    print(diag)
+    norm = 1 / np.linalg.norm(diag, axis=0)
+    vertices = (mesh.vertices - centroid) * norm
+
+    return trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
+
+
 def sample_volume_unit_sphere(count: int) -> np.ndarray:
     """Sample points from unit sphere by rejection
 
@@ -122,6 +136,3 @@ def fix_mesh(path: str, mesh_scale=0.7, size=128):
     path = path[:-4] + ".fixed.obj"
     mesh.export(path)
     return path
-
-
-# def trimesh_to_o3d(mesh: trimesh.Trimesh):
