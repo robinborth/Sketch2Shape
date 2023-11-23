@@ -9,36 +9,54 @@ import trimesh
 # from lib.data.sketch import obj_path
 
 
-def scale_to_unit_sphere_o3d(mesh: o3d.t.geometry.TriangleMesh):
-    bb = mesh.get_axis_aligned_bounding_box()
-    vertices = mesh.vertex.positions - bb.get_center()
-    dist = np.linalg.norm(vertices.numpy(), axis=1)
-    dist_max = np.max(dist)
-    vertices /= dist_max
-    mesh.vertex.positions = vertices
+# def scale_to_unit_sphere_o3d(mesh: o3d.t.geometry.TriangleMesh):
+#     bb = mesh.get_axis_aligned_bounding_box()
+#     vertices = mesh.vertex.positions - bb.get_center()
+#     dist = np.linalg.norm(vertices.numpy(), axis=1)
+#     dist_max = np.max(dist)
+#     vertices /= dist_max
+#     mesh.vertex.positions = vertices
+#     return mesh
+
+
+# def scale_to_unit_sphere_trimesh(mesh: trimesh.Trimesh):
+#     vertices = mesh.vertices - mesh.bounding_box.centroid
+#     distances = np.linalg.norm(vertices, axis=1)
+#     vertices /= np.max(distances)
+
+#     return trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
+
+
+# def scale_to_unit_cube(mesh: trimesh.Trimesh):
+#     centroid = np.mean(
+#         mesh.vertices, axis=0
+#     )  # this sounds more like the mean, but it is how ShapeNetV2 officially normalizes the shapes
+#     min = np.min(mesh.vertices, axis=0)
+#     max = np.max(mesh.vertices, axis=0)
+#     diag = max - min
+#     print(diag)
+#     norm = 1 / np.linalg.norm(diag, axis=0)
+#     vertices = (mesh.vertices - centroid) * norm
+
+#     return trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
+
+
+def scale_to_unit_sphere(mesh: trimesh.Trimesh, buffer: float = 1.03):
+    min = mesh.vertices.min(axis=0)
+    max = mesh.vertices.max(axis=0)
+    center = (max + min) / 2
+    mesh.vertices = mesh.vertices - center
+
+    scale = np.linalg.norm(mesh.vertices, axis=1).max()
+    scale *= buffer
+
+    mesh.vertices = mesh.vertices / scale
+    return mesh, center, scale
+
+
+def scale_to_unit_cube(mesh: trimesh.Trimesh, offset: np.ndarray, scale: float):
+    mesh.vertices = (mesh.vertices * scale) + offset
     return mesh
-
-
-def scale_to_unit_sphere_trimesh(mesh: trimesh.Trimesh):
-    vertices = mesh.vertices - mesh.bounding_box.centroid
-    distances = np.linalg.norm(vertices, axis=1)
-    vertices /= np.max(distances)
-
-    return trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
-
-
-def scale_to_unit_cube(mesh: trimesh.Trimesh):
-    centroid = np.mean(
-        mesh.vertices, axis=0
-    )  # this sounds more like the mean, but it is how ShapeNetV2 officially normalizes the shapes
-    min = np.min(mesh.vertices, axis=0)
-    max = np.max(mesh.vertices, axis=0)
-    diag = max - min
-    print(diag)
-    norm = 1 / np.linalg.norm(diag, axis=0)
-    vertices = (mesh.vertices - centroid) * norm
-
-    return trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
 
 
 def sample_volume_unit_sphere(count: int) -> np.ndarray:
