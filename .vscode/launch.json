@@ -62,6 +62,28 @@
             "program": "scripts/extract_sdf.py",
             "console": "integratedTerminal",
             "justMyCode": false,
+        },
+        {
+            "name": "Debug: SDF Preprocessing",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/preprocess_deepsdf.py",
+            "args": [
+                "folder=overfit_scene"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
+            "name": "Debug: SDF Reconstruction",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/reconstruct_objects_deepsdf.py",
+            "args": [
+                "log_path=/home/korth/sketch2shape/logs/train/runs/2023-11-23_18-49-22"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
         }
     ]
 }

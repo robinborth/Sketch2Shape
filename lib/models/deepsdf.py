@@ -1,5 +1,6 @@
-from typing import Any, List
 import math
+from typing import Any, List
+
 import lightning as L
 import torch
 import torch.nn as nn
@@ -25,13 +26,13 @@ class DeepSDF(L.LightningModule):
         dropout_latent: bool = False,
         dropout_latent_p: float = 0.2,
         weight_norm: bool = False,
-        decoder_scheduler = None,
-        latents_scheduler = None
+        decoder_scheduler=None,
+        latents_scheduler=None,
     ):
         super().__init__()
         # this line allows to access init params with 'self.hparams' attribute
         # also ensures init params will be stored in ckpt
-        self.save_hyperparameters(logger=False)
+        self.save_hyperparameters()
         self.automatic_optimization = False
 
         self.loss = loss
@@ -42,22 +43,21 @@ class DeepSDF(L.LightningModule):
         self.lat_vecs = nn.Embedding(
             self.hparams["num_scenes"], self.hparams["latent_vector_size"]
         )
-        std_lat_vec = 1.0 / math.sqrt(self.hparams['latent_vector_size'])
+        std_lat_vec = 1.0 / math.sqrt(self.hparams["latent_vector_size"])
         torch.nn.init.normal_(self.lat_vecs.weight.data, 0.0, std_lat_vec)
 
-        # Whether to use schedulers or not 
+        # Whether to use schedulers or not
         self.schedulers = decoder_scheduler is not None
 
         # latent dropout
-        if self.hparams['dropout_latent']:
-            self.latent_dropout = nn.Dropout(p=self.hparams['dropout_latent_p'])
+        if self.hparams["dropout_latent"]:
+            self.latent_dropout = nn.Dropout(p=self.hparams["dropout_latent_p"])
 
- 
     def forward(self, x):
         """
         x is a tuple with the coordinates at position 0 and latent_vectors at position 1
         """
-        if self.hparams['dropout_latent']:
+        if self.hparams["dropout_latent"]:
             x[1] = self.latent_dropout(x[1])
         out = torch.cat(x, dim=2)
         for i, layer in enumerate(self.decoder):
@@ -91,7 +91,11 @@ class DeepSDF(L.LightningModule):
 
         if self.hparams["reg_loss"]:
             reg_loss_sum = torch.sum(torch.linalg.norm(lat_vec))
-            reg_loss = (reg_loss_sum * min(1, 1/(self.current_epoch + 1)) * self.hparams["sigma"]) / y.shape[0]
+            reg_loss = (
+                reg_loss_sum
+                * min(1, 1 / (self.current_epoch + 1))
+                * self.hparams["sigma"]
+            ) / y.shape[0]
             self.log("train/reg_loss", reg_loss)
             loss = l1_loss + reg_loss
         else:
@@ -130,19 +134,25 @@ class DeepSDF(L.LightningModule):
         if self.schedulers:
             scheduler_decoder = self.hparams["decoder_scheduler"](optim_decoder)
             scheduler_latens = self.hparams["latents_scheduler"](optim_latents)
-            return ({"optimizer": optim_decoder, "lr_scheduler": scheduler_decoder},
-                    {"optimizer": optim_latents, "lr_scheduler": scheduler_latens})
+            return (
+                {"optimizer": optim_decoder, "lr_scheduler": scheduler_decoder},
+                {"optimizer": optim_latents, "lr_scheduler": scheduler_latens},
+            )
         return [optim_decoder, optim_latents]
 
-
     def _build_model(self):
-         # build the mlp
+        # build the mlp
         layers: List[Any] = []
         layers.append(
             nn.Sequential(
-                nn.utils.weight_norm(nn.Linear(
-                    3 + self.hparams["latent_vector_size"], self.hparams["latent_size"]
-                )) if self.hparams['weight_norm'] else nn.Linear(
+                nn.utils.weight_norm(
+                    nn.Linear(
+                        3 + self.hparams["latent_vector_size"],
+                        self.hparams["latent_size"],
+                    )
+                )
+                if self.hparams["weight_norm"]
+                else nn.Linear(
                     3 + self.hparams["latent_vector_size"], self.hparams["latent_size"]
                 ),
                 nn.ReLU(),
@@ -152,12 +162,16 @@ class DeepSDF(L.LightningModule):
             if i in self.hparams["skip_connection"]:
                 layers.append(
                     nn.Sequential(
-                        nn.utils.weight_norm(nn.Linear(
-                            self.hparams["latent_size"],
-                            self.hparams["latent_size"]
-                            - self.hparams["latent_vector_size"]
-                            - 3,
-                        )) if self.hparams['weight_norm'] else nn.Linear(
+                        nn.utils.weight_norm(
+                            nn.Linear(
+                                self.hparams["latent_size"],
+                                self.hparams["latent_size"]
+                                - self.hparams["latent_vector_size"]
+                                - 3,
+                            )
+                        )
+                        if self.hparams["weight_norm"]
+                        else nn.Linear(
                             self.hparams["latent_size"],
                             self.hparams["latent_size"]
                             - self.hparams["latent_vector_size"]
@@ -170,9 +184,13 @@ class DeepSDF(L.LightningModule):
             else:
                 layers.append(
                     nn.Sequential(
-                        nn.utils.weight_norm(nn.Linear(
-                            self.hparams["latent_size"], self.hparams["latent_size"]
-                        )) if self.hparams['weight_norm'] else nn.Linear(
+                        nn.utils.weight_norm(
+                            nn.Linear(
+                                self.hparams["latent_size"], self.hparams["latent_size"]
+                            )
+                        )
+                        if self.hparams["weight_norm"]
+                        else nn.Linear(
                             self.hparams["latent_size"], self.hparams["latent_size"]
                         ),
                         nn.ReLU(),

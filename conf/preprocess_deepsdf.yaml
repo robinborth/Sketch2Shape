@@ -1,0 +1,16 @@
+# @package _global_
+
+defaults:
+  - _self_
+  - paths: default
+
+  # optional local config for machine/user specific settings
+  # it's optional since it doesn't need to exist and is excluded from version control
+  - optional local: default
+
+folder: null
+
+data_dir: ${paths.data_dir}/deepsdf/${folder}
+
+# seed for random number generators in pytorch, numpy and python.random
+seed: 123

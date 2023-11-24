@@ -23,7 +23,7 @@ class DeepSDFDataset(Dataset):
         self.idx2shape = dict()
         self.npy_paths = list()
         self.data = list()
-        for idx, path in enumerate(path.glob("**/*npz")):
+        for idx, path in enumerate(path.glob("**/sdf_samples.npz")):
             self.npy_paths.append(str(path))
             self.idx2shape[idx] = path.parts[-3] + "/" + path.parts[-2]
             if self.load_ram:
