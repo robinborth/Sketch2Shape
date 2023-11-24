@@ -12,12 +12,11 @@ defaults:
 # all parameters below will be merged with parameters from default configurations set above
 # this allows you to overwrite only specified parameters
 
-tags: ["overfit_scene"]
+tags: ["overfit_scene", "our_machine"]
 
 trainer:
   accelerator: gpu
   max_epochs: 100000
-  precision: "bf16-mixed" #on 3090
   log_every_n_steps: 1
 
 data:
@@ -39,6 +38,7 @@ model:
   num_scenes: 1
   sigma: 1e-4
   skip_connection: [4]
+  dropout: False
   dropout_p: 0.1
 
 callbacks:

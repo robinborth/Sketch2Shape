@@ -1,7 +1,7 @@
 from pathlib import Path
 
 # from mesh_to_sdf import sample_sdf_near_surface
-import mesh2sdf
+# import mesh2sdf
 import numpy as np
 import open3d as o3d
 import trimesh
