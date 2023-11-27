@@ -30,7 +30,7 @@ Then install the requirements.txt like following:
 ```bash
 conda create --name sketch2shape python=3.9
 conda activate sketch2shape
-conda install pytorch=2.1 torchvision -c pytorch #conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+conda install pytorch=2.1 torchvision -c pytorch
 conda install -c fvcore -c iopath -c conda-forge fvcore iopath
 conda install pytorch3d -c pytorch3d
 pip install -r requirements.txt
