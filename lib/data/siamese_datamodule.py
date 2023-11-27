@@ -80,7 +80,10 @@ class SiameseDataModule(LightningDataModule):
         sampler = None
         if self.hparams["sampler"]:
             metainfo = MetaInfo(data_dir=self.hparams["data_dir"], split=split)
-            sampler = self.hparams["sampler"](labels=metainfo.labels)
+            sampler = self.hparams["sampler"](
+                labels=metainfo.labels,
+                length_before_new_iter=metainfo.pair_count,
+            )
         return sampler
 
     def train_dataloader(self) -> DataLoader:

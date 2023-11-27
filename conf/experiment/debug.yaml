@@ -1,0 +1,65 @@
+# @package _global_
+
+defaults:
+  - override /data: siamese_chair_small
+  - override /model: siamese
+  - override /callbacks: default
+  - override /trainer: default
+  # - override /logger: wandb
+
+trainer:
+  accelerator: gpu 
+  max_epochs: 10
+  profiler:
+    _target_: lightning.pytorch.profilers.SimpleProfiler 
+    dirpath: ${paths.output_dir}/profiler
+    filename: simple_profiler
+  val_check_interval: 16
+
+
+data:
+  batch_size: 128
+  num_workers: 4
+  pin_memory: True 
+  drop_last: True
+  persistent_workers: True
+  shuffle: False
+  sampler:
+    _target_: pytorch_metric_learning.samplers.MPerClassSampler
+    _partial_: True
+    m: 4
+  dataset:
+    _target_: lib.data.siamese_dataset.SiameseDatasetDynamicLoadDynamicTransform
+  collate_fn: null
+  #   _target_: lib.data.siamese_datamodule.chunk_collate_fn
+  #   _partial_: True
+
+model:
+  scheduler: null
+  optimizer:
+    lr: 1e-04
+  decoder:
+    _target_: lib.models.layers.ResNet18
+    embedding_size: 128
+  miner:
+    _target_: pytorch_metric_learning.miners.TripletMarginMiner
+    margin: 0.2
+    type_of_triplets: semihard
+  loss:
+    _target_: pytorch_metric_learning.losses.TripletMarginLoss
+    margin: 0.2
+    swap: False
+    smooth_loss: False
+    triplets_per_anchor: all
+    reducer: 
+      _target_: pytorch_metric_learning.reducers.ThresholdReducer
+      low: 0
+    # distance: 
+    #   _target_: pytorch_metric_learning.distances.CosineSimilarity
+
+tags: ["siamese", "chair_large", "save"]
+
+logger:
+  wandb:
+    tags: ${tags}
+    group: "siamese"

@@ -51,7 +51,13 @@ def main(cfg: DictConfig) -> None:
         + ["test"] * cfg.data.num_obj_test
     )
     assert len(splits) == len(paths)
-    df = pd.DataFrame({"obj_id": obj_ids, "split": splits})
+    df = pd.DataFrame(
+        {
+            "obj_id": obj_ids,
+            "labels": list(range(len(obj_ids))),
+            "split": splits,
+        }
+    )
     df.to_csv(cfg.data.dataset_splits_path, index=None)
 
 

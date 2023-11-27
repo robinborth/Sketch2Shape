@@ -8,12 +8,12 @@ decoder:
 
 miner:
   _target_: pytorch_metric_learning.miners.TripletMarginMiner
-  margin: 0.05
-  type_of_triplets: all
+  margin: 0.2
+  type_of_triplets: semihard
 
 loss:
   _target_: pytorch_metric_learning.losses.TripletMarginLoss
-  margin: 0.05
+  margin: 0.2
   swap: False
   smooth_loss: False
   triplets_per_anchor: all

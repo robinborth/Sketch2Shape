@@ -36,10 +36,9 @@ class SiameseDatasetBase(Dataset):
         info = self.metainfo.get_pair(index)
         obj_id = info["obj_id"]
         image_id = info["image_id"]
-        sketch_id = info["sketch_id"]
         label = info["label"]
 
-        sketch = self._fetch("sketches", obj_id, sketch_id)
+        sketch = self._fetch("sketches", obj_id, image_id)
         image = self._fetch("images", obj_id, image_id)
 
         return {
@@ -47,7 +46,6 @@ class SiameseDatasetBase(Dataset):
             "image": image,
             "label": label,
             "image_id": image_id,
-            "sketch_id": image_id,
         }
 
 

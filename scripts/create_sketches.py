@@ -63,23 +63,20 @@ def main(cfg: DictConfig) -> None:
 
     logger.debug(f"==> creating metainfo for {metainfo.obj_id_count} shapes...")
     data = []
-    label = 0
+    label = 1
     for obj_id, split in tqdm(metainfo.obj_ids_splits, total=metainfo.obj_id_count):
-        sketch_paths = Path(cfg.data.data_dir, obj_id, "sketches").glob("*.jpg")
-        for sketch_id in sorted(list(path.stem for path in sketch_paths)):
-            image_paths = Path(cfg.data.data_dir, obj_id, "images").glob("*.jpg")
-            for image_id in sorted(list(path.stem for path in image_paths)):
-                data.append(
-                    {
-                        "obj_id": str(obj_id),
-                        "sketch_id": str(sketch_id),
-                        "image_id": str(image_id),
-                        "label": label,
-                        "split": str(split),
-                    }
-                )
+        image_paths = Path(cfg.data.data_dir, obj_id, "images").glob("*.jpg")
+        for image_id in sorted(list(path.stem for path in image_paths)):
+            data.append(
+                {
+                    "obj_id": str(obj_id),
+                    "image_id": str(image_id),
+                    "label": label,
+                    "split": str(split),
+                }
+            )
         label += 1
-    df = pd.DataFrame(data).sample(frac=1.0)
+    df = pd.DataFrame(data)
     df.to_csv(cfg.data.sketch_image_pairs_path, index=None)
 
 

@@ -117,7 +117,6 @@ def render_shapenet(
             shader=HardGouraudShader(
                 device=device,
                 cameras=cameras,
-                # lights=lights,
             ),
         )
 
