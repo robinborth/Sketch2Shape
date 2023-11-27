@@ -142,10 +142,10 @@ class DeepSDF(L.LightningModule):
 
     def _build_model(self):
         # build the mlp
-        layers: List[Any] = []
+        layers = list()
         layers.append(
             nn.Sequential(
-                nn.utils.weight_norm(
+                nn.utils.parametrizations.weight_norm(
                     nn.Linear(
                         3 + self.hparams["latent_vector_size"],
                         self.hparams["latent_size"],
@@ -162,7 +162,7 @@ class DeepSDF(L.LightningModule):
             if i in self.hparams["skip_connection"]:
                 layers.append(
                     nn.Sequential(
-                        nn.utils.weight_norm(
+                        nn.utils.parametrizations.weight_norm(
                             nn.Linear(
                                 self.hparams["latent_size"],
                                 self.hparams["latent_size"]
@@ -184,7 +184,7 @@ class DeepSDF(L.LightningModule):
             else:
                 layers.append(
                     nn.Sequential(
-                        nn.utils.weight_norm(
+                        nn.utils.parametrizations.weight_norm(
                             nn.Linear(
                                 self.hparams["latent_size"], self.hparams["latent_size"]
                             )
