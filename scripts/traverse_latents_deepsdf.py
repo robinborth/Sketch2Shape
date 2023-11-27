@@ -10,7 +10,7 @@ import trimesh
 from omegaconf import DictConfig, OmegaConf
 
 from lib.evaluate import compute_chamfer_distance
-from lib.generate import reconstruct_training_data
+from lib.generate import traverse_latent_space
 from lib.models.deepsdf import DeepSDF
 
 
@@ -43,8 +43,8 @@ def identify_matching_objs(gt_path, rec_paths):
     return matches
 
 
-@hydra.main(version_base=None, config_path="../conf", config_name="reconstruct_deepsdf")
-def reconstruct(cfg: DictConfig) -> None:
+@hydra.main(version_base=None, config_path="../conf", config_name="traverse_deepsdf")
+def traverse(cfg: DictConfig) -> None:
     if not os.path.exists(cfg.log_path):
         raise ValueError("Please provide a log path")
 
@@ -60,28 +60,16 @@ def reconstruct(cfg: DictConfig) -> None:
         else load_checkpoint_path(cfg.log_path)
     )
 
-    rec_paths = reconstruct_training_data(
-        DeepSDF, ckpt_path, idx2shape, cfg.resolution_list
+    traverse_latent_space(
+        DeepSDF,
+        ckpt_path,
+        idx2shape,
+        cfg.idx_one,
+        cfg.idx_two,
+        cfg.steps,
+        cfg.resolution_list,
     )
-
-    if cfg.chamfer:
-        matches = identify_matching_objs(run_config.data.data_dir, rec_paths)
-        chamfers = dict()
-        for match in matches:
-            # load meshes
-            gt = trimesh.load(match[0], force="mesh")
-            rec = trimesh.load(match[1], force="mesh")
-            chamfer = compute_chamfer_distance(
-                gt, rec, n_samples=cfg.chamfer_num_samples
-            )
-            idx = match[0].split("/")[-2]
-            chamfers[idx] = chamfer
-        chamfers["mean_chamfer"] = np.mean(list(chamfers.values()))
-        chamfers["num_samples"] = cfg.chamfer_num_samples
-
-        np.savez(cfg.log_path + "/chamfers.npz", chamfers)
-        print(f"Mean Chamfer distance over all objects is: {chamfers['mean_chamfer']}")
 
 
 if __name__ == "__main__":
-    reconstruct()
+    traverse()

@@ -10,13 +10,12 @@ defaults:
 
 ckpt_path: null
 
-resolution_list: [256]
+resolution_list: [64]
 
 log_path: null
 
-chamfer_num_samples: 100_000
-
-chamfer: True
-
+idx_one: 0
+idx_two: 1
+steps: 7
 # seed for random number generators in pytorch, numpy and python.random
 seed: 123
