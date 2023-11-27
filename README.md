@@ -30,7 +30,7 @@ Then install the requirements.txt like following:
 ```bash
 conda create --name sketch2shape python=3.9
 conda activate sketch2shape
-conda install pytorch=2.1 torchvision -c pytorch
+conda install pytorch=2.1 torchvision -c pytorch #conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
 conda install -c fvcore -c iopath -c conda-forge fvcore iopath
 conda install pytorch3d -c pytorch3d
 pip install -r requirements.txt
@@ -79,13 +79,3 @@ for more information which kind of skripts can be exectured look into the Makefi
 
 In order to download ShapeNet you need to register and get approved from the official website [here](https://shapenet.org/)
 or alternative for quick testing you can download the dataset from kaggle unofficially [here](https://www.kaggle.com/datasets/jeremy26/shapenet-core/)
-
-## Open Tasks
-- [] Download the official ShapeNet dataset
-- [] Render an image from one pointcloud 
-- [] Extract edges from one images
-- [] Create a skript that creates an aligned dataset from shapes to sketches
-- [] Convert PointCloud/Mesh to VoxelGrid (occupancy values)
-- [] Train a simple AutoEncoder from Sketch2VoxelGrid overfit to a few instances
-- [] Look at the instances via WandB but also per instance with open3d or similar tool
-- [] Calculate some metric with that IuO if VoxelGrid with ground truth as super easy baseline
