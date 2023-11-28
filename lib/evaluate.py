@@ -3,11 +3,10 @@ import trimesh
 from sklearn.neighbors import KDTree
 
 
-def compute_chamfer_distance(
-    gt_mesh: trimesh.Trimesh, rec_mesh: trimesh.Trimesh, n_samples=30000
-):
+def compute_chamfer_distance(gt, rec_mesh, n_samples=30000):
     rec_samples = trimesh.sample.sample_surface(rec_mesh, n_samples)[0]
-    gt_samples = trimesh.sample.sample_surface(gt_mesh, n_samples)[0]
+    # rec_samples = rec_samples / norm_file["scale"] - norm_file["offset"]
+    gt_samples = gt.vertices
 
     rec_kd_tree = KDTree(rec_samples)
     dist, _ = rec_kd_tree.query(gt_samples)
