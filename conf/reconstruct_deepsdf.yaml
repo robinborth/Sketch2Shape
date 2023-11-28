@@ -14,7 +14,7 @@ resolution_list: [256]
 
 log_path: null
 
-chamfer_num_samples: 100_000
+chamfer_num_samples: 30_000
 
 chamfer: True
 

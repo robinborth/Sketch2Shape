@@ -10,7 +10,7 @@ defaults:
 
 ckpt_path: null
 
-resolution_list: [64]
+resolution_list: [256]
 
 log_path: null
 

@@ -20,7 +20,10 @@ trainer:
   log_every_n_steps: 1
 
 data:
-  data_dir: ${paths.data_dir}/deepsdf/overfit_scene
+  experiment: overfit_scene
+  data_dir: ${paths.data_dir}/deepsdf/SdfSamples/${data.experiment}
+  norm_dir: ${paths.data_dir}/deepsdf/NormalizationParameters/${data.experiment}
+  surf_dir: ${paths.data_dir}/deepsdf/SurfaceSamples/${data.experiment}
   batch_size: 1
   num_workers: 4
   pin_memory: False
