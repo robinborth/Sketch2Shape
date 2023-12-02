@@ -17,19 +17,21 @@ tags: ["overfit_batch", "our_machine"]
 trainer:
   accelerator: gpu
   max_epochs: 10000
-  log_every_n_steps: 1
+  precision: 16-mixed
+  # log_every_n_steps: 1
 
 data:
   experiment: overfit_batch
   data_dir: ${paths.data_dir}/deepsdf/SdfSamples/${data.experiment}
   norm_dir: ${paths.data_dir}/deepsdf/NormalizationParameters/${data.experiment}
   surf_dir: ${paths.data_dir}/deepsdf/SurfaceSamples/${data.experiment}
-  batch_size: 8
+  batch_size: 16
   num_workers: 4
   pin_memory: False
   drop_last: True
   persistent_workers: True
-  subsample: 16384
+  subsample: 16384 # 32768
+  load_ram: False
 
 model:
   latent_size: 512
@@ -44,6 +46,18 @@ model:
   dropout: False
   dropout_p: 0.2
   weight_norm: False
+
+  decoder_scheduler:
+    _partial_: True
+    _target_: torch.optim.lr_scheduler.StepLR
+    step_size: 2500
+    gamma: 0.5
+
+  latents_scheduler:
+    _partial_: True
+    _target_: torch.optim.lr_scheduler.StepLR
+    step_size: 2500
+    gamma: 0.5
 
 callbacks:
   model_checkpoint:

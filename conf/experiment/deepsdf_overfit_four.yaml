@@ -20,11 +20,11 @@ trainer:
   log_every_n_steps: 1
 
 data:
-  experiment: overfit_batch
+  experiment: overfit_four
   data_dir: ${paths.data_dir}/deepsdf/SdfSamples/${data.experiment}
   norm_dir: ${paths.data_dir}/deepsdf/NormalizationParameters/${data.experiment}
   surf_dir: ${paths.data_dir}/deepsdf/SurfaceSamples/${data.experiment}
-  batch_size: 8
+  batch_size: 4
   num_workers: 4
   pin_memory: False
   drop_last: True
@@ -38,7 +38,7 @@ model:
   clamp: True
   clamp_val: 0.1
   reg_loss: True
-  num_scenes: 16
+  num_scenes: 4
   sigma: 1e-4
   skip_connection: [4]
   dropout: False
@@ -47,7 +47,7 @@ model:
 
 callbacks:
   model_checkpoint:
-    every_n_epochs: 5000
+    every_n_epochs: 2000
     save_last: True
     save_top_k: -1
 
