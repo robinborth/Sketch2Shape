@@ -13,6 +13,8 @@ from sklearn.manifold import TSNE
 from torchvision.models import resnet18
 from torchvision.models.resnet import ResNet18_Weights
 
+from lib.models.decoder import SimpleDecoder
+
 
 def transform_to_plot(data, batch=False):
     if batch:
@@ -84,18 +86,30 @@ class Siamese(LightningModule):
         # also ensures init params will be stored in ckpt
         self.save_hyperparameters(logger=False)
 
-        # self.decoder = decoder
-        self.decoder = resnet18(ResNet18_Weights.IMAGENET1K_V1)
-        self.decoder.fc = torch.nn.Linear(in_features=512, out_features=128)
+        self.decoder = decoder
+        # self.decoder = resnet18(ResNet18_Weights.IMAGENET1K_V1)
+        # self.decoder = resnet18()
+        # for param in self.decoder.parameters():
+        #     param.requires_grad = False
+        # self.decoder.fc = torch.nn.Linear(in_features=512, out_features=128)
+        # self.decoder = SimpleDecoder(256, 128)
         self.miner = miner
         self.loss = loss
 
         self.validation_step_outputs = []  # type: ignore
         self.train_step_outputs = []  # type: ignore
 
+    # def forward(self, batch):
+    #     sketch_emb = self.decoder(batch["sketch"])
+    #     image_emb = self.decoder(batch["image"])
+    #     return {"sketch_emb": sketch_emb, "image_emb": image_emb}
+
     def forward(self, batch):
-        sketch_emb = self.decoder(batch["sketch"])
-        image_emb = self.decoder(batch["image"])
+        batch_size = batch["sketch"].shape[0]
+        decoder_input = torch.concatenate([batch["sketch"], batch["image"]])
+        decoder_emb = self.decoder(decoder_input)
+        sketch_emb = decoder_emb[:batch_size]
+        image_emb = decoder_emb[batch_size:]
         return {"sketch_emb": sketch_emb, "image_emb": image_emb}
 
     def model_step(self, batch):
@@ -127,6 +141,7 @@ class Siamese(LightningModule):
         return output, loss
 
     def training_step(self, batch, batch_idx):
+        # self.eval()
         output, loss = self.model_step(batch)
         self.log("train/loss", loss, prog_bar=True)
         self.log("train/miner_ratio", output["miner_ratio"], prog_bar=True)
@@ -135,6 +150,7 @@ class Siamese(LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
+        # self.train()
         output, loss = self.model_step(batch)
         self.log("val/loss", loss, prog_bar=True)
         self.log("val/miner_count", output["miner_count"])

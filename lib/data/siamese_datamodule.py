@@ -65,7 +65,7 @@ class SiameseDataModule(LightningDataModule):
         # )
 
     def setup(self, stage: str):
-        if stage == "fit":
+        if stage in ["fit", "all"]:
             self.train_metainfo = MetaInfo(
                 data_dir=self.hparams["data_dir"],
                 dataset_splits_path=self.hparams["dataset_splits_path"],
@@ -76,17 +76,7 @@ class SiameseDataModule(LightningDataModule):
                 metainfo=self.train_metainfo,
                 transforms=self.transforms,
             )
-            self.val_metainfo = MetaInfo(
-                data_dir=self.hparams["data_dir"],
-                dataset_splits_path=self.hparams["dataset_splits_path"],
-                sketch_image_pairs_path=self.hparams["sketch_image_pairs_path"],
-                split="train",
-            )
-            self.val_dataset = self.hparams["dataset"](
-                metainfo=self.val_metainfo,
-                transforms=self.transforms,
-            )
-        elif stage == "validate":
+        elif stage in ["validate", "fit", "all"]:
             self.val_metainfo = MetaInfo(
                 data_dir=self.hparams["data_dir"],
                 dataset_splits_path=self.hparams["dataset_splits_path"],
@@ -97,7 +87,7 @@ class SiameseDataModule(LightningDataModule):
                 metainfo=self.val_metainfo,
                 transforms=self.transforms,
             )
-        elif stage == "test":
+        if stage in ["test", "all"]:
             self.test_metainfo = MetaInfo(
                 data_dir=self.hparams["data_dir"],
                 dataset_splits_path=self.hparams["dataset_splits_path"],

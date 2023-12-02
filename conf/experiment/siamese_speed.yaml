@@ -41,6 +41,6 @@ data:
 model:
   scheduler: null
   decoder:
-    _target_: lib.models.layers.ResNet18
+    _target_: lib.models.decoder.ResNet18
     embedding_size: 64
 

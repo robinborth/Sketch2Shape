@@ -2,7 +2,7 @@
 _target_: lib.models.siamese.Siamese
 
 decoder:
-  _target_: lib.models.layers.ResNet18
+  _target_: lib.models.decoder.ResNet18
   # image_size: ${data.image_size}
   embedding_size: 64
 
