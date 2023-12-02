@@ -32,17 +32,6 @@ def load_shape2idx(path: str):
     return shape2idx
 
 
-# def identify_matching_objs(gt_path, rec_paths):
-#     matches = list()
-#     for rec in rec_paths:
-#         # find gt params
-#         folder = rec.split("/")[-1].replace("_", "/").split("/")[:-1]
-#         full_gt_path = os.path.join(gt_path, *folder, "model_unit_sphere.obj")
-
-#         matches.append((full_gt_path, rec))
-#     return matches
-
-
 def get_id_from_path(rec_path):
     return rec_path.split("/")[-1].split("_")[0]
 
@@ -78,13 +67,15 @@ def reconstruct(cfg: DictConfig) -> None:
             gt = trimesh.load(run_config.data.surf_dir + "/" + obj_id + ".ply")
             rec = trimesh.load(rec_path)
 
-            # TODO should be done somewhere else, but fine for now
-            rec.vertices = rec.vertices / norm_file["scale"] - norm_file["offset"]
-            rec.export(rec_path + ".obj")
+            gt.vertices = (gt.vertices + norm_file["offset"]) * norm_file["scale"]
 
             chamfer = compute_chamfer_distance(
                 gt, rec, n_samples=cfg.chamfer_num_samples
             )
+
+            # TODO should be done somewhere else, but fine for now
+            rec.vertices = rec.vertices / norm_file["scale"] - norm_file["offset"]
+            rec.export(rec_path + ".obj")
 
             chamfers[obj_id] = chamfer
         chamfers["mean_chamfer"] = np.mean(list(chamfers.values()))

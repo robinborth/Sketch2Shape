@@ -28,7 +28,7 @@ def reconstruct_training_data(
     model,
     checkpoint_path: str,
     idx2shape: dict,
-    resolution_list: list = [64],
+    resolution_list: list = [256],
     chunck_size: int = 500_000,  # based on 2080TI / 16GB RAM (very rough estimate)
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -165,7 +165,9 @@ def traverse_latent_space(
         lat_vec_one = decoder.lat_vecs(torch.Tensor([idx_one]).int())
         lat_vec_two = decoder.lat_vecs(torch.Tensor([idx_two]).int())
 
-        for t in np.linspace(0, 1, steps):
+        offset = np.array([0.0, 0, 0])
+
+        for i, t in enumerate(np.linspace(0, 1, steps)):
             lat_vec = t * lat_vec_one + (1 - t) * lat_vec_two
             lat_vec = lat_vec.repeat(xyz.shape[0], 1)
 
@@ -195,12 +197,23 @@ def traverse_latent_space(
             # Create a trimesh object
             mesh = trimesh.Trimesh(vertices=verts, faces=faces)
 
-            # remove objects outside unit sphere
-            mesh = remove_faces_outside_sphere(mesh)
+            # # remove objects outside unit sphere
+            # mesh = remove_faces_outside_sphere(mesh)
 
             path_obj = f"{save_path}/t_{t}.obj"
             # Save the mesh as an OBJ file
             mesh.export(path_obj)
+
+            # to align traversal for visualization
+            h_max = verts.max(0)[0]
+            h_min = np.abs(verts.min(0)[0])
+            offset += np.array([h_min, 0, 0])
+            verts += offset
+
+            mesh = trimesh.Trimesh(vertices=verts, faces=faces)
+            mesh.export(f"{save_path}/t_{t}_viz.obj")
+
+            offset += np.array([h_max + 0.25, 0, 0])
 
             del (
                 sd,

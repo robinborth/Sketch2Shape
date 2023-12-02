@@ -133,10 +133,10 @@ class DeepSDF(L.LightningModule):
         optim_latents = self.hparams["latents_optimizer"](self.lat_vecs.parameters())
         if self.schedulers:
             scheduler_decoder = self.hparams["decoder_scheduler"](optim_decoder)
-            scheduler_latens = self.hparams["latents_scheduler"](optim_latents)
+            scheduler_latents = self.hparams["latents_scheduler"](optim_latents)
             return (
                 {"optimizer": optim_decoder, "lr_scheduler": scheduler_decoder},
-                {"optimizer": optim_latents, "lr_scheduler": scheduler_latens},
+                {"optimizer": optim_latents, "lr_scheduler": scheduler_latents},
             )
         return [optim_decoder, optim_latents]
 

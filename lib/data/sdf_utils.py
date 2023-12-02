@@ -1,25 +1,10 @@
 from pathlib import Path
 
-# from mesh_to_sdf import sample_sdf_near_surface
-# import mesh2sdf
 import numpy as np
-import open3d as o3d
 import trimesh
 
-# from lib.data.sketch import obj_path
 
-
-def scale_to_unit_sphere_o3d(mesh: o3d.t.geometry.TriangleMesh):
-    bb = mesh.get_axis_aligned_bounding_box()
-    vertices = mesh.vertex.positions - bb.get_center()
-    dist = np.linalg.norm(vertices.numpy(), axis=1)
-    dist_max = np.max(dist)
-    vertices /= dist_max
-    mesh.vertex.positions = vertices
-    return mesh
-
-
-def scale_to_unit_sphere_trimesh(mesh: trimesh.Trimesh):
+def scale_to_unit_sphere(mesh: trimesh.Trimesh, scale, offset):
     vertices = mesh.vertices - mesh.bounding_box.centroid
     distances = np.linalg.norm(vertices, axis=1)
     vertices /= np.max(distances)
@@ -27,7 +12,7 @@ def scale_to_unit_sphere_trimesh(mesh: trimesh.Trimesh):
     return trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
 
 
-def scale_to_unit_cube(mesh: trimesh.Trimesh):
+def scale_to_unit_cube(mesh: trimesh.Trimesh, scale, offset):
     centroid = np.mean(
         mesh.vertices, axis=0
     )  # this sounds more like the mean, but it is how ShapeNetV2 officially normalizes the shapes
@@ -39,92 +24,3 @@ def scale_to_unit_cube(mesh: trimesh.Trimesh):
     vertices = (mesh.vertices - centroid) * norm
 
     return trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
-
-
-def scale_to_unit_sphere(mesh: trimesh.Trimesh, buffer: float = 1.03):
-    min = mesh.vertices.min(axis=0)
-    max = mesh.vertices.max(axis=0)
-    center = (max + min) / 2
-    mesh.vertices = mesh.vertices - center
-
-    scale = np.linalg.norm(mesh.vertices, axis=1).max()
-    scale *= buffer
-
-    mesh.vertices = mesh.vertices / scale
-    return mesh, center, scale
-
-
-def rescale_to_unit_cube(mesh: trimesh.Trimesh, offset: np.ndarray, scale: float):
-    mesh.vertices = (mesh.vertices * scale) + offset
-    return mesh
-
-
-def sample_volume_unit_sphere(count: int) -> np.ndarray:
-    """Sample points from unit sphere by rejection
-
-    Args:
-        count (int): number of points to sample
-
-    Returns:
-        np.ndarray: array of points, with n<=count samples
-    """
-    samples = np.random.uniform(low=-1, high=1, size=(int(count * 2.1), 3))
-    norm = np.linalg.norm(samples, axis=1)
-    samples = samples[norm <= 1]
-    if samples.shape[0] > count:
-        return samples[:count]
-    else:
-        return samples
-
-
-def create_sdf_samples_grid(path: str, num_samples: int = 10000):
-    # disable the warning
-    o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)
-
-    # create mesh
-    mesh = o3d.io.read_triangle_mesh(path)
-    mesh = o3d.t.geometry.TriangleMesh.from_legacy(mesh)
-
-    # transform to unit sphere
-    mesh = scale_to_unit_sphere_o3d(mesh)
-
-    mesh = mesh.to_legacy()
-
-    # sample & perturb points from mesh
-    cloud = mesh.sample_points_uniformly(num_samples // 2)
-
-    np_cloud = np.asarray(cloud.points)
-    # np_normals = np.asarray(cloud.normalize_normals().normals)
-
-    noise = np.random.normal(scale=np.sqrt(0.0025), size=(num_samples // 2, 3))
-    noise_2 = np.random.normal(scale=np.sqrt(0.00025), size=(num_samples // 2, 3))
-
-    # np_noised_normals_1 = np_normals * noise.reshape(-1, 1)
-    # np_noised_normals_2 = np_normals * noise_2.reshape(-1, 1)
-
-    np_noised_cloud = noise + np_cloud
-    np_noised_cloud_2 = noise_2 + np_cloud
-
-    # sample points form unit sphere
-    points_sphere = sample_volume_unit_sphere(int(num_samples * 0.2))
-
-    points = np.concatenate((np_noised_cloud, np_noised_cloud_2, points_sphere)).astype(
-        np.float32
-    )
-
-    # retrieve the sdf values
-    scene = o3d.t.geometry.RaycastingScene()
-    scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(mesh))
-    signed_distance = scene.compute_signed_distance(points).numpy()
-    return np.column_stack((points, signed_distance))
-
-
-# def get_sdf_samples_(obj_id: Path, number_of_points=50000):
-#     # import os
-
-#     # os.environ["PYOPENGL_PLATFORM"] = "egl"
-
-#     mesh = trimesh.load(obj_id, force="mesh")
-#     points, sdf = sample_sdf_near_surface(mesh, number_of_points=number_of_points)
-
-#     return np.column_stack((points, sdf))

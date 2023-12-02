@@ -1,4 +1,5 @@
 import json
+import random
 from pathlib import Path
 
 import numpy as np
@@ -41,26 +42,80 @@ class DeepSDFDataset(Dataset):
         pos_tensor = self._remove_nans(torch.from_numpy(data["pos"]))
         neg_tensor = self._remove_nans(torch.from_numpy(data["neg"]))
 
-        hlf = self.subsample // 2
+        # split the sample into half
+        half = int(self.subsample / 2)
 
-        pos_samples = torch.randperm(pos_tensor)[:hlf]
-        neg_samples = torch.randperm(neg_tensor)[:hlf]
+        random_pos = (torch.rand(half) * pos_tensor.shape[0]).long()
+        random_neg = (torch.rand(half) * neg_tensor.shape[0]).long()
 
-        samples = torch.cat([pos_samples, neg_samples], dim=0)
+        sample_pos = torch.index_select(pos_tensor, 0, random_pos)
+        sample_neg = torch.index_select(neg_tensor, 0, random_neg)
+
+        samples = torch.cat([sample_pos, sample_neg], 0)
 
         return samples
+
+        # hlf = self.subsample // 2
+
+        # pos_samples = torch.randperm(pos_tensor)[:hlf]
+        # neg_samples = torch.randperm(neg_tensor)[:hlf]
+
+        # samples = torch.cat([pos_samples, neg_samples], dim=0)
+
+        # return samples
 
     def _load_sdf_samples_from_ram(self, data):
         if self.subsample is None:
             return data
-        hlf = self.subsample // 2
+        # hlf = self.subsample // 2
 
-        pos_indices = torch.randperm(len(data[0]))[:hlf]
-        neg_indices = torch.randperm(len(data[1]))[:hlf]
+        ## numpy
+        ## random permutation only once
+        ## select a random index and then get the next hlf poitns
+        ## official implementation
 
-        samples = torch.cat([data[0][pos_indices], data[1][neg_indices]], dim=0)
+        ### 0 -> 15.714
+        # return torch.cat((data[0][:hlf], data[1][:hlf]), 0)
+
+        ### 1 -> 26.389s
+        # pos_indices = torch.randperm(len(data[0]))[:hlf]
+        # neg_indices = torch.randperm(len(data[1]))[:hlf]
+
+        ### 2 -> 29.005s
+        # pos_indices = random.sample(range(len(data[0])), hlf)
+        # neg_indices = random.sample(range(len(data[1])), hlf)
+
+        ### 3 -> 17.198s (with replacement), 25.338 (without replacement)
+        # pos_indices = np.random.choice(len(data[0]), hlf, replace=0)
+        # neg_indices = np.random.choice(len(data[1]), hlf, replace=0)
+
+        ### 4 -> 15.653 (official implementation)
+        pos_tensor = data[0]
+        neg_tensor = data[1]
+
+        # split the sample into half
+        half = int(self.subsample / 2)
+
+        pos_size = pos_tensor.shape[0]
+        neg_size = neg_tensor.shape[0]
+
+        pos_start_ind = random.randint(0, pos_size - half)
+        sample_pos = pos_tensor[pos_start_ind : (pos_start_ind + half)]
+
+        if neg_size <= half:
+            random_neg = (torch.rand(half) * neg_tensor.shape[0]).long()
+            sample_neg = torch.index_select(neg_tensor, 0, random_neg)
+        else:
+            neg_start_ind = random.randint(0, neg_size - half)
+            sample_neg = neg_tensor[neg_start_ind : (neg_start_ind + half)]
+
+        samples = torch.cat([sample_pos, sample_neg], 0)
 
         return samples
+
+        # samples = torch.cat([data[0][pos_indices], data[1][neg_indices]], dim=0)
+
+        # return samples
 
     def _remove_nans(self, tensor):
         tensor_nan = torch.isnan(tensor[:, 3])
@@ -68,8 +123,9 @@ class DeepSDFDataset(Dataset):
 
     def _load_to_ram(self, path):
         data = np.load(path)
-        pos_tensor = self._remove_nans(torch.from_numpy(data["pos"]))
-        neg_tensor = self._remove_nans(torch.from_numpy(data["neg"]))
+        # to make it fit into ram
+        pos_tensor = self._remove_nans(torch.from_numpy(data["pos"])).half()
+        neg_tensor = self._remove_nans(torch.from_numpy(data["neg"])).half()
         return [pos_tensor, neg_tensor]
 
     def __len__(self):
@@ -87,7 +143,7 @@ class DeepSDFDataset(Dataset):
             }
         else:
             _data = self._load_sdf_samples(self.npy_paths[idx])
-            idx = np.repeat(idx, len(_data)).reshape(-1, 1)  # needs to be fixed
+            idx = np.repeat(idx, len(_data))  # needs to be fixed
             return {
                 "xyz": _data[:, :3],
                 "sd": _data[:, 3],

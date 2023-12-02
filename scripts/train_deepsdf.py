@@ -2,10 +2,12 @@ from typing import List
 
 import hydra
 import lightning as L
+import torch
+
+# torch._dynamo.config.suppress_errors = True
 from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
-import torch
 
 from lib.utils import create_logger, instantiate_callbacks, instantiate_loggers
 
@@ -16,13 +18,17 @@ log = create_logger("train_deepsdf")
 def train(cfg: DictConfig) -> None:
     log.info("==> loading config ...")
     L.seed_everything(cfg.seed)
-    torch.set_float32_matmul_precision('medium')
+    torch.set_float32_matmul_precision("medium")
 
     log.info(f"==> initializing datamodule <{cfg.data._target_}>")
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
 
     log.info(f"==> initializing model <{cfg.model._target_}>")
     model: LightningModule = hydra.utils.instantiate(cfg.model)
+
+    # if torch.__version__.startswith("2"):
+    #     log.info(f"==> compiling model <{cfg.model._target_}>")
+    #     model = torch.compile(model, mode="reduce-overhead")
 
     log.info("==> initializing callbacks ...")
     callbacks: List[Callback] = instantiate_callbacks(cfg.get("callbacks"))
