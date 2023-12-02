@@ -53,6 +53,11 @@ apt-get install g++ -y
 pip install -e .
 ```
 
+tsne-cuda
+```bash
+pip3 install tsnecuda==3.0.1+cu122 -f https://tsnecuda.isx.ai/tsnecuda_stable.html
+```
+
 In order to find the interpreter path for VSCode do following:
 
 ```bash

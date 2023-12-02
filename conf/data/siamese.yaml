@@ -9,20 +9,20 @@ sketch_image_pairs_path: ${data.data_dir}/sketch_image_pairs.csv
 hd5py_file_name: ${data.dataset_name}.h5
 
 
-batch_size: 8
-num_workers: 0
-pin_memory: False
+batch_size: 128
+num_workers: 7
+pin_memory: True
 drop_last: True
 shuffle: True
-persistent_workers: False
+persistent_workers: True
 
 sampler: null
 dataset: 
-  _target_: lib.data.siamese_dataset.SiameseChunkDataset
+  _target_: lib.data.siamese_dataset.SiameseDatasetDynamicLoadDynamicTransform
   _partial_: True
-collate_fn:
-  _target_: lib.data.siamese_datamodule.chunk_collate_fn
-  _partial_: True
+collate_fn: null
+#   _target_: lib.data.siamese_datamodule.chunk_collate_fn
+#   _partial_: True
 
 ########################################################################
 # Split Settings

@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torchvision.models import resnet18
+from torchvision.models.resnet import ResNet18_Weights
 
 
 class DummyDecoder(nn.Module):
@@ -78,7 +79,11 @@ class SimpleDecoder(nn.Module):
 class ResNet18(nn.Module):
     def __init__(self, embedding_size: int = 64):
         super().__init__()
-        self.resnet18 = resnet18()
+        self.resnet18 = resnet18(ResNet18_Weights.IMAGENET1K_V1)
+        # for param in self.resnet18.parameters():
+        #     param.requires_grad = False
+        # for param in self.resnet18.layer4[-1].parameters():
+        #     param.requires_grad = True
         self.resnet18.fc = torch.nn.Linear(in_features=512, out_features=embedding_size)
 
     def forward(self, batch):

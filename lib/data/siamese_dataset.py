@@ -14,13 +14,21 @@ from lib.data.metainfo import MetaInfo
 class SiameseDatasetBase(Dataset):
     def __init__(
         self,
-        data_dir: str = "data/",
-        stage: str = "train",
+        metainfo: MetaInfo,
+        # data_dir: str = "data/",
+        # sketch_image_pairs_path: str = "data/sketch_image_pairs.csv",
+        # stage: str = "train",
         transforms: Optional[Callable] = None,
     ):
-        self.data_dir = data_dir
+        # self.data_dir = data_dir
         self.transforms = transforms if transforms else Compose()
-        self.metainfo = MetaInfo(data_dir=data_dir, split=stage)
+        self.metainfo = metainfo
+        self.data_dir = metainfo.data_dir
+        # self.metainfo = MetaInfo(
+        #     data_dir=data_dir,
+        #     sketch_image_pairs_path=sketch_image_pairs_path,
+        #     split=stage,
+        # )
         self._load()
 
     def _load(self):
@@ -149,6 +157,36 @@ class SiameseH5pyDataset(Dataset):
         image = self._fetch("images", obj_id)
         label = np.repeat(index, len(sketch))
         return {
+            "sketch": sketch,
+            "image": image,
+            "label": label,
+        }
+
+
+class SiameseDatasetEasyImages(SiameseDatasetBase):
+    def _fetch(self, folder: str, obj_id: str, image_id: str):
+        paths = [
+            Path(self.data_dir, obj_id, f"{folder}/00014.jpg"),
+            Path(self.data_dir, obj_id, f"{folder}/00015.jpg"),
+            Path(self.data_dir, obj_id, f"{folder}/00022.jpg"),
+            Path(self.data_dir, obj_id, f"{folder}/00023.jpg"),
+        ]
+        images = []
+        for path in paths:
+            image = cv2.imread(path.as_posix())
+            images.append(self.transforms(image))
+        return np.stack(images)
+
+    def __len__(self):
+        return self.metainfo.obj_id_count
+
+    def __getitem__(self, index):
+        obj_id = self.metainfo.obj_ids[index]
+        sketch = self._fetch("sketches", obj_id, "")
+        image = self._fetch("images", obj_id, "")
+        label = np.repeat(index, len(sketch))
+        return {
+            "obj_id": obj_id,
             "sketch": sketch,
             "image": image,
             "label": label,

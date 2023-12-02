@@ -5,7 +5,7 @@ defaults:
   - override /model: siamese
   - override /callbacks: default
   - override /trainer: default
-  # - override /logger: wandb
+  - override /logger: wandb
 
 task_name: "train"
 test: True
@@ -24,6 +24,7 @@ trainer:
   
 
 data:
+  sketch_image_pairs_path: ${data.data_dir}/_sketch_image_pairs.csv
   batch_size: 128 
   num_workers: 7
   pin_memory: True
@@ -65,7 +66,7 @@ model:
 
 tags: ["siamese", "images"]
 
-# logger:
-#   wandb:
-#     tags: ${tags}
-#     group: "siamese"
+logger:
+  wandb:
+    tags: ${tags}
+    group: "siamese"

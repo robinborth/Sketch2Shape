@@ -13,13 +13,13 @@ class MetaInfo:
     def __init__(
         self,
         data_dir: str = "data/",
-        dataset_splits_file_name: str = "dataset_splits.csv",
-        sketch_image_pairs_file_name: str = "sketch_image_pairs.csv",
+        dataset_splits_path: str = "data/dataset_splits.csv",
+        sketch_image_pairs_path: str = "data/sketch_image_pairs.csv",
         split: Optional[str] = None,
     ):
         self.data_dir = data_dir
-        dataset_splits_path = Path(data_dir, dataset_splits_file_name)
-        sketch_image_pairs_path = Path(data_dir, sketch_image_pairs_file_name)
+        self.dataset_splits_path = dataset_splits_path
+        self.sketch_image_pairs_path = sketch_image_pairs_path
         try:
             dataset_splits = pd.read_csv(dataset_splits_path)
             if split is not None:

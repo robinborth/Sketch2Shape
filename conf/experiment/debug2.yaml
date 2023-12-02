@@ -11,11 +11,12 @@ task_name: "train"
 test: True
 
 trainer:
-  accelerator: gpu
-  max_epochs: 1
-  # limit_train_batches: 256
+  accelerator: cpu
+  max_epochs: 10
   check_val_every_n_epoch: 1
-  val_check_interval: 32
+  limit_train_batches: 1
+  limit_val_batches: 1
+  val_check_interval: 1
   log_every_n_steps: 1
   # profiler:
   #   _target_: lightning.pytorch.profilers.SimpleProfiler 
@@ -24,21 +25,22 @@ trainer:
   
 
 data:
-  batch_size: 128 
+  batch_size: 32
   num_workers: 7
   pin_memory: True
   drop_last: True
   persistent_workers: True
   shuffle: False
-  sampler:
-    _target_: pytorch_metric_learning.samplers.MPerClassSampler
-    _partial_: True
-    m: 4
-  dataset:
-    _target_: lib.data.siamese_dataset.SiameseDatasetDynamicLoadDynamicTransform
-  collate_fn: null
-  #   _target_: lib.data.siamese_datamodule.chunk_collate_fn
+  sampler: null
+  # sampler:
+  #   _target_: pytorch_metric_learning.samplers.MPerClassSampler
   #   _partial_: True
+  #   m: 4
+  dataset:
+    _target_: lib.data.siamese_dataset.SiameseDatasetEasyImages
+  collate_fn:
+    _target_: lib.data.siamese_datamodule.chunk_collate_fn
+    _partial_: True
 
 model:
   scheduler: null

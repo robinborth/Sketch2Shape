@@ -4,6 +4,7 @@ from lightning import LightningDataModule
 from torch.utils.data import DataLoader, default_collate
 from torch.utils.data.sampler import Sampler
 from torchvision import transforms
+from torchvision.models.resnet import ResNet18_Weights
 
 from lib.data.metainfo import MetaInfo
 from lib.data.siamese_dataset import SiameseDatasetBase
@@ -12,6 +13,7 @@ from lib.data.siamese_dataset import SiameseDatasetBase
 def chunk_collate_fn(batch):
     batch = default_collate(batch)
     return {
+        "obj_id": batch["obj_id"],
         "sketch": batch["sketch"].flatten(0, 1),
         "image": batch["image"].flatten(0, 1),
         "label": batch["label"].flatten(0, 1),
@@ -46,40 +48,70 @@ class SiameseDataModule(LightningDataModule):
 
         self.transforms = transforms.Compose(
             [
+                # transforms.Resize(256),
+                # transforms.CenterCrop(224),
                 transforms.ToTensor(),
-                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
             ]
         )
 
+        # self.transforms = transforms.Compose(
+        #     [
+        #         transforms.ToTensor(),
+        #         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+        #     ]
+        # )
+
     def setup(self, stage: str):
         if stage == "fit":
-            self.train_dataset = self.hparams["dataset"](
-                stage="train",
+            self.train_metainfo = MetaInfo(
                 data_dir=self.hparams["data_dir"],
+                dataset_splits_path=self.hparams["dataset_splits_path"],
+                sketch_image_pairs_path=self.hparams["sketch_image_pairs_path"],
+                split="train",
+            )
+            self.train_dataset = self.hparams["dataset"](
+                metainfo=self.train_metainfo,
                 transforms=self.transforms,
             )
-            self.val_dataset = self.hparams["dataset"](
-                stage="val",
+            self.val_metainfo = MetaInfo(
                 data_dir=self.hparams["data_dir"],
+                dataset_splits_path=self.hparams["dataset_splits_path"],
+                sketch_image_pairs_path=self.hparams["sketch_image_pairs_path"],
+                split="train",
+            )
+            self.val_dataset = self.hparams["dataset"](
+                metainfo=self.val_metainfo,
                 transforms=self.transforms,
             )
         elif stage == "validate":
-            self.val_dataset = self.hparams["dataset"](
-                stage="val",
+            self.val_metainfo = MetaInfo(
                 data_dir=self.hparams["data_dir"],
+                dataset_splits_path=self.hparams["dataset_splits_path"],
+                sketch_image_pairs_path=self.hparams["sketch_image_pairs_path"],
+                split="val",
+            )
+            self.val_dataset = self.hparams["dataset"](
+                metainfo=self.val_metainfo,
                 transforms=self.transforms,
             )
         elif stage == "test":
-            self.test_dataset = self.hparams["dataset"](
-                stage="test",
+            self.test_metainfo = MetaInfo(
                 data_dir=self.hparams["data_dir"],
+                dataset_splits_path=self.hparams["dataset_splits_path"],
+                sketch_image_pairs_path=self.hparams["sketch_image_pairs_path"],
+                split="test",
+            )
+            self.test_dataset = self.hparams["dataset"](
+                metainfo=self.test_metainfo,
                 transforms=self.transforms,
             )
 
-    def build_sampler(self, split: str = "train"):
+    def build_sampler(self, metainfo: MetaInfo):
         sampler = None
         if self.hparams["sampler"]:
-            metainfo = MetaInfo(data_dir=self.hparams["data_dir"], split=split)
             sampler = self.hparams["sampler"](
                 labels=metainfo.labels,
                 length_before_new_iter=metainfo.pair_count,
@@ -95,7 +127,7 @@ class SiameseDataModule(LightningDataModule):
             drop_last=self.hparams["drop_last"],
             persistent_workers=self.hparams["persistent_workers"],
             shuffle=self.hparams["shuffle"],
-            sampler=self.build_sampler("train"),
+            sampler=self.build_sampler(self.train_metainfo),
             collate_fn=self.hparams["collate_fn"],
         )
 
@@ -107,7 +139,7 @@ class SiameseDataModule(LightningDataModule):
             pin_memory=self.hparams["pin_memory"],
             drop_last=self.hparams["drop_last"],
             persistent_workers=self.hparams["persistent_workers"],
-            sampler=self.build_sampler("val"),
+            sampler=self.build_sampler(self.val_metainfo),
             collate_fn=self.hparams["collate_fn"],
         )
 
@@ -119,6 +151,6 @@ class SiameseDataModule(LightningDataModule):
             pin_memory=self.hparams["pin_memory"],
             drop_last=self.hparams["drop_last"],
             persistent_workers=self.hparams["persistent_workers"],
-            sampler=self.build_sampler("test"),
+            sampler=self.build_sampler(self.test_metainfo),
             collate_fn=self.hparams["collate_fn"],
         )

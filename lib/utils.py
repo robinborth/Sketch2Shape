@@ -38,11 +38,15 @@ def instantiate_loggers(loggers_cfg: DictConfig) -> List[Logger]:
     return loggers
 
 
-def load_config(config_name: str) -> DictConfig:
+def load_config(config_name: str, overrides: list = None) -> DictConfig:
     """Loads the hydra config via code.
+
+    Args:
+        config_name (str): The name of the configuration.
+        overrides (list): List of overrides to apply.
 
     Returns:
         DictConfig: The initialized config.
     """
     with initialize(config_path="../conf", version_base=None):
-        return compose(config_name=config_name)
+        return compose(config_name=config_name, overrides=overrides)
