@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
-  - override /data: siamese_chair_large
+  - override /data: siamese_chair_small
   - override /model: siamese
   - override /callbacks: default
   - override /trainer: default
@@ -12,10 +12,10 @@ test: True
 
 trainer:
   accelerator: gpu
-  max_epochs: 1
+  max_epochs: 3
   # limit_train_batches: 256
   check_val_every_n_epoch: 1
-  val_check_interval: 200
+  # val_check_interval: 4
   log_every_n_steps: 1
   # profiler:
   #   _target_: lightning.pytorch.profilers.SimpleProfiler 
@@ -24,7 +24,7 @@ trainer:
   
 
 data:
-  batch_size: 128 
+  batch_size: 128
   num_workers: 7
   pin_memory: True
   drop_last: True
@@ -33,12 +33,10 @@ data:
   sampler:
     _target_: pytorch_metric_learning.samplers.MPerClassSampler
     _partial_: True
-    m: 4
+    m: 8
   dataset:
     _target_: lib.data.siamese_dataset.SiameseDatasetDynamicLoadDynamicTransform
   collate_fn: null
-  #   _target_: lib.data.siamese_datamodule.chunk_collate_fn
-  #   _partial_: True
 
 model:
   scheduler: null
@@ -60,8 +58,6 @@ model:
     reducer: 
       _target_: pytorch_metric_learning.reducers.ThresholdReducer
       low: 0
-    # distance: 
-    #   _target_: pytorch_metric_learning.distances.CosineSimilarity
 
 tags: ["siamese", "images"]
 

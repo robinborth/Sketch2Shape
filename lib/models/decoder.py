@@ -46,6 +46,7 @@ class SimpleDecoder(nn.Module):
         embedding_size: int = 32,
     ):
         super().__init__()
+        self.embedding_size = embedding_size
         self.cnn = nn.Sequential(
             nn.Conv2d(3, 16, 5),
             nn.ReLU(),
@@ -82,6 +83,7 @@ class SimpleDecoder(nn.Module):
 class ResNet18(nn.Module):
     def __init__(self, embedding_size: int = 64):
         super().__init__()
+        self.embedding_size = embedding_size
         self.resnet18 = resnet18(ResNet18_Weights.IMAGENET1K_V1)
         # for param in self.resnet18.parameters():
         #     param.requires_grad = False

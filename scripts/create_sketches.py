@@ -29,7 +29,10 @@ def main(cfg: DictConfig) -> None:
     logger.debug("==> loading config ...")
     L.seed_everything(cfg.seed)
 
-    metainfo = MetaInfo(data_dir=cfg.data.data_dir)
+    metainfo = MetaInfo(
+        data_dir=cfg.data.data_dir,
+        dataset_splits_path=cfg.data.dataset_splits_path,
+    )
     logger.debug(f"==> start extracting sketches for {metainfo.obj_id_count} shapes...")
     for obj_id in tqdm(metainfo.obj_ids, total=metainfo.obj_id_count):
         shape_path = obj_path(obj_id, config=cfg)
@@ -38,8 +41,8 @@ def main(cfg: DictConfig) -> None:
             shape_path,
             dist=cfg.data.dist,
             color=cfg.data.color,
-            elev=elevs,
-            azim=azims,
+            elevs=elevs,
+            azims=azims,
             image_size=cfg.data.image_size,
             device=cfg.data.render_device,
         )

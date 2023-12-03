@@ -37,17 +37,24 @@ num_obj_test: 16
 ########################################################################
 
 image_size: 256
-dist: 1.1
+dist: 1.0
 elev: [-22.5, 0, 22.5, 45] 
-azim: [-70, -35, 0, 35, 70, 105, 140, 175] 
-color: 0.4
-render_device: cuda
+azim: [0, 30, 60, 90, 112.5, 135, 157.5, 180]
+color: 1.0
+render_device: cuda:0
 
 ########################################################################
 # Sketch Setting
 ########################################################################
 
-t_lower: 100
-t_upper: 150
+# high resolution
+t_lower: 20
+t_upper: 40
 aperture_size: 3  # 3, 5, 7
 L2gradient: True
+
+# low resolution
+# t_lower: 40
+# t_upper: 50
+# aperture_size: 3  # 3, 5, 7
+# L2gradient: True

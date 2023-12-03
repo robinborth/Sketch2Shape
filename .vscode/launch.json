@@ -18,7 +18,18 @@
             "request": "launch",
             "program": "scripts/train_siamese.py",
             "args": [
-                "+experiment=debug2"
+                "+experiment=debug"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
+            "name": "Debug: Eval Siamese",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/eval_siamese.py",
+            "args": [
+                "+experiment=eval"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

@@ -4,7 +4,6 @@ from lightning import LightningDataModule
 from torch.utils.data import DataLoader, default_collate
 from torch.utils.data.sampler import Sampler
 from torchvision import transforms
-from torchvision.models.resnet import ResNet18_Weights
 
 from lib.data.metainfo import MetaInfo
 from lib.data.siamese_dataset import SiameseDatasetBase
@@ -48,21 +47,14 @@ class SiameseDataModule(LightningDataModule):
 
         self.transforms = transforms.Compose(
             [
-                # transforms.Resize(256),
-                # transforms.CenterCrop(224),
                 transforms.ToTensor(),
+                # transforms.RandomHorizontalFlip(),
                 transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                    mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225],
                 ),
             ]
         )
-
-        # self.transforms = transforms.Compose(
-        #     [
-        #         transforms.ToTensor(),
-        #         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        #     ]
-        # )
 
     def setup(self, stage: str):
         if stage in ["fit", "all"]:
@@ -76,7 +68,7 @@ class SiameseDataModule(LightningDataModule):
                 metainfo=self.train_metainfo,
                 transforms=self.transforms,
             )
-        elif stage in ["validate", "fit", "all"]:
+        if stage in ["validate", "fit", "all"]:
             self.val_metainfo = MetaInfo(
                 data_dir=self.hparams["data_dir"],
                 dataset_splits_path=self.hparams["dataset_splits_path"],
