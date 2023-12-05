@@ -87,7 +87,7 @@ class DeepSDF(L.LightningModule):
             y = torch.clamp(y, -self.hparams["clamp_val"], self.hparams["clamp_val"])
 
         l1_loss = self.loss(y, y_hat)
-        self.log("train/l1_loss", l1_loss)
+        self.log("train/l1_loss", l1_loss, on_step=True, on_epoch=True)
 
         if self.hparams["reg_loss"]:
             reg_loss_sum = torch.sum(torch.linalg.norm(lat_vec))
@@ -96,7 +96,7 @@ class DeepSDF(L.LightningModule):
                 * min(1, 1 / (self.current_epoch + 1))
                 * self.hparams["sigma"]
             ) / y.shape[0]
-            self.log("train/reg_loss", reg_loss)
+            self.log("train/reg_loss", reg_loss, on_step=True, on_epoch=True)
             loss = l1_loss + reg_loss
         else:
             loss = l1_loss
@@ -112,6 +112,8 @@ class DeepSDF(L.LightningModule):
         self.log(
             "train/loss",
             loss,
+            on_step=True,
+            on_epoch=True,
             prog_bar=True,
         )
         return loss

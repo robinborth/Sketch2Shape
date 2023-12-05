@@ -55,35 +55,9 @@ class DeepSDFDataset(Dataset):
 
         return samples
 
-        # hlf = self.subsample // 2
-
-        # pos_samples = torch.randperm(pos_tensor)[:hlf]
-        # neg_samples = torch.randperm(neg_tensor)[:hlf]
-
-        # samples = torch.cat([pos_samples, neg_samples], dim=0)
-
-        # return samples
-
     def _load_sdf_samples_from_ram(self, data):
         if self.subsample is None:
             return data
-        # hlf = self.subsample // 2
-
-        ## numpy
-        ## random permutation only once
-        ## select a random index and then get the next hlf poitns
-        ## official implementation
-
-        ### 0 -> 15.714
-        # return torch.cat((data[0][:hlf], data[1][:hlf]), 0)
-
-        ### 1 -> 26.389s
-        # pos_indices = torch.randperm(len(data[0]))[:hlf]
-        # neg_indices = torch.randperm(len(data[1]))[:hlf]
-
-        ### 2 -> 29.005s
-        # pos_indices = random.sample(range(len(data[0])), hlf)
-        # neg_indices = random.sample(range(len(data[1])), hlf)
 
         ### 3 -> 17.198s (with replacement), 25.338 (without replacement)
         # pos_indices = np.random.choice(len(data[0]), hlf, replace=0)
@@ -113,10 +87,6 @@ class DeepSDFDataset(Dataset):
 
         return samples
 
-        # samples = torch.cat([data[0][pos_indices], data[1][neg_indices]], dim=0)
-
-        # return samples
-
     def _remove_nans(self, tensor):
         tensor_nan = torch.isnan(tensor[:, 3])
         return tensor[~tensor_nan, :]
@@ -124,9 +94,17 @@ class DeepSDFDataset(Dataset):
     def _load_to_ram(self, path):
         data = np.load(path)
         # to make it fit into ram
-        pos_tensor = self._remove_nans(torch.from_numpy(data["pos"])).half()
-        neg_tensor = self._remove_nans(torch.from_numpy(data["neg"])).half()
-        return [pos_tensor, neg_tensor]
+        pos_tensor = self._remove_nans(torch.from_numpy(data["pos"]))
+        neg_tensor = self._remove_nans(torch.from_numpy(data["neg"]))
+
+        ### 3 -> 17.198s (with replacement), 25.338 (without replacement)
+        # pos_indices = np.random.choice(len(data[0]), hlf, replace=0)
+        # neg_indices = np.random.choice(len(data[1]), hlf, replace=0)
+
+        pos_shuffle = torch.randperm(pos_tensor.shape[0])
+        neg_shuffle = torch.randperm(neg_tensor.shape[0])
+
+        return [pos_tensor[pos_shuffle], neg_tensor[neg_shuffle]]
 
     def __len__(self):
         return len(self.npy_paths)

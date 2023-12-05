@@ -39,5 +39,6 @@ create_sketches:
 ########################################################################
 
 train_deepsdf:
-	python scripts/train_deepsdf.py +experiment=deepsdf_overfit_scene logger=wandb
-	python scripts/train_deepsdf.py +experiment=deepsdf_overfit_batch logger=wandb
+	python scripts/train_deepsdf.py +experiment=deepsdf_overfit_1 logger=wandb
+	python scripts/train_deepsdf.py +experiment=deepsdf_overfit_4 logger=wandb
+	python scripts/train_deepsdf.py +experiment=deepsdf_overfit_16 logger=wandb

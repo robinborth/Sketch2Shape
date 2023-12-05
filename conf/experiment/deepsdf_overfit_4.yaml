@@ -12,24 +12,26 @@ defaults:
 # all parameters below will be merged with parameters from default configurations set above
 # this allows you to overwrite only specified parameters
 
-tags: ["overfit_batch", "our_machine"]
+tags: ["overfit_4"]
 
 trainer:
   accelerator: gpu
-  max_epochs: 10000
+  max_epochs: 100000
+  precision: 16-mixed
   log_every_n_steps: 1
 
 data:
-  experiment: overfit_four
-  data_dir: ${paths.data_dir}/deepsdf/SdfSamples/${data.experiment}
-  norm_dir: ${paths.data_dir}/deepsdf/NormalizationParameters/${data.experiment}
-  surf_dir: ${paths.data_dir}/deepsdf/SurfaceSamples/${data.experiment}
+  experiment: overfit_4
+  data_dir: ${paths.data_dir}/SdfSamples/${data.experiment}
+  norm_dir: ${paths.data_dir}/SdfSamples/NormalizationParameters/${data.experiment}
+  surf_dir: ${paths.data_dir}/SdfSamples/SurfaceSamples/${data.experiment}
   batch_size: 4
   num_workers: 4
   pin_memory: False
   drop_last: True
   persistent_workers: True
-  subsample: 16384
+  subsample: 65536
+  load_ram: False
 
 model:
   latent_size: 512
@@ -47,9 +49,8 @@ model:
 
 callbacks:
   model_checkpoint:
-    every_n_epochs: 2000
     save_last: True
-    save_top_k: -1
+    save_top_k: 1
 
 logger:
   wandb:

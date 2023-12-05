@@ -12,26 +12,26 @@ defaults:
 # all parameters below will be merged with parameters from default configurations set above
 # this allows you to overwrite only specified parameters
 
-tags: ["overfit_batch", "our_machine"]
+tags: ["overfit_1"]
 
 trainer:
   accelerator: gpu
-  max_epochs: 10000
-  precision: 16-mixed
-  # log_every_n_steps: 1
+  max_epochs: 100000
+  # precision: 16-mixed
+  log_every_n_steps: 1
 
 data:
-  experiment: overfit_batch
-  data_dir: ${paths.data_dir}/deepsdf/SdfSamples/${data.experiment}
-  norm_dir: ${paths.data_dir}/deepsdf/NormalizationParameters/${data.experiment}
-  surf_dir: ${paths.data_dir}/deepsdf/SurfaceSamples/${data.experiment}
-  batch_size: 16
+  experiment: overfit_1
+  data_dir: ${paths.data_dir}/SdfSamples/${data.experiment}
+  norm_dir: ${paths.data_dir}/SdfSamples/NormalizationParameters/${data.experiment}
+  surf_dir: ${paths.data_dir}/SdfSamples/SurfaceSamples/${data.experiment}
+  batch_size: 1
   num_workers: 4
   pin_memory: False
   drop_last: True
   persistent_workers: True
-  subsample: 16384 # 32768
-  load_ram: False
+  subsample: 65536
+  load_ram: True
 
 model:
   latent_size: 512
@@ -40,30 +40,16 @@ model:
   clamp: True
   clamp_val: 0.1
   reg_loss: True
-  num_scenes: 16
+  num_scenes: 1
   sigma: 1e-4
   skip_connection: [4]
   dropout: False
-  dropout_p: 0.2
-  weight_norm: False
-
-  decoder_scheduler:
-    _partial_: True
-    _target_: torch.optim.lr_scheduler.StepLR
-    step_size: 2500
-    gamma: 0.5
-
-  latents_scheduler:
-    _partial_: True
-    _target_: torch.optim.lr_scheduler.StepLR
-    step_size: 2500
-    gamma: 0.5
+  dropout_p: 0.1
 
 callbacks:
   model_checkpoint:
-    every_n_epochs: 5000
     save_last: True
-    save_top_k: -1
+    save_top_k: 1
 
 logger:
   wandb:
