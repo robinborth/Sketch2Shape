@@ -30,6 +30,7 @@ def reconstruct_training_data(
     idx2shape: dict,
     resolution_list: list = [256],
     chunck_size: int = 500_000,  # based on 2080TI / 16GB RAM (very rough estimate)
+    limit: int = 16,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -119,6 +120,10 @@ def reconstruct_training_data(
             gc.collect()
 
             list_obj_paths.append(path_obj)
+
+            if i >= limit:
+                break
+
     return list_obj_paths
 
 
