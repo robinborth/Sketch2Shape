@@ -13,10 +13,12 @@ class DeepSDFDataset(Dataset):
         data_dir: str = "data/",
         load_ram: bool = True,
         subsample: int = 16384,
+        half: bool = False,
     ) -> None:
         self.data_dir = data_dir
         self.load_ram = load_ram
         self.subsample = subsample
+        self.half = half
         self._load()
 
     def _load(self):
@@ -58,34 +60,39 @@ class DeepSDFDataset(Dataset):
     def _load_sdf_samples_from_ram(self, data):
         if self.subsample is None:
             return data
+        
+        hlf = self.subsample // 2
 
         ### 3 -> 17.198s (with replacement), 25.338 (without replacement)
-        # pos_indices = np.random.choice(len(data[0]), hlf, replace=0)
-        # neg_indices = np.random.choice(len(data[1]), hlf, replace=0)
+        pos_indices = np.random.choice(len(data[0]), hlf, replace=0)
+        neg_indices = np.random.choice(len(data[1]), hlf, replace=0)
 
-        ### 4 -> 15.653 (official implementation)
-        pos_tensor = data[0]
-        neg_tensor = data[1]
-
-        # split the sample into half
-        half = int(self.subsample / 2)
-
-        pos_size = pos_tensor.shape[0]
-        neg_size = neg_tensor.shape[0]
-
-        pos_start_ind = random.randint(0, pos_size - half)
-        sample_pos = pos_tensor[pos_start_ind : (pos_start_ind + half)]
-
-        if neg_size <= half:
-            random_neg = (torch.rand(half) * neg_tensor.shape[0]).long()
-            sample_neg = torch.index_select(neg_tensor, 0, random_neg)
-        else:
-            neg_start_ind = random.randint(0, neg_size - half)
-            sample_neg = neg_tensor[neg_start_ind : (neg_start_ind + half)]
-
-        samples = torch.cat([sample_pos, sample_neg], 0)
-
+        samples = torch.cat([data[0][pos_indices], data[1][neg_indices]], dim=0)
         return samples
+
+        # ### 4 -> 15.653 (official implementation)
+        # pos_tensor = data[0]
+        # neg_tensor = data[1]
+
+        # # split the sample into half
+        # half = int(self.subsample / 2)
+
+        # pos_size = pos_tensor.shape[0]
+        # neg_size = neg_tensor.shape[0]
+
+        # pos_start_ind = random.randint(0, pos_size - half)
+        # sample_pos = pos_tensor[pos_start_ind : (pos_start_ind + half)]
+
+        # if neg_size <= half:
+        #     random_neg = (torch.rand(half) * neg_tensor.shape[0]).long()
+        #     sample_neg = torch.index_select(neg_tensor, 0, random_neg)
+        # else:
+        #     neg_start_ind = random.randint(0, neg_size - half)
+        #     sample_neg = neg_tensor[neg_start_ind : (neg_start_ind + half)]
+
+        # samples = torch.cat([sample_pos, sample_neg], 0)
+
+        # return samples
 
     def _remove_nans(self, tensor):
         tensor_nan = torch.isnan(tensor[:, 3])
@@ -97,14 +104,18 @@ class DeepSDFDataset(Dataset):
         pos_tensor = self._remove_nans(torch.from_numpy(data["pos"]))
         neg_tensor = self._remove_nans(torch.from_numpy(data["neg"]))
 
+        if self.half:
+            pos_tensor = pos_tensor.half()
+            neg_tensor = neg_tensor.half()
+
         ### 3 -> 17.198s (with replacement), 25.338 (without replacement)
         # pos_indices = np.random.choice(len(data[0]), hlf, replace=0)
         # neg_indices = np.random.choice(len(data[1]), hlf, replace=0)
 
-        pos_shuffle = torch.randperm(pos_tensor.shape[0])
-        neg_shuffle = torch.randperm(neg_tensor.shape[0])
+        # pos_shuffle = torch.randperm(pos_tensor.shape[0])
+        # neg_shuffle = torch.randperm(neg_tensor.shape[0])
 
-        return [pos_tensor[pos_shuffle], neg_tensor[neg_shuffle]]
+        return [pos_tensor, neg_tensor]
 
     def __len__(self):
         return len(self.npy_paths)

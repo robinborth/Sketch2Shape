@@ -23,8 +23,8 @@ trainer:
 data:
   experiment: overfit_1
   data_dir: ${paths.data_dir}/SdfSamples/${data.experiment}
-  norm_dir: ${paths.data_dir}/SdfSamples/NormalizationParameters/${data.experiment}
-  surf_dir: ${paths.data_dir}/SdfSamples/SurfaceSamples/${data.experiment}
+  norm_dir: ${paths.data_dir}/NormalizationParameters/${data.experiment}
+  surf_dir: ${paths.data_dir}/SurfaceSamples/${data.experiment}
   batch_size: 1
   num_workers: 4
   pin_memory: False
@@ -32,6 +32,7 @@ data:
   persistent_workers: True
   subsample: 65536
   load_ram: True
+  half: False
 
 model:
   latent_size: 512
@@ -44,12 +45,13 @@ model:
   sigma: 1e-4
   skip_connection: [4]
   dropout: False
-  dropout_p: 0.1
+  dropout_p: 0.2
 
 callbacks:
   model_checkpoint:
+    every_n_epochs: 5000
     save_last: True
-    save_top_k: 1
+    save_top_k: -1
 
 logger:
   wandb:

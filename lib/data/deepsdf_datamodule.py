@@ -15,6 +15,7 @@ class DeepSDFDataModule(LightningDataModule):
         data_dir: str = "data/",
         load_ram: bool = True,
         subsample: int = 16384,
+        half: bool = False,
         # training
         batch_size: int = 32,
         num_workers: int = 0,
@@ -37,6 +38,7 @@ class DeepSDFDataModule(LightningDataModule):
             data_dir=self.hparams["data_dir"],
             load_ram=self.hparams["load_ram"],
             subsample=self.hparams["subsample"],
+            half=self.hparams["half"]
         )
 
     def train_dataloader(self) -> DataLoader:

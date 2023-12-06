@@ -16,21 +16,23 @@ tags: ["overfit_16"]
 
 trainer:
   accelerator: gpu
-  max_epochs: 100000
-  precision: 16-mixed
+  max_epochs: 20000
+  # precision: 16-mixed
   log_every_n_steps: 1
 
 data:
   experiment: overfit_16
   data_dir: ${paths.data_dir}/SdfSamples/${data.experiment}
-  norm_dir: ${paths.data_dir}/SdfSamples/NormalizationParameters/${data.experiment}
-  surf_dir: ${paths.data_dir}/SdfSamples/SurfaceSamples/${data.experiment}
+  norm_dir: ${paths.data_dir}/NormalizationParameters/${data.experiment}
+  surf_dir: ${paths.data_dir}/SurfaceSamples/${data.experiment}
   batch_size: 16
   num_workers: 4
   pin_memory: False
   drop_last: True
   persistent_workers: True
   subsample: 16384
+  load_ram: True
+  half: False
 
 model:
   latent_size: 512
