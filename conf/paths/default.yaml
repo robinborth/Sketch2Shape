@@ -17,3 +17,6 @@ work_dir: ${hydra:runtime.cwd}
 
 # path to the downloaded shapenet directory
 shapenet_dir: /shared/data/ShapeNetCore/Chair/03001627
+
+# path to DeepSDF preprocessed data
+deepsdf_dir: /shared/data/ShapeNetV2
