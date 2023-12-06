@@ -2,6 +2,7 @@
 
 defaults:
   - _self_
+  - hydra: default
   - paths: default
 
   # optional local config for machine/user specific settings
