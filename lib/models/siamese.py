@@ -12,6 +12,7 @@ class Siamese(LightningModule):
         optimizer: torch.optim.Optimizer,
         scheduler: torch.optim.lr_scheduler,
         mine_full_batch: bool = False,
+        scale_loss: bool = False,
     ) -> None:
         super().__init__()
 
@@ -64,6 +65,9 @@ class Siamese(LightningModule):
         max_count = torch.tensor((m - 1) * batch_size * (batch_size - m))
         output["miner_max_count"] = max_count
         output["miner_ratio"] = output["miner_count"] / output["miner_max_count"]
+
+        if self.hparams["scale_loss"]:
+            loss *= output["miner_ratio"]
 
         return output, loss
 
