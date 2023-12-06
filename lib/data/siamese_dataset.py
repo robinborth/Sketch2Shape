@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Callable, Optional
 
 import cv2
+import h5py
+import numpy as np
 from torch.utils.data import Dataset
 from torchvision.transforms import Compose
 
@@ -12,13 +14,12 @@ from lib.data.metainfo import MetaInfo
 class SiameseDatasetBase(Dataset):
     def __init__(
         self,
-        data_dir: str = "data/",
-        stage: str = "train",
+        metainfo: MetaInfo,
         transforms: Optional[Callable] = None,
     ):
-        self.data_dir = data_dir
         self.transforms = transforms if transforms else Compose()
-        self.metainfo = MetaInfo(data_dir=data_dir, split=stage)
+        self.metainfo = metainfo
+        self.data_dir = metainfo.data_dir
         self._load()
 
     def _load(self):
@@ -34,10 +35,9 @@ class SiameseDatasetBase(Dataset):
         info = self.metainfo.get_pair(index)
         obj_id = info["obj_id"]
         image_id = info["image_id"]
-        sketch_id = info["sketch_id"]
         label = info["label"]
 
-        sketch = self._fetch("sketches", obj_id, sketch_id)
+        sketch = self._fetch("sketches", obj_id, image_id)
         image = self._fetch("images", obj_id, image_id)
 
         return {
@@ -45,7 +45,6 @@ class SiameseDatasetBase(Dataset):
             "image": image,
             "label": label,
             "image_id": image_id,
-            "sketch_id": image_id,
         }
 
 
@@ -86,3 +85,100 @@ class SiameseDatasetDynamicLoadDynamicTransform(SiameseDatasetBase):
         path = Path(self.data_dir, obj_id, f"{folder}/{image_id}.jpg")
         image = cv2.imread(path.as_posix())
         return self.transforms(image)
+
+
+class SiameseChunkDataset(Dataset):
+    def __init__(
+        self,
+        data_dir: str = "data/",
+        stage: str = "train",
+        transforms: Optional[Callable] = None,
+    ):
+        self.data_dir = data_dir
+        self.transforms = transforms if transforms else Compose()
+        self.metainfo = MetaInfo(data_dir=data_dir, split=stage)
+
+    def _fetch(self, folder: str, obj_id: str):
+        paths = Path(self.data_dir, obj_id, folder).glob("*.jpg")
+        images = []
+        for path in paths:
+            image = cv2.imread(path.as_posix())
+            images.append(self.transforms(image))
+        return np.stack(images)
+
+    def __len__(self):
+        return self.metainfo.obj_id_count
+
+    def __getitem__(self, index):
+        obj_id = self.metainfo.obj_ids[index]
+        sketch = self._fetch("sketches", obj_id)
+        image = self._fetch("images", obj_id)
+        label = np.repeat(index, len(sketch))
+        return {
+            "sketch": sketch,
+            "image": image,
+            "label": label,
+        }
+
+
+class SiameseH5pyDataset(Dataset):
+    def __init__(
+        self,
+        data_dir: str = "data/",
+        stage: str = "train",
+        transforms: Optional[Callable] = None,
+    ):
+        self.data_dir = data_dir
+        self.transforms = transforms if transforms else Compose()
+        self.metainfo = MetaInfo(data_dir=data_dir, split=stage)
+
+    def _fetch(self, folder: str, obj_id: str):
+        hd5py_file_name = f"{Path(self.data_dir).stem}.h5"
+        h5_file = h5py.File(Path(self.data_dir, obj_id, hd5py_file_name), "r+")
+        data = np.array(h5_file[folder].astype(np.uint8))
+        h5_file.close()
+        return np.stack([self.transforms(img) for img in data])
+
+    def __len__(self):
+        return self.metainfo.obj_id_count
+
+    def __getitem__(self, index):
+        obj_id = self.metainfo.obj_ids[index]
+        sketch = self._fetch("sketches", obj_id)
+        image = self._fetch("images", obj_id)
+        label = np.repeat(index, len(sketch))
+        return {
+            "sketch": sketch,
+            "image": image,
+            "label": label,
+        }
+
+
+class SiameseDatasetEasyImages(SiameseDatasetBase):
+    def _fetch(self, folder: str, obj_id: str, image_id: str):
+        paths = [
+            Path(self.data_dir, obj_id, f"{folder}/00014.jpg"),
+            Path(self.data_dir, obj_id, f"{folder}/00015.jpg"),
+            Path(self.data_dir, obj_id, f"{folder}/00022.jpg"),
+            Path(self.data_dir, obj_id, f"{folder}/00023.jpg"),
+        ]
+        images = []
+        for path in paths:
+            image = cv2.imread(path.as_posix())
+            images.append(self.transforms(image))
+        return np.stack(images)
+
+    def __len__(self):
+        return self.metainfo.obj_id_count
+
+    def __getitem__(self, index):
+        obj_id = self.metainfo.obj_ids[index]
+        sketch = self._fetch("sketches", obj_id, "")
+        image = self._fetch("images", obj_id, "")
+        label = np.repeat(index, len(sketch))
+        return {
+            "obj_id": obj_id,
+            "sketch": sketch,
+            "image": image,
+            "label": label,
+        }

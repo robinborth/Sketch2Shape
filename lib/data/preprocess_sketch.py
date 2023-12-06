@@ -1,18 +1,27 @@
 import os
-from typing import Union
+from typing import Any
 
 import cv2 as cv
 import matplotlib.pyplot as plt
 import numpy as np
+import open3d as o3d
 import torch
+from open3d.utility import VerbosityLevel, set_verbosity_level
 from pytorch3d.io import load_obj
 from pytorch3d.renderer import (
+    DirectionalLights,
+    FoVOrthographicCameras,
     FoVPerspectiveCameras,
+    HardFlatShader,
+    HardGouraudShader,
+    HardPhongShader,
     MeshRasterizer,
     MeshRenderer,
     PointLights,
     RasterizationSettings,
+    SoftGouraudShader,
     SoftPhongShader,
+    SoftSilhouetteShader,
     TexturesVertex,
     look_at_view_transform,
 )
@@ -61,67 +70,72 @@ def image_grid(
 def render_shapenet(
     path: str,
     dist: float = 1.0,
-    elev: Union[int, torch.Tensor] = 0,
-    azim: Union[int, torch.Tensor] = 0,
-    color: float = 0.85,
+    elevs: list[int] = [0],
+    azims: list[int] = [0],
+    color: float = 1,
     image_size: int = 256,
+    device: Any = None,
 ):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    # settings
+    set_verbosity_level(VerbosityLevel.Error)
+    if device is None:
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    # load and prepare the shapenet objects
-    verts, faces_idx, _ = load_obj(path, load_textures=False)
-    faces = faces_idx.verts_idx
+    # load the mesh
+    open3d_mesh = o3d.io.read_triangle_mesh(path)
+    verts = torch.tensor(np.asarray(open3d_mesh.vertices), dtype=torch.float32).to(
+        device
+    )
+    faces = torch.tensor(np.asarray(open3d_mesh.triangles), dtype=torch.int64).to(
+        device
+    )
 
-    # set the rendering texture color to grey
-    verts_rgb = torch.zeros_like(verts)[None]  # (1, V, 3)
+    # set the texture
+    verts_rgb = torch.ones_like(verts)[None]
     verts_rgb[:, :, :] = color
-    textures = TexturesVertex(verts_features=verts_rgb.to(device))
+    textures = TexturesVertex(verts_features=verts_rgb)
 
-    # create a Meshes object
+    # create pytorch 3d mesh
     mesh = Meshes(
-        verts=[verts.to(device)],
-        faces=[faces.to(device)],
+        verts=[verts],
+        faces=[faces],
         textures=textures,
     )
 
-    # get the correct batch_size to cast the mash
-    if torch.is_tensor(elev) and torch.is_tensor(azim):
-        assert elev.shape[0] == azim.shape[0]  # type: ignore
-
-    batch_size = 1
-    if torch.is_tensor(elev):
-        batch_size = elev.shape[0]  # type: ignore
-    elif torch.is_tensor(azim):
-        batch_size = azim.shape[0]  # type: ignore
-
-    mesh = mesh.extend(batch_size)
-
-    # initilizing the camara
-    R, T = look_at_view_transform(dist=dist, elev=elev, azim=azim)
-    cameras = FoVPerspectiveCameras(device=device, R=R, T=T)
-
     # initilizing the rasterization
-    raster_settings = RasterizationSettings(image_size=image_size, bin_size=0)
+    raster_settings = RasterizationSettings(
+        image_size=image_size,
+        blur_radius=0.0,
+        faces_per_pixel=8,
+    )
 
     # initilizing the lights
-    lights = PointLights(device=device, location=[[0.0, 0.0, 0.0]])
+    lights = PointLights(device=device, location=[[-1, 1, -2]])
 
     # initilizing the renderer
     renderer = MeshRenderer(
         rasterizer=MeshRasterizer(
-            cameras=cameras,
             raster_settings=raster_settings,
         ),
         shader=SoftPhongShader(
             device=device,
-            cameras=cameras,
             lights=lights,
         ),
     )
 
-    # create the rendered image without the depth
-    images = renderer(mesh).cpu().numpy()[..., :3]
-    return (images * 255).astype(np.uint8)
+    # initilize the transformation delta for the object
+    delta = ((verts.max(dim=0)[0] + verts.min(dim=0)[0]) / 2).detach().cpu()
+
+    # loop for each camara position
+    images = []
+    for elev, azim in zip(elevs, azims):
+        R, T = look_at_view_transform(dist=1, elev=elev, azim=azim)
+        T[0] -= delta
+        cameras = FoVPerspectiveCameras(device=device, R=R, T=T)
+        image = renderer(mesh, cameras=cameras).cpu().numpy()[0, ..., :3]
+        images.append((image * 255).astype(np.uint8))
+
+    return np.stack(images, axis=0)
 
 
 def image_to_sketch(

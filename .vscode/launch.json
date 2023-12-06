@@ -17,8 +17,22 @@
             "type": "python",
             "request": "launch",
             "program": "scripts/train_siamese.py",
+            "args": [
+                "+experiment=mine_full_batch"
+            ],
             "console": "integratedTerminal",
-            "justMyCode": true,
+            "justMyCode": false,
+        },
+        {
+            "name": "Debug: Eval Siamese",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/eval_siamese.py",
+            "args": [
+                "+experiment=eval"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
         },
         {
             "name": "Debug: Training DeepSDF",
@@ -33,6 +47,17 @@
             "type": "python",
             "request": "launch",
             "program": "scripts/create_sketches.py",
+            "args": [
+                "data=siamese_chair_medium"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+        },
+        {
+            "name": "Debug: Create H5py",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/create_h5py.py",
             "console": "integratedTerminal",
             "justMyCode": true,
         },

@@ -2,7 +2,7 @@
 
 defaults:
   - _self_
-  - data: siamese_chair 
+  - data: siamese_chair_small
   - hydra: default
   - paths: default
   # optional local config for machine/user specific settings

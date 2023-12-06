@@ -2,6 +2,6 @@
 
 learning_rate_monitor:
   _target_: lightning.pytorch.callbacks.LearningRateMonitor
-  logging_interval: epoch
+  logging_interval: null
   log_momentum: False
   log_weight_decay: False

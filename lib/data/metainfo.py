@@ -13,12 +13,13 @@ class MetaInfo:
     def __init__(
         self,
         data_dir: str = "data/",
-        dataset_splits_file_name: str = "dataset_splits.csv",
-        sketch_image_pairs_file_name: str = "sketch_image_pairs.csv",
+        dataset_splits_path: str = "data/dataset_splits.csv",
+        sketch_image_pairs_path: str = "data/sketch_image_pairs.csv",
         split: Optional[str] = None,
     ):
-        dataset_splits_path = Path(data_dir, dataset_splits_file_name)
-        sketch_image_pairs_path = Path(data_dir, sketch_image_pairs_file_name)
+        self.data_dir = data_dir
+        self.dataset_splits_path = dataset_splits_path
+        self.sketch_image_pairs_path = sketch_image_pairs_path
         try:
             dataset_splits = pd.read_csv(dataset_splits_path)
             if split is not None:
@@ -61,3 +62,6 @@ class MetaInfo:
 
     def get_pair(self, index: int):
         return self._sketch_image_pairs.iloc[index].to_dict()
+
+    def obj_path(self, obj_id: str) -> Path:
+        return Path(self.data_dir, obj_id, "model_normalized.obj")

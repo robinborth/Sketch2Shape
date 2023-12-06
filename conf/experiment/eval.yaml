@@ -1,0 +1,37 @@
+# @package _global_
+
+defaults:
+  - override /data: siamese_chair_large
+  - override /trainer: default
+  - override /logger: wandb
+
+ckpt_path: /home/borth/sketch2shape/logs/train/runs/2023-12-03_19-25-56/checkpoints/last.ckpt
+
+task_name: "eval"
+
+trainer:
+  accelerator: gpu
+  max_epochs: 1
+  enable_checkpointing: False
+
+data:
+  batch_size: 128
+  num_workers: 7
+  pin_memory: True
+  drop_last: True
+  persistent_workers: True
+  shuffle: False
+  sampler:
+    _target_: pytorch_metric_learning.samplers.MPerClassSampler
+    _partial_: True
+    m: 8
+  dataset:
+    _target_: lib.data.siamese_dataset.SiameseDatasetDynamicLoadDynamicTransform
+  collate_fn: null
+
+tags: ["siamese", "sample_m", "eval"]
+
+logger:
+  wandb:
+    tags: ${tags}
+    group: "siamese"
