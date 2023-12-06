@@ -18,7 +18,7 @@
             "request": "launch",
             "program": "scripts/train_siamese.py",
             "args": [
-                "+experiment=debug"
+                "+experiment=mine_full_batch"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

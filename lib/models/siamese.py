@@ -11,6 +11,7 @@ class Siamese(LightningModule):
         loss: losses.BaseMetricLossFunction,
         optimizer: torch.optim.Optimizer,
         scheduler: torch.optim.lr_scheduler,
+        mine_full_batch: bool = False,
     ) -> None:
         super().__init__()
 
@@ -22,9 +23,6 @@ class Siamese(LightningModule):
         self.miner = miner
         self.loss = loss
 
-        self.validation_step_outputs = []  # type: ignore
-        self.train_step_outputs = []  # type: ignore
-
     def forward(self, batch):
         batch_size = batch["sketch"].shape[0]
         decoder_input = torch.concatenate([batch["sketch"], batch["image"]])
@@ -35,28 +33,36 @@ class Siamese(LightningModule):
 
     def model_step(self, batch):
         output = self.forward(batch)
-        miner_output = self.miner(
-            embeddings=output["sketch_emb"],
-            labels=batch["label"],
-            ref_emb=output["image_emb"],
-        )
-        loss = self.loss(
-            embeddings=output["sketch_emb"],
-            labels=batch["label"],
-            indices_tuple=miner_output,
-            ref_emb=output["image_emb"],
-        )
+        if self.hparams["mine_full_batch"]:
+            embeddings = torch.concatenate([output["sketch_emb"], output["image_emb"]])
+            labels = torch.concatenate([batch["label"], batch["label"]])
+            miner_output = self.miner(embeddings=embeddings, labels=labels)
+            loss = self.loss(
+                embeddings=embeddings,
+                labels=labels,
+                indices_tuple=miner_output,
+            )
+        else:
+            labels = batch["label"]
+            miner_output = self.miner(
+                embeddings=output["sketch_emb"],
+                labels=labels,
+                ref_emb=output["image_emb"],
+            )
+            loss = self.loss(
+                embeddings=output["sketch_emb"],
+                labels=labels,
+                indices_tuple=miner_output,
+                ref_emb=output["image_emb"],
+            )
 
+        m = 4
+        if self.trainer.datamodule.hparams.sampler:
+            m = self.trainer.datamodule.hparams.sampler.keywords["m"]
         output["miner_count"] = len(miner_output[0])
-
-        # how many triplets
-        batch_size = batch["label"].shape[0]
-        # m = 4
-        m = self.trainer.datamodule.hparams.sampler.keywords["m"]
+        batch_size = labels.shape[0]
         max_count = torch.tensor((m - 1) * batch_size * (batch_size - m))
         output["miner_max_count"] = max_count
-
-        # ratio
         output["miner_ratio"] = output["miner_count"] / output["miner_max_count"]
 
         return output, loss
@@ -75,22 +81,7 @@ class Siamese(LightningModule):
         self.log("val/miner_count", output["miner_count"])
         self.log("val/miner_max_count", output["miner_max_count"]),
         self.log("val/miner_ratio", output["miner_ratio"], prog_bar=True)
-        # outputs = detach_batch_output(batch, output)
-        # self.validation_step_outputs.append(outputs)
         return loss
-
-    # def on_validation_end(self) -> None:
-    #     output = batch_outputs(self.validation_step_outputs)
-
-    #     image = transform_to_plot(output["image"][0])
-    #     sketch = transform_to_plot(output["sketch"][0])
-    #     self.logger.log_image(key="val/image_sketch", images=[image, sketch])  # type: ignore
-
-    #     k = 128
-    #     fig = tsne(output["sketch_emb"][:k], output["label"][:k])
-    #     self.logger.log_metrics({"val/chart": fig})  # type: ignore
-
-    #     self.validation_step_outputs.clear()
 
     def test_step(self, batch, batch_idx):
         _, loss = self.model_step(batch)
@@ -105,7 +96,7 @@ class Siamese(LightningModule):
                 "optimizer": optimizer,
                 "lr_scheduler": {
                     "scheduler": scheduler,
-                    "monitor": "val/loss",
+                    "monitor": "train/loss",
                     "interval": "epoch",
                     "frequency": 1,
                 },

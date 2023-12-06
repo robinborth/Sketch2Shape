@@ -15,19 +15,18 @@ trainer:
   enable_checkpointing: False
 
 data:
-  batch_size: 128
+  batch_size: 1
   num_workers: 7
   pin_memory: True
   drop_last: True
   persistent_workers: True
   shuffle: False
-  sampler:
-    _target_: pytorch_metric_learning.samplers.MPerClassSampler
-    _partial_: True
-    m: 8
+  sampler: null
   dataset:
-    _target_: lib.data.siamese_dataset.SiameseDatasetDynamicLoadDynamicTransform
-  collate_fn: null
+    _target_: lib.data.siamese_dataset.SiameseChunkDataset
+  collate_fn:
+    _target_: lib.data.siamese_datamodule.chunk_collate_fn
+    _partial_: true 
 
 tags: ["siamese", "sample_m", "eval"]
 

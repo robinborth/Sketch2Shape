@@ -7,8 +7,8 @@ defaults:
   - override /trainer: default
   - override /logger: wandb
 
-task_name: "debug"
-test: False
+task_name: "train"
+test: True
 
 trainer:
   accelerator: gpu
@@ -51,7 +51,6 @@ model:
     reducer: 
       _target_: pytorch_metric_learning.reducers.ThresholdReducer
       low: 0
-  mine_full_batch: true
   
 callbacks:
   early_stopping:
@@ -59,7 +58,7 @@ callbacks:
     patience: 8
 
 
-tags: ["siamese", "debug"]
+tags: ["siamese", "multirun", "sample_m"]
 
 logger:
   wandb:

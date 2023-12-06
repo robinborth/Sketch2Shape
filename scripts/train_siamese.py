@@ -17,6 +17,9 @@ def train(cfg: DictConfig) -> None:
     log.info("==> loading config ...")
     L.seed_everything(cfg.seed)
 
+    log.info("==> initializing logger ...")
+    logger: List[Logger] = instantiate_loggers(cfg.get("logger"))
+
     log.info(f"==> initializing datamodule <{cfg.data._target_}>")
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
 
@@ -25,11 +28,6 @@ def train(cfg: DictConfig) -> None:
 
     log.info("==> initializing callbacks ...")
     callbacks: List[Callback] = instantiate_callbacks(cfg.get("callbacks"))
-
-    log.info("==> initializing logger ...")
-    logger: List[Logger] = instantiate_loggers(cfg.get("logger"))
-    # for wandb_logger in logger:
-    #     wandb_logger.watch(model, log="all")
 
     log.info(f"==> initializing trainer <{cfg.trainer._target_}>")
     trainer: Trainer = hydra.utils.instantiate(
@@ -50,6 +48,9 @@ def train(cfg: DictConfig) -> None:
             ckpt_path = None
         trainer.test(model=model, datamodule=datamodule, ckpt_path=ckpt_path)
         log.info(f"Best ckpt path: {ckpt_path}")
+
+    # if logger:
+    #     logger[0].finish()  # type: ignore
 
 
 if __name__ == "__main__":

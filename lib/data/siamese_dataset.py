@@ -15,20 +15,11 @@ class SiameseDatasetBase(Dataset):
     def __init__(
         self,
         metainfo: MetaInfo,
-        # data_dir: str = "data/",
-        # sketch_image_pairs_path: str = "data/sketch_image_pairs.csv",
-        # stage: str = "train",
         transforms: Optional[Callable] = None,
     ):
-        # self.data_dir = data_dir
         self.transforms = transforms if transforms else Compose()
         self.metainfo = metainfo
         self.data_dir = metainfo.data_dir
-        # self.metainfo = MetaInfo(
-        #     data_dir=data_dir,
-        #     sketch_image_pairs_path=sketch_image_pairs_path,
-        #     split=stage,
-        # )
         self._load()
 
     def _load(self):

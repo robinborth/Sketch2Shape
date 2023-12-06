@@ -12,20 +12,12 @@ test: True
 
 trainer:
   accelerator: gpu
-  max_epochs: 1
-  # limit_train_batches: 256
-  check_val_every_n_epoch: 1
-  val_check_interval: 32
+  max_epochs: 10
+  val_check_interval: 200
   log_every_n_steps: 1
-  # profiler:
-  #   _target_: lightning.pytorch.profilers.SimpleProfiler 
-  #   dirpath: ${paths.output_dir}/profiler
-  #   filename: simple_profiler
-  
 
 data:
-  sketch_image_pairs_path: ${data.data_dir}/_sketch_image_pairs.csv
-  batch_size: 128 
+  batch_size: 128
   num_workers: 7
   pin_memory: True
   drop_last: True
@@ -38,8 +30,6 @@ data:
   dataset:
     _target_: lib.data.siamese_dataset.SiameseDatasetDynamicLoadDynamicTransform
   collate_fn: null
-  #   _target_: lib.data.siamese_datamodule.chunk_collate_fn
-  #   _partial_: True
 
 model:
   scheduler: null
@@ -61,10 +51,15 @@ model:
     reducer: 
       _target_: pytorch_metric_learning.reducers.ThresholdReducer
       low: 0
-    # distance: 
-    #   _target_: pytorch_metric_learning.distances.CosineSimilarity
+  mine_full_batch: true
+  
+callbacks:
+  early_stopping:
+    monitor: "val/loss"
+    patience: 8
 
-tags: ["siamese", "images"]
+
+tags: ["siamese", "multirun", "mine_full_batch"]
 
 logger:
   wandb:

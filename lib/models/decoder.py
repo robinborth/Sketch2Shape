@@ -81,14 +81,13 @@ class SimpleDecoder(nn.Module):
 
 
 class ResNet18(nn.Module):
-    def __init__(self, embedding_size: int = 64):
+    def __init__(self, embedding_size: int = 64, pretrained: bool = True):
         super().__init__()
         self.embedding_size = embedding_size
-        self.resnet18 = resnet18(ResNet18_Weights.IMAGENET1K_V1)
-        # for param in self.resnet18.parameters():
-        #     param.requires_grad = False
-        # for param in self.resnet18.layer4[-1].parameters():
-        #     param.requires_grad = True
+        if pretrained:
+            self.resnet18 = resnet18(ResNet18_Weights.IMAGENET1K_V1)
+        else:
+            self.resnet18 = resnet18()
         self.resnet18.fc = torch.nn.Linear(in_features=512, out_features=embedding_size)
 
     def forward(self, batch):

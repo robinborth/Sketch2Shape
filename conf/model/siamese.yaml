@@ -4,6 +4,7 @@ _target_: lib.models.siamese.Siamese
 decoder:
   _target_: lib.models.decoder.ResNet18
   embedding_size: 128
+  pretrained: True
 
 miner:
   _target_: pytorch_metric_learning.miners.TripletMarginMiner
@@ -27,5 +28,7 @@ scheduler:
   _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
   _partial_: true
   mode: min
-  factor: 0.1
-  patience: 10
+  factor: 0.5
+  patience: 1
+
+mine_full_batch: false

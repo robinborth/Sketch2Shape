@@ -12,35 +12,24 @@ test: True
 
 trainer:
   accelerator: gpu
-  max_epochs: 1
-  check_val_every_n_epoch: 1
-  # limit_train_batches: 1
-  limit_val_batches: 1
-  val_check_interval: 1
+  max_epochs: 10
+  val_check_interval: 200
   log_every_n_steps: 1
-  # profiler:
-  #   _target_: lightning.pytorch.profilers.SimpleProfiler 
-  #   dirpath: ${paths.output_dir}/profiler
-  #   filename: simple_profiler
-  
 
 data:
-  batch_size: 32
+  batch_size: 128
   num_workers: 7
   pin_memory: True
   drop_last: True
   persistent_workers: True
   shuffle: False
-  sampler: null
-  # sampler:
-  #   _target_: pytorch_metric_learning.samplers.MPerClassSampler
-  #   _partial_: True
-  #   m: 4
-  dataset:
-    _target_: lib.data.siamese_dataset.SiameseDatasetEasyImages
-  collate_fn:
-    _target_: lib.data.siamese_datamodule.chunk_collate_fn
+  sampler:
+    _target_: pytorch_metric_learning.samplers.MPerClassSampler
     _partial_: True
+    m: 2
+  dataset:
+    _target_: lib.data.siamese_dataset.SiameseDatasetDynamicLoadDynamicTransform
+  collate_fn: null
 
 model:
   scheduler: null
@@ -52,7 +41,7 @@ model:
   miner:
     _target_: pytorch_metric_learning.miners.TripletMarginMiner
     margin: 0.2
-    type_of_triplets: semihard
+    type_of_triplets: all 
   loss:
     _target_: pytorch_metric_learning.losses.TripletMarginLoss
     margin: 0.2
@@ -62,10 +51,15 @@ model:
     reducer: 
       _target_: pytorch_metric_learning.reducers.ThresholdReducer
       low: 0
-    # distance: 
-    #   _target_: pytorch_metric_learning.distances.CosineSimilarity
+  mine_full_batch: true
+  
+callbacks:
+  early_stopping:
+    monitor: "val/loss"
+    patience: 8
 
-tags: ["siamese", "images"]
+
+tags: ["siamese", "multirun", "type_of_triplets"]
 
 logger:
   wandb:
