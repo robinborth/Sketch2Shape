@@ -22,9 +22,9 @@ trainer:
 
 data:
   experiment: overfit_16
-  data_dir: ${paths.data_dir}/SdfSamples/${data.experiment}
-  norm_dir: ${paths.data_dir}/NormalizationParameters/${data.experiment}
-  surf_dir: ${paths.data_dir}/SurfaceSamples/${data.experiment}
+  data_dir: ${paths.deepsdf_dir}/SdfSamples/${data.experiment}
+  norm_dir: ${paths.deepsdf_dir}/NormalizationParameters/${data.experiment}
+  surf_dir: ${paths.deepsdf_dir}/SurfaceSamples/${data.experiment}
   batch_size: 16
   num_workers: 4
   pin_memory: False
