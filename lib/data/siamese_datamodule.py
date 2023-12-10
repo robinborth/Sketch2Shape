@@ -37,6 +37,7 @@ class SiameseDataModule(LightningDataModule):
         sampler: Optional[Sampler] = None,
         dataset: Optional[SiameseDatasetBase] = None,
         collate_fn: Optional[Callable] = None,
+        train: bool = True,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -45,11 +46,16 @@ class SiameseDataModule(LightningDataModule):
         # also ensures init params will be stored in ckpt
         self.save_hyperparameters(logger=False)
 
-        self.transforms = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.RandomHorizontalFlip(),
-            ]
+        if train:
+            trans = [transforms.ToTensor(), transforms.RandomHorizontalFlip()]
+            self.transforms = transforms.Compose(trans)
+        else:
+            self.transforms = transforms.Compose([transforms.ToTensor()])
+
+        self.metainfo = MetaInfo(
+            data_dir=self.hparams["data_dir"],
+            dataset_splits_path=self.hparams["dataset_splits_path"],
+            sketch_image_pairs_path=self.hparams["sketch_image_pairs_path"],
         )
 
     def setup(self, stage: str):

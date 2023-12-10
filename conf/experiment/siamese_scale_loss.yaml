@@ -1,0 +1,11 @@
+# @package _global_
+
+defaults:
+  - siamese
+ 
+tags: ["siamese", "scale_loss"]
+model:
+  optimizer:
+    lr: 5e-05
+  scale_loss: false
+ 

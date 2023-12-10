@@ -1,0 +1,9 @@
+# @package _global_
+
+defaults:
+  - siamese
+ 
+tags: ["siamese", "pretrained"]
+model:
+  decoder:
+    pretrained: false

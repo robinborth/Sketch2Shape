@@ -16,6 +16,7 @@ opencv-python
 scikit-image
 trimesh
 h5py
+visdom
 
 # test
 black

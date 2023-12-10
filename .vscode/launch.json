@@ -18,7 +18,7 @@
             "request": "launch",
             "program": "scripts/train_siamese.py",
             "args": [
-                "+experiment=mine_full_batch"
+                "+experiment=siamese"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
@@ -32,7 +32,7 @@
                 "+experiment=eval"
             ],
             "console": "integratedTerminal",
-            "justMyCode": false,
+            "justMyCode": true,
         },
         {
             "name": "Debug: Training DeepSDF",

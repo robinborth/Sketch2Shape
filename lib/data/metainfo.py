@@ -65,3 +65,7 @@ class MetaInfo:
 
     def obj_path(self, obj_id: str) -> Path:
         return Path(self.data_dir, obj_id, "model_normalized.obj")
+
+    def label_to_obj_id(self, label: str) -> str:
+        df = self._sketch_image_pairs
+        return df.loc[df["label"] == label].iloc[0]["obj_id"]

@@ -1,0 +1,9 @@
+# @package _global_
+
+defaults:
+  - siamese
+ 
+tags: ["siamese", "mine_full_batch"]
+model:
+  decoder:
+    mine_full_batch: false

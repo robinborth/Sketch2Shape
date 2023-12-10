@@ -30,12 +30,9 @@ def evaluate(cfg: DictConfig) -> None:
     datamodule.setup("all")
 
     log.info(f"==> load model <{cfg.model._target_}>")
-    # model = Siamese.load_from_checkpoint(cfg.ckpt_path)
-    # tester = SiameseTester(model=model.decoder)
-    decoder = resnet18(ResNet18_Weights.IMAGENET1K_V1)
-    decoder.fc = torch.nn.Identity()
-    decoder.embedding_size = 512
-    tester = SiameseTester(model=decoder)
+    model = Siamese.load_from_checkpoint(cfg.ckpt_path).decoder
+    model.metainfo = datamodule.metainfo
+    tester = SiameseTester(model=model)
 
     log.info(f"==> index datasets <{cfg.trainer._target_}>")
     trainer: Trainer = hydra.utils.instantiate(cfg.trainer, logger=logger)

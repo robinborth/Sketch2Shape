@@ -1,0 +1,9 @@
+# @package _global_
+
+defaults:
+  - siamese
+ 
+tags: ["siamese", "type_of_triplets"]
+model:
+  miner:
+    type_of_triplets: all 

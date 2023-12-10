@@ -1,6 +1,7 @@
 import torch
 from lightning import LightningModule
 from pytorch_metric_learning import losses, miners
+from pytorch_metric_learning.utils import loss_and_miner_utils as lmu
 
 
 class Siamese(LightningModule):
@@ -57,13 +58,8 @@ class Siamese(LightningModule):
                 ref_emb=output["image_emb"],
             )
 
-        m = 4
-        if self.trainer.datamodule.hparams.sampler:
-            m = self.trainer.datamodule.hparams.sampler.keywords["m"]
         output["miner_count"] = len(miner_output[0])
-        batch_size = labels.shape[0]
-        max_count = torch.tensor((m - 1) * batch_size * (batch_size - m))
-        output["miner_max_count"] = max_count
+        output["miner_max_count"] = len(lmu.get_all_triplets_indices(labels)[0])
         output["miner_ratio"] = output["miner_count"] / output["miner_max_count"]
 
         if self.hparams["scale_loss"]:

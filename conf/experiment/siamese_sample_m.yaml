@@ -1,0 +1,9 @@
+# @package _global_
+
+defaults:
+  - siamese
+ 
+tags: ["siamese", "sample_m"]
+model:
+  sampler:
+    m: ???

@@ -5,7 +5,7 @@ defaults:
   - override /trainer: default
   - override /logger: wandb
 
-ckpt_path: /home/borth/sketch2shape/logs/train/runs/2023-12-03_19-25-56/checkpoints/last.ckpt
+ckpt_path: /home/borth/sketch2shape/logs/train/runs/2023-12-10_19-15-19/checkpoints/last.ckpt
 
 task_name: "eval"
 
@@ -15,7 +15,7 @@ trainer:
   enable_checkpointing: False
 
 data:
-  batch_size: 128
+  batch_size: 32
   num_workers: 7
   pin_memory: True
   drop_last: True
@@ -24,7 +24,7 @@ data:
   sampler:
     _target_: pytorch_metric_learning.samplers.MPerClassSampler
     _partial_: True
-    m: 8
+    m: 32
   dataset:
     _target_: lib.data.siamese_dataset.SiameseDatasetDynamicLoadDynamicTransform
   collate_fn: null
