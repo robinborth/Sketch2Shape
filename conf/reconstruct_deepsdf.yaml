@@ -8,7 +8,6 @@ defaults:
   # optional local config for machine/user specific settings
   # it's optional since it doesn't need to exist and is excluded from version control
   - optional local: default
-
 ckpt_path: null
 
 resolution_list: [256]
@@ -18,6 +17,8 @@ log_path: null
 chamfer_num_samples: 30_000
 
 chamfer: True
+
+task_name: visualize
 
 # seed for random number generators in pytorch, numpy and python.random
 seed: 123

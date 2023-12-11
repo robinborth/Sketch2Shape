@@ -18,20 +18,20 @@ trainer:
   accelerator: gpu
   max_epochs: 2000
   precision: 16-mixed
-  log_every_n_steps: 10
+  log_every_n_steps: 1
 
 data:
   experiment: train
-  data_dir: ${paths.data_dir}/SdfSamples/${data.experiment}
-  norm_dir: ${paths.data_dir}/SdfSamples/NormalizationParameters/${data.experiment}
-  surf_dir: ${paths.data_dir}/SdfSamples/SurfaceSamples/${data.experiment}
-  batch_size: 32
+  data_dir: ${paths.deepsdf_dir}/SdfSamples/${data.experiment}
+  norm_dir: ${paths.deepsdf_dir}/NormalizationParameters/${data.experiment}
+  surf_dir: ${paths.deepsdf_dir}/SurfaceSamples/${data.experiment}
+  batch_size: 24
   num_workers: 4
   pin_memory: False
   drop_last: True
   shuffle: True
   persistent_workers: True
-  subsample: 65536
+  subsample: 16384
 
 model:
   latent_size: 512
@@ -40,7 +40,7 @@ model:
   clamp: True
   clamp_val: 0.1
   reg_loss: True
-  num_scenes: 3281
+  num_scenes: 3282
   sigma: 1e-4
   skip_connection: [4]
   dropout: True
@@ -69,3 +69,4 @@ logger:
   wandb:
     tags: ${tags}
     group: "deepsdf"
+    # name: $data.experiment-bs_{data.batch_size}

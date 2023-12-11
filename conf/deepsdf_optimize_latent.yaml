@@ -1,0 +1,56 @@
+# @package _global_
+
+defaults:
+  - trainer: default
+  - _self_
+  - hydra: default
+  - paths: default
+
+  # optional local config for machine/user specific settings
+  # it's optional since it doesn't need to exist and is excluded from version control
+  - optional local: default
+
+trainer:
+  accelerator: gpu
+  max_epochs: 1000
+  precision: 16-mixed
+  log_every_n_steps: 1
+
+ckpt_path: "/home/korth/sketch2shape/logs/train/runs/train_chairs/checkpoints/last.ckpt"
+model:
+  _target_: lib.models.deepsdf.SDFReconstructor
+  prior_idx: -1 #negative value means no prior
+
+  # the DeepSDF model checkpoint
+  loss:
+    _target_: torch.nn.L1Loss
+    reduction: mean
+
+  optim:
+    _target_: torch.optim.Adam
+    _partial_: true
+    lr: 5e-3
+
+  scheduler:
+    _partial_: True
+    _target_: torch.optim.lr_scheduler.StepLR
+    step_size: 500
+    gamma: 0.1
+
+data:
+  _target_: lib.data.deepsdf_datamodule.OneShapeSDFDataModule
+  path: null
+  subsample: 16384 #65536
+
+  num_workers: 4
+  pin_memory: False
+  persistent_workers: True
+
+  dataset:
+    _target_: lib.data.deepsdf_dataset.OneShapeSDFDataset
+    _partial_: True
+
+task_name: optimize_latent
+
+# seed for random number generators in pytorch, numpy and python.random
+seed: 42

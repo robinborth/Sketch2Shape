@@ -17,7 +17,7 @@ tags: ["overfit_1"]
 trainer:
   accelerator: gpu
   max_epochs: 100000
-  # precision: 16-mixed
+  precision: 16-mixed
   log_every_n_steps: 1
 
 data:
@@ -26,7 +26,7 @@ data:
   norm_dir: ${paths.deepsdf_dir}/NormalizationParameters/${data.experiment}
   surf_dir: ${paths.deepsdf_dir}/SurfaceSamples/${data.experiment}
   batch_size: 1
-  num_workers: 4
+  num_workers: 2
   pin_memory: False
   drop_last: True
   persistent_workers: True

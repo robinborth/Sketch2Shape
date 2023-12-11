@@ -26,12 +26,12 @@ data:
   norm_dir: ${paths.deepsdf_dir}/NormalizationParameters/${data.experiment}
   surf_dir: ${paths.deepsdf_dir}/SurfaceSamples/${data.experiment}
   batch_size: 4
-  num_workers: 4
+  num_workers: 2
   pin_memory: False
   drop_last: True
   persistent_workers: True
   subsample: 65536
-  load_ram: False
+  load_ram: True
 
 model:
   latent_size: 512
@@ -49,6 +49,7 @@ model:
 
 callbacks:
   model_checkpoint:
+    every_n_epochs: 5000
     save_last: True
     save_top_k: 1
 

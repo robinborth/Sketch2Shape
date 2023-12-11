@@ -2,7 +2,7 @@ defaults:
   - model_checkpoint
   # - early_stopping
   - model_summary
-  - learning_rate_monitor
+  # - learning_rate_monitor
   # - rich_progress_bar
   - _self_
 
@@ -16,7 +16,7 @@ model_checkpoint:
 
 early_stopping:
   monitor: "train/loss"
-  patience: 3 
+  patience: 3
   mode: "min"
 
 model_summary:

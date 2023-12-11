@@ -122,12 +122,13 @@
             "justMyCode": false,
         },
         {
-            "name": "Debug: Obj Generation",
+            "name": "Debug: Pointcloud reconstruction",
             "type": "python",
             "request": "launch",
-            "program": "scripts/generate_unit_sphere_meshes.py",
+            "program": "scripts/reconstruct_from_pointcloud_deepsdf.py",
             "args": [
-                "+experiment=deepsdf_overfit_four"
+                "ckpt_path=/home/korth/sketch2shape/logs/train/runs/train_chairs/checkpoints/last.ckpt",
+                "model.prior_idx=34"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
