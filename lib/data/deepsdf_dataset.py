@@ -7,6 +7,11 @@ import torch
 from torch.utils.data import Dataset
 
 
+def remove_nans(tensor):
+    tensor_nan = torch.isnan(tensor[:, 3])
+    return tensor[~tensor_nan, :]
+
+
 class DeepSDFDataset(Dataset):
     def __init__(
         self,
@@ -41,8 +46,8 @@ class DeepSDFDataset(Dataset):
         data = np.load(path)
         if self.subsample is None:
             return data
-        pos_tensor = self._remove_nans(torch.from_numpy(data["pos"]))
-        neg_tensor = self._remove_nans(torch.from_numpy(data["neg"]))
+        pos_tensor = remove_nans(torch.from_numpy(data["pos"]))
+        neg_tensor = remove_nans(torch.from_numpy(data["neg"]))
 
         # split the sample into half
         half = int(self.subsample / 2)
@@ -60,12 +65,12 @@ class DeepSDFDataset(Dataset):
     def _load_sdf_samples_from_ram(self, data):
         if self.subsample is None:
             return data
-        
+
         hlf = self.subsample // 2
 
         ### 3 -> 17.198s (with replacement), 25.338 (without replacement)
         pos_indices = np.random.choice(len(data[0]), hlf, replace=0)
-        neg_indices = np.random.choice(len(data[1]), hlf, replace=0)
+        neg_indices = np.random.choice(len(data[1]), hlf, replace=hlf > len(data[1]))
 
         samples = torch.cat([data[0][pos_indices], data[1][neg_indices]], dim=0)
         return samples
@@ -94,19 +99,15 @@ class DeepSDFDataset(Dataset):
 
         # return samples
 
-    def _remove_nans(self, tensor):
-        tensor_nan = torch.isnan(tensor[:, 3])
-        return tensor[~tensor_nan, :]
-
     def _load_to_ram(self, path):
         data = np.load(path)
         # to make it fit into ram
-        pos_tensor = self._remove_nans(torch.from_numpy(data["pos"]))
-        neg_tensor = self._remove_nans(torch.from_numpy(data["neg"]))
+        pos_tensor = remove_nans(torch.from_numpy(data["pos"])).half()
+        neg_tensor = remove_nans(torch.from_numpy(data["neg"])).half()
 
-        if self.half:
-            pos_tensor = pos_tensor.half()
-            neg_tensor = neg_tensor.half()
+        # if self.half:
+        #     pos_tensor = pos_tensor.half()
+        #     neg_tensor = neg_tensor.half()
 
         ### 3 -> 17.198s (with replacement), 25.338 (without replacement)
         # pos_indices = np.random.choice(len(data[0]), hlf, replace=0)
@@ -138,3 +139,34 @@ class DeepSDFDataset(Dataset):
                 "sd": _data[:, 3],
                 "idx": idx,
             }
+
+
+class OneShapeSDFDataset(Dataset):
+    def __init__(
+        self,
+        path: str,
+        subsample: int = 65536,
+    ) -> None:
+        data = np.load(path)
+        self.pos_tensor = remove_nans(torch.from_numpy(data["pos"])).half()
+        self.neg_tensor = remove_nans(torch.from_numpy(data["neg"])).half()
+
+        self.subsample = subsample
+
+    def __len__(self):
+        return 1
+
+    def __getitem__(self, idx):
+        hlf = self.subsample // 2
+
+        pos_indices = np.random.choice(self.pos_tensor.shape[0], hlf, replace=0)
+        neg_indices = np.random.choice(
+            self.neg_tensor.shape[0],
+            hlf,
+            replace=hlf > self.neg_tensor.shape[0],
+        )
+
+        samples = torch.cat(
+            [self.pos_tensor[pos_indices], self.neg_tensor[neg_indices]], dim=0
+        )
+        return {"xyz": samples[:, :3], "sd": samples[:, 3]}

@@ -26,10 +26,6 @@ def train(cfg: DictConfig) -> None:
     log.info(f"==> initializing model <{cfg.model._target_}>")
     model: LightningModule = hydra.utils.instantiate(cfg.model)
 
-    # if torch.__version__.startswith("2"):
-    #     log.info(f"==> compiling model <{cfg.model._target_}>")
-    #     model = torch.compile(model, mode="reduce-overhead")
-
     log.info("==> initializing callbacks ...")
     callbacks: List[Callback] = instantiate_callbacks(cfg.get("callbacks"))
 

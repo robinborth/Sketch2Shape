@@ -29,7 +29,7 @@ def reconstruct_training_data(
     checkpoint_path: str,
     idx2shape: dict,
     resolution_list: list = [256],
-    chunck_size: int = 500_000,  # based on 2080TI / 16GB RAM (very rough estimate)
+    chunck_size: int = 500_000,  # based on 2080TI / 12GB RAM (very rough estimate)
     limit: int = 16,
 ):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -205,9 +205,9 @@ def traverse_latent_space(
             # # remove objects outside unit sphere
             # mesh = remove_faces_outside_sphere(mesh)
 
-            path_obj = f"{save_path}/t_{t}.obj"
-            # Save the mesh as an OBJ file
-            mesh.export(path_obj)
+            # path_obj = f"{save_path}/t_{t}.obj"
+            # # Save the mesh as an OBJ file
+            # mesh.export(path_obj)
 
             # to align traversal for visualization
             h_max = verts.max(0)[0]

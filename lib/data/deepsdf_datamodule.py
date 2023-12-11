@@ -38,7 +38,7 @@ class DeepSDFDataModule(LightningDataModule):
             data_dir=self.hparams["data_dir"],
             load_ram=self.hparams["load_ram"],
             subsample=self.hparams["subsample"],
-            half=self.hparams["half"]
+            half=self.hparams["half"],
         )
 
     def train_dataloader(self) -> DataLoader:
@@ -50,4 +50,43 @@ class DeepSDFDataModule(LightningDataModule):
             drop_last=self.hparams["drop_last"],
             persistent_workers=self.hparams["persistent_workers"],
             shuffle=self.hparams["shuffle"],
+        )
+
+
+class OneShapeSDFDataModule(LightningDataModule):
+    def __init__(
+        self,
+        # settings
+        path: str,
+        subsample: int = 65536,
+        # training
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        drop_last: bool = True,
+        persistent_workers: bool = False,
+        shuffle: bool = False,
+        # dataset
+        dataset: Optional[DeepSDFDataset] = None,
+        **kwargs,
+    ) -> None:
+        super().__init__()
+
+        # this line allows to access init params with 'self.hparams' attribute
+        # also ensures init params will be stored in ckpt
+        self.save_hyperparameters(logger=False)
+
+    def setup(self, stage: str) -> None:
+        self.dataset = self.hparams["dataset"](
+            path=self.hparams["path"],
+            subsample=self.hparams["subsample"],
+        )
+
+    def train_dataloader(self) -> DataLoader:
+        return DataLoader(
+            dataset=self.dataset,
+            batch_size=1,
+            num_workers=self.hparams["num_workers"],
+            pin_memory=self.hparams["pin_memory"],
+            drop_last=self.hparams["drop_last"],
+            persistent_workers=self.hparams["persistent_workers"],
         )
