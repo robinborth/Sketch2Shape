@@ -45,10 +45,17 @@ train_deepsdf:
 
 
 train_siamese:
-	python scripts/train_siamese.py +experiment=siamese
-	python scripts/train_siamese.py +experiment=siamese_scale_loss 
-	python scripts/train_siamese.py +experiment=siamese_sample_m model.sampler.m=4
-	python scripts/train_siamese.py +experiment=siamese_sample_m model.sampler.m=8
+	# python scripts/train_siamese.py +experiment=siamese
+	# python scripts/eval_siamese.py +experiment=eval_resnet
+	# python scripts/eval_siamese.py +experiment=eval_clip
+	# python scripts/train_siamese.py +experiment=siamese_scale_loss 
+	# python scripts/train_siamese.py +experiment=siamese_sample_m data.sampler.m=4
+	# python scripts/train_siamese.py +experiment=siamese_sample_m data.sampler.m=8
 	python scripts/train_siamese.py +experiment=siamese_mine_full_batch
 	python scripts/train_siamese.py +experiment=siamese_pretrained
 	python scripts/train_siamese.py +experiment=siamese_type_of_triplets
+
+eval_siamese:
+	python scripts/eval_siamese.py +experiment=eval_resnet18
+	python scripts/eval_siamese.py +experiment=eval_clip
+

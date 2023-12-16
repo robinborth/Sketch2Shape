@@ -6,10 +6,9 @@ import torch
 from lightning import LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
-from torchvision.models import resnet18
-from torchvision.models.resnet import ResNet18_Weights
 
 from lib.eval.tester import SiameseTester
+from lib.models.decoder import EvalCLIP, EvalResNet18
 from lib.models.siamese import Siamese
 from lib.utils import create_logger, instantiate_loggers
 
@@ -29,8 +28,13 @@ def evaluate(cfg: DictConfig) -> None:
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
     datamodule.setup("all")
 
-    log.info(f"==> load model <{cfg.model._target_}>")
-    model = Siamese.load_from_checkpoint(cfg.ckpt_path).decoder
+    if cfg.ckpt_path == "resnet18":
+        model = EvalResNet18()
+    elif cfg.ckpt_path == "clip":
+        model = EvalCLIP()
+    else:
+        model = Siamese.load_from_checkpoint(cfg.ckpt_path).decoder
+    log.info(f"==> load model <{model}>")
     model.metainfo = datamodule.metainfo
     tester = SiameseTester(model=model)
 

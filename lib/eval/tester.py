@@ -214,10 +214,12 @@ class SiameseTester(LightningModule):
 
         self.recall_heatmap.update(out["recall_heatmap"])
 
-        if batch_idx % 16 == 0:
+        if batch_idx % 8 == 0:
             metainfo = self.model.metainfo
             dataset = self.trainer.test_dataloaders.dataset
-            image_id = random.randint(0, 31)
+            image_id = 21
+            if batch_idx % 16 == 0:
+                image_id = random.randint(0, 31)
             idx = torch.where(batch["image_id"] == image_id)[0][0]
 
             gt_label = batch["label"][idx].item()
@@ -229,6 +231,7 @@ class SiameseTester(LightningModule):
             obj_id = metainfo.label_to_obj_id(gt_label)
             image_id = str(gt_image_id).zfill(5)
             sketch = dataset._fetch("sketches", obj_id, image_id)
+            plt.clf()
             plot_single_image(sketch)
             index_images["sketch"] = wandb.Image(plt)
 
@@ -242,6 +245,7 @@ class SiameseTester(LightningModule):
                     image[image > 0.95] = 0
                 images.append(image)
             image_data = transform_to_plot(images, batch=True)
+            plt.clf()
             image_grid(image_data, 4, 8)
             index_images["rendered_images"] = wandb.Image(plt)
             self.logger.log_metrics(index_images)  # type: ignore
@@ -250,7 +254,8 @@ class SiameseTester(LightningModule):
         recall_heatmap = self.recall_heatmap.compute()
         recall_heatmap = recall_heatmap.view(-1, 1, 32).mean(dim=0)
         recall_heatmap = recall_heatmap.detach().cpu().numpy()
-        plt.imshow(recall_heatmap, cmap="viridis", interpolation="nearest")
-        plt.colorbar()
-        image = wandb.Image(plt)
+        plt.clf()
+        c = plt.imshow(recall_heatmap, cmap="viridis", interpolation="nearest")
+        plt.colorbar(c)
+        image = wandb.Image(c)
         self.logger.log_metrics({"recall_heatmap": image})  # type: ignore

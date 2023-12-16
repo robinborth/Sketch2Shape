@@ -3,7 +3,9 @@
 defaults:
   - override /data: siamese_chair_large
   - override /model: siamese
-  - override /callbacks: default
+  - override /callbacks:
+      - default
+      - early_stopping
   - override /trainer: default
   - override /logger: wandb
 
@@ -14,7 +16,7 @@ test: True
 trainer:
   accelerator: gpu
   max_epochs: 100
-  val_check_interval: 120
+  val_check_interval: 120 
   log_every_n_steps: 1
 
 data:
@@ -58,9 +60,7 @@ model:
 callbacks:
   early_stopping:
     monitor: val/loss
-    patience: 8
-
-
+    patience: 40
 
 
 logger:

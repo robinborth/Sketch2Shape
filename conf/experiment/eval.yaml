@@ -29,7 +29,7 @@ data:
     _target_: lib.data.siamese_dataset.SiameseDatasetDynamicLoadDynamicTransform
   collate_fn: null
 
-tags: ["siamese", "sample_m", "eval"]
+tags: ["siamese", "eval"]
 
 logger:
   wandb:

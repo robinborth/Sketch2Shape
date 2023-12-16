@@ -5,4 +5,5 @@ defaults:
  
 tags: ["siamese", "mine_full_batch"]
 model:
-  mine_full_batch: false
+  decoder:
+    dropout: ???

@@ -4,6 +4,6 @@ defaults:
   - siamese
  
 tags: ["siamese", "sample_m"]
-model:
+data:
   sampler:
     m: ???
