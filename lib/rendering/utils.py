@@ -40,3 +40,7 @@ def R_azim_elev(azim: float = 0.0, elev: float = 0.0):
 
 def normalize(point):
     return point / torch.linalg.norm(point, dim=-1)[..., None]
+
+
+def dot(x, y):
+    return (x * y).sum(dim=-1)[..., None]
