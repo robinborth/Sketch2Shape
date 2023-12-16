@@ -119,15 +119,12 @@ class DeepSDF(L.LightningModule):
         return loss
 
     def predict(self, x):
-        with torch.no_grad():
-            out = torch.cat(x, dim=2)
-            for i, layer in enumerate(self.decoder):
-                if i in self.hparams["skip_connection"]:
-                    _skip = torch.cat(x, dim=2)
-                    out = torch.cat((out, _skip), dim=2)
-                    out = layer(out)
-                else:
-                    out = layer(out)
+        out = torch.cat(x, dim=-1)
+        for i, layer in enumerate(self.decoder):
+            if i in self.hparams["skip_connection"]:
+                _skip = torch.cat(x, dim=-1)
+                out = torch.cat((out, _skip), dim=-1)
+            out = layer(out)
         return out
 
     def configure_optimizers(self):
