@@ -55,6 +55,9 @@ class SphereTracer:
 
             points[mask] = points[mask] + sd[mask, None] * rays[mask]
 
+            if not mask.sum():
+                break
+
         return points, surface_mask, void_mask
 
 
@@ -107,7 +110,7 @@ class Camera:
         # image plane
         xs = torch.linspace(0.5, -0.5, resolution)
         ys = torch.linspace(0.5, -0.5, resolution)
-        zs = torch.full((resolution, resolution), -(dist), dtype=torch.float32)
+        zs = torch.full((resolution, resolution), -dist, dtype=torch.float32)
         grid = torch.meshgrid(xs, ys)
         _image_plane = torch.stack([grid[0], grid[1], zs], dim=-1).view(-1, 3)
         self.image_plane = (R @ _image_plane.T).T.to(device)
@@ -115,6 +118,13 @@ class Camera:
         # camera point
         _camera = torch.tensor([0, 0, -(dist + focal_length)], dtype=torch.float32)
         self.camera_point = (R @ _camera).to(device)
+
+        # principal axis
+        self.principal_normal = normalize(-self.camera_point, dim=0)
+
+        # principal point
+        _principal_point = torch.tensor([0, 0, -dist], dtype=torch.float32)
+        self.principal_point = (R @ _principal_point).to(device)
 
         # rays
         self.rays = normalize(self.image_plane - self.camera_point)
@@ -191,7 +201,8 @@ class Scene:
 
     def render_depth(self):
         points, surface_mask, _ = self.sphere_tracing()
-        depth = torch.linalg.norm((points - self.camera.image_plane), dim=-1)
+        V = points - self.camera.principal_point
+        depth = torch.abs(dot(self.camera.principal_normal, V))
         return self._to_image(depth, surface_mask)
 
     def render_normals(self):
