@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import torch
 
 
@@ -44,3 +45,25 @@ def normalize(point):
 
 def dot(x, y):
     return (x * y).sum(dim=-1)[..., None]
+
+
+def visualize_mask(camera, mask):
+    mask_image = mask.view(camera.resolution, camera.resolution).detach().cpu().numpy()
+    plt.imshow(mask_image.T)
+
+
+def visualize_normals(normals):
+    normals_image = (normals + 1) / 2
+    normals_image[~normals.to(torch.bool)] = 0.0
+    plt.imshow(normals_image.detach().cpu().numpy())
+    plt.show()
+
+
+def visualize_depth(depth):
+    plt.imshow(depth.detach().cpu().numpy())
+    plt.show()
+
+
+def visualize_image(image):
+    plt.imshow(image.detach().cpu().numpy())
+    plt.show()
