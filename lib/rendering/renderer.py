@@ -75,7 +75,7 @@ class SignedDistanceFunction:
 
         if obj_idx is not None:
             obj_idx = torch.tensor(obj_idx).to(self.device)
-            self.lat_vec = self.model.lat_vecs(obj_idx)[None]
+            self.lat_vec = self.model.lat_vecs(obj_idx)[None].detach()
         else:
             self.lat_vec = ...
 
@@ -179,18 +179,25 @@ class Scene:
         self.light = light
         self.sphere_tracer = sphere_tracer or SphereTracer()
 
-    def _to_image(self, x, mask, default=0):
+    def to_image(self, x, mask, default=0):
         resolution = self.camera.resolution
         x[~mask] = default
         x = x.view(resolution, resolution, -1)
         return x.permute(1, 0, 2)
 
     def _normals(self, points: torch.Tensor, mask: torch.Tensor):
+        points, mask, _ = self.sphere_tracing()
+        self.sdf.lat_vec.requires_grad = True
         points.requires_grad = True
         sd = self.sdf.predict(points, mask)
-        loss = sd.sum()
-        loss.backward(retain_graph=True)
-        return normalize(points.grad)  # type: ignore
+        grad, = torch.autograd.grad(
+            outputs=sd,
+            inputs=points,
+            grad_outputs=torch.ones_like(sd),
+            retain_graph=True,
+        )
+        grad.requires_grad = True
+        return normalize(grad)
 
     def sphere_tracing(self):
         return self.sphere_tracer.trance(
@@ -203,12 +210,12 @@ class Scene:
         points, surface_mask, _ = self.sphere_tracing()
         V = points - self.camera.principal_point
         depth = torch.abs(dot(self.camera.principal_normal, V))
-        return self._to_image(depth, surface_mask)
+        return depth, surface_mask
 
     def render_normals(self):
         points, surface_mask, _ = self.sphere_tracing()
         normals = self._normals(points, surface_mask)
-        return self._to_image(normals, surface_mask), surface_mask
+        return normals, surface_mask
 
     def render_image(self):
         points, surface_mask, _ = self.sphere_tracing()
@@ -219,4 +226,4 @@ class Scene:
             camera_point=self.camera.camera_point,
             normals=normals,
         )
-        return self._to_image(image, surface_mask, default=1)
+        return image, surface_mask
