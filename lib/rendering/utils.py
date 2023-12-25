@@ -59,11 +59,6 @@ def visualize_normals(normals):
     plt.show()
 
 
-def visualize_depth(depth):
-    plt.imshow(depth.detach().cpu().numpy())
-    plt.show()
-
-
 def visualize_image(image):
     plt.imshow(image.detach().cpu().numpy())
     plt.show()

@@ -126,6 +126,14 @@ class Camera:
         _principal_point = torch.tensor([0, 0, -dist], dtype=torch.float32)
         self.principal_point = (R @ _principal_point).to(device)
 
+        # origing plane
+        xs = torch.linspace(dist, -dist, resolution)
+        ys = torch.linspace(dist, -dist, resolution)
+        zs = torch.full((resolution, resolution), 0, dtype=torch.float32)
+        grid = torch.meshgrid(xs, ys)
+        _origin_plane = torch.stack([grid[0], grid[1], zs], dim=-1).view(-1, 3)
+        self.origin_plane = (R @ _origin_plane.T).T.to(device)
+
         # rays
         self.rays = normalize(self.image_plane - self.camera_point)
 
@@ -179,9 +187,10 @@ class Scene:
         self.light = light
         self.sphere_tracer = sphere_tracer or SphereTracer()
 
-    def to_image(self, x, mask, default=0):
+    def to_image(self, x, mask=None, default=0):
         resolution = self.camera.resolution
-        x[~mask] = default
+        if mask is not None:
+            x[~mask] = default
         x = x.view(resolution, resolution, -1)
         return x.permute(1, 0, 2)
 
@@ -190,7 +199,7 @@ class Scene:
         self.sdf.lat_vec.requires_grad = True
         points.requires_grad = True
         sd = self.sdf.predict(points, mask)
-        grad, = torch.autograd.grad(
+        (grad,) = torch.autograd.grad(
             outputs=sd,
             inputs=points,
             grad_outputs=torch.ones_like(sd),
@@ -211,6 +220,9 @@ class Scene:
         V = points - self.camera.principal_point
         depth = torch.abs(dot(self.camera.principal_normal, V))
         return depth, surface_mask
+
+    def render_sdf(self):
+        return self.sdf.predict(self.camera.origin_plane.reshape(-1, 3))
 
     def render_normals(self):
         points, surface_mask, _ = self.sphere_tracing()
