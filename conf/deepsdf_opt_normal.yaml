@@ -16,7 +16,7 @@ defaults:
 # tags to help you identify your experiments
 # you can overwrite this in experiment configs
 # overwrite from command line with `python train.py tags="[first_tag, second_tag]"`
-tags: ["opt", "deepsdf"]
+tags: ["opt", "deepsdf", "normals"]
 
 trainer:
   accelerator: gpu
@@ -26,18 +26,18 @@ trainer:
 
 ckpt_path: "/home/korth/sketch2shape/logs/train/runs/2023-12-25_08-37-31/checkpoints/last.ckpt"
 model:
-  _target_: lib.models.deepsdf.DeepSDFOptimizer
-  prior_idx: -1 #negative value means no prior
+  _target_: lib.models.deepsdf.DeepSDFRenderOptimizer
+  prior_idx: 37 #negative value means no prior
 
   # the DeepSDF model checkpoint
   loss:
-    _target_: torch.nn.L1Loss
+    _target_: torch.nn.MSELoss
     reduction: mean
 
   optim:
     _target_: torch.optim.Adam
     _partial_: true
-    lr: 5e-3
+    lr: 5e-2
 
   scheduler:
     _partial_: True
@@ -47,11 +47,11 @@ model:
 
   save_obj: True
   save_obj_path: "/home/korth/sketch2shape/temp"
+  # reg_loss: False
 
 data:
-  _target_: lib.data.deepsdf_datamodule.DeepSDFDataModule
-  data_dir: /shared/data/ShapeNetV2/SdfSamples/overfit_1
-  subsample: 65536
+  _target_: lib.data.deepsdf_datamodule.RenderedSDFDataModule
+  data_dir: /home/korth/sketch2shape/temp/data_overfit
 
   num_workers: 7
   pin_memory: True
@@ -59,7 +59,7 @@ data:
   drop_last: False
 
   dataset:
-    _target_: lib.data.deepsdf_dataset.DeepSDFDataset
+    _target_: lib.data.deepsdf_dataset.RenderedDataset
     _partial_: True
 
 task_name: optimize_latent

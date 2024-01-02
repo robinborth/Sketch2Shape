@@ -75,7 +75,7 @@
             "request": "launch",
             "program": "scripts/train_deepsdf.py",
             "args": [
-                "+experiment=deepsdf_overfit_batch16",
+                "+experiment=deepsdf_overfit_16",
             ],
             "console": "integratedTerminal",
             "justMyCode": true,
@@ -126,10 +126,27 @@
             "type": "python",
             "request": "launch",
             "program": "scripts/reconstruct_from_pointcloud_deepsdf.py",
+            "args": [],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
+            "name": "Debug: Eval DeepSDF",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/eval_deepsdf.py",
             "args": [
-                "ckpt_path=/home/korth/sketch2shape/logs/train/runs/train_chairs/checkpoints/last.ckpt",
-                "model.prior_idx=34"
-            ],
+                "logger=wandb"
+            ]
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
+            "name": "Debug: Optimize Normalmap",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/deepsdf_optimize_normal.py",
+            "args": []
             "console": "integratedTerminal",
             "justMyCode": false,
         }

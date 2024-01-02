@@ -2,24 +2,13 @@
 
 # runs with execution time profiling
 
-defaults:
-  - default
-
 trainer:
-  max_epochs: 1
-  accelerator: cpu
+  max_epochs: 10
+  check_val_every_n_epoch: 10
   profiler:
     _target_: lightning.pytorch.profilers.SimpleProfiler
     dirpath: ${paths.output_dir}/profiler
     filename: simple_profiler
 
 data:
-  batch_size: 16
-  num_workers: 0
-  pin_memory: False
-  drop_last: True
-  persistent_workers: False
-  sampler: null
-
-model:
-  scheduler: null
+  drop_last: False

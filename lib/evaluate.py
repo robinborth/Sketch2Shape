@@ -5,8 +5,7 @@ from sklearn.neighbors import KDTree
 
 def compute_chamfer_distance(gt, rec_mesh, n_samples=30000):
     rec_samples = trimesh.sample.sample_surface(rec_mesh, n_samples)[0]
-    # rec_samples = rec_samples / norm_file["scale"] - norm_file["offset"]
-    gt_samples = gt.vertices
+    gt_samples = gt.squeeze().cpu().numpy()
 
     rec_kd_tree = KDTree(rec_samples)
     dist, _ = rec_kd_tree.query(gt_samples)

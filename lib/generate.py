@@ -127,6 +127,7 @@ def reconstruct_training_data(
     return list_obj_paths
 
 
+# TODO make this a method of the lightning model
 def traverse_latent_space(
     model,
     checkpoint_path: str,
