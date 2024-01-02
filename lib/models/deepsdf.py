@@ -66,14 +66,12 @@ class DeepSDF(L.LightningModule):
         """
         if self.hparams["dropout_latent"]:
             x[1] = self.latent_dropout(x[1])
-        out = torch.cat(x, dim=2)
+        out = torch.cat(x, dim=-1)
         for i, layer in enumerate(self.decoder):
             if i in self.hparams["skip_connection"]:
                 _skip = torch.cat(x, dim=2)
                 out = torch.cat((out, _skip), dim=2)
-                out = layer(out)
-            else:
-                out = layer(out)
+            out = layer(out)
         return out
 
     def training_step(self, batch, batch_idx):
@@ -540,11 +538,9 @@ class DeepSDFRenderOptimizer(L.LightningModule):
         optim: torch.optim.Optimizer,
         loss: torch.nn.Module,
         scheduler=None,
-        clamp: bool = True,
-        clamp_val: float = 0.1,
+        resolution: int = 256,
         reg_loss: bool = True,
         sigma: float = 1e-4,
-        resolution: int = 256,
         emp_init: bool = False,
         save_obj: bool = False,
         save_obj_path: str = "",
@@ -554,55 +550,33 @@ class DeepSDFRenderOptimizer(L.LightningModule):
         sphere_eps: float = 3e-2,
     ) -> None:
         super().__init__()
-        self.save_hyperparameters(ignore=["loss"])
+        self.save_hyperparameters()
 
-        self._load_model()
-
-        self.loss = loss
-
-        self.resolution = resolution
-        self.idx2chamfer = dict()
-
-        if self.hparams["save_obj"] and not os.path.exists(
-            self.hparams["save_obj_path"]
-        ):
-            os.mkdir(self.hparams["save_obj_path"])
-
-    def _load_model(self):
-        self.model = DeepSDF.load_from_checkpoint(
-            self.hparams["ckpt_path"], map_location="cpu"
-        )
+        # init model
+        self.model = DeepSDF.load_from_checkpoint(self.hparams["ckpt_path"])
         self.model.freeze()
 
-    # TODO unnecessary right now, not calling setup at all
-    def setup(self, stage: str):
-        if stage == "fit":
-            # TODO replace this with a camera settigns npz file that can be used to obtain all important parameters: height, widht, focal, sphere_eps, surface_eps, etc
-            # self.shape2idx = self.trainer.datamodule.train_dataset.shape2idx
-            self._init_latent()
-
-    def _init_latent(self):
-        if self.hparams["prior_idx"] >= 0:
-            # using a prior
-            self.latent = self.model.lat_vecs(
-                torch.tensor([self.hparams["prior_idx"]])
-            ).detach()
-            self.latent.requires_grad_()
+        # init latent
+        if self.hparams["prior_idx"] >= 0:  # using a prior
+            idx = torch.tensor([self.hparams["prior_idx"]])
+            latent = self.model.lat_vecs(idx.to(self.model.device))
         else:
             mean = self.model.lat_vecs.weight.mean(0)
             std = self.model.lat_vecs.weight.std(0)
-            self.latent = torch.normal(mean.detach(), std.detach()).cuda()
-            self.latent.requires_grad_()
-
+            latent = torch.normal(mean, std)
+        self.register_buffer("latent", latent)
+        self.latent.requires_grad = True
         self.model.lat_vecs = None
 
-    def forward(self, x):
-        lat_vec = self.latent.expand(x.shape[1], -1).unsqueeze(0)
-        return self.model((x, lat_vec))
+        self.loss = loss
 
-    def predict(self, x):
-        lat_vec = self.latent.expand(x.shape[1], -1).unsqueeze(0)
-        return self.model.predict((x, lat_vec))
+    def forward(self, xyz):
+        lat_vec = self.latent.expand(xyz.shape[0], xyz.shape[1], -1)
+        return self.model((xyz, lat_vec))
+
+    # def predict(self, xyz):
+    #     lat_vec = self.latent.expand(xyz.shape[0], xyz.shape[1], -1)
+    #     return self.model.predict((xyz, lat_vec))
 
     def training_step(self, batch, batch_idx):
         self.model.eval()
@@ -641,24 +615,27 @@ class DeepSDFRenderOptimizer(L.LightningModule):
         surface = torch.zeros_like(intersection, device=self.device)
         sdfs = torch.zeros(intersection.shape[1], device=self.device).half()
         for i in range(self.hparams["n_render_steps"]):
-            sdf = self.predict(intersection[:, ~mask.squeeze()])
+            with torch.no_grad():
+                sdf = self.forward(intersection[:, ~mask.squeeze()])
             sdfs[~mask.squeeze()] = sdf.squeeze()
             surface_mask = (sdfs < self.hparams["surface_eps"]) | (
                 intersection.norm(dim=2) > (1 + self.hparams["sphere_eps"] * 2)
             )
+            # TODO clip
             inv_acceleration = min(i / 10, 1)
             intersection[:, ~surface_mask.squeeze()] = (
                 intersection + ray_direction * sdfs.unsqueeze(1) * inv_acceleration
             )[:, ~surface_mask.squeeze()]
 
-        surface[:, surface_mask.squeeze()] = intersection[:, surface_mask.squeeze()]
+        # only mask points whre norm < 1.06
+        # surface[:, surface_mask.squeeze()] = intersection[:, surface_mask.squeeze()]
 
         # Differentiable Part starts here
 
         intersection.requires_grad_()
-        actual_surface_mask = intersection.norm(dim=2) > (
-            1 + self.hparams["sphere_eps"] * 2
-        )
+        # actual_surface_mask = intersection.norm(dim=2) > (
+        #     1 + self.hparams["sphere_eps"] * 2
+        # )
         # normals = torch.ones_like(intersection)
         # normals.requires_grad_()
         # inp = intersection[:, ~actual_surface_mask.squeeze()]
@@ -681,21 +658,11 @@ class DeepSDFRenderOptimizer(L.LightningModule):
             return {"optimizer": optim, "lr_scheduler": scheduler}
         return optim
 
-    # def validation_step(self, batch, batch_idx):
-    #     if len(batch["shapenet_idx"]) > 1:
-    #         raise ValueError("Make sure that the batch_size for validation loader is 1")
-    #     idx = batch["shapenet_idx"][0]
-    #     mesh = self._get_obj(idx)
-    #     chamfer = compute_chamfer_distance(batch["pointcloud"], mesh)
-    #     self.log("val/chamfer", chamfer, on_epoch=True)
-
-    #     self.idx2chamfer["idx"] = chamfer
-
-    def get_obj(self, device="cuda"):
+    def get_obj(self, device="cuda", resolution=256):
         self.to(device)
         chunck_size = 500_000
         # hparams
-        grid_vals = torch.arange(-1, 1, float(2 / self.resolution))
+        grid_vals = torch.arange(-1, 1, float(2 / resolution))
         grid = torch.meshgrid(grid_vals, grid_vals, grid_vals)
 
         xyz = torch.stack(
@@ -715,22 +682,27 @@ class DeepSDFRenderOptimizer(L.LightningModule):
             sd = self.predict(_xyz).squeeze().cpu().numpy()
             sd_list.append(sd)
         sd = np.concatenate(sd_list)
-        sd_r = sd.reshape(self.resolution, self.resolution, self.resolution)
+        sd_r = sd.reshape(resolution, resolution, resolution)
 
         verts, faces, _, _ = marching_cubes(sd_r, level=0.0)
 
         x_max = np.array([1, 1, 1])
         x_min = np.array([-1, -1, -1])
-        verts = verts * ((x_max - x_min) / (self.resolution)) + x_min
+        verts = verts * ((x_max - x_min) / (resolution)) + x_min
 
         # Create a trimesh object
         mesh = trimesh.Trimesh(vertices=verts, faces=faces)
 
-        if self.hparams["save_obj"]:
-            # Save the mesh as an OBJ file
-            print("exporting")
-            mesh.export(
-                f"{self.hparams['save_obj_path']}/{self.trainer.max_epochs}-test.obj"
-            )
+        # # TODO don't save here do it in the script
+        # if self.hparams["save_obj"] and not os.path.exists(
+        #     self.hparams["save_obj_path"]
+        # ):
+        #     os.mkdir(self.hparams["save_obj_path"])
+        # if self.hparams["save_obj"]:
+        #     # Save the mesh as an OBJ file
+        #     print("exporting")
+        #     mesh.export(
+        #         f"{self.hparams['save_obj_path']}/{self.trainer.max_epochs}-test.obj"
+        #     )
 
         return mesh

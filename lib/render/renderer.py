@@ -5,6 +5,7 @@ import lightning as L
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from torch.nn.functional import normalize
 
 
 class LightSource:
@@ -30,10 +31,6 @@ class ReflectionProperty:
         self.diffuse = diffuse
         self.specular = specular
         self.shininess = shininess
-
-
-def normalize(vector):
-    return vector / vector.norm(dim=-1, keepdim=True)
 
 
 def sphere_intersection(ray_origin, ray_direction, eps=0.03):
@@ -116,12 +113,12 @@ def get_camera_to_world(azim, elev, dist):
     return torch.inverse(get_world_to_camera(azim, elev, dist))
 
 
-def get_camera_loc(R, t):
-    return -R.T @ t
+# def get_camera_loc(R, t):
+#     return -R.T @ t
 
 
-def get_camera_rays(R):
-    return R.T @ torch.tensor([0, 0, 1.0])
+# def get_camera_rays(R):
+#     return R.T @ torch.tensor([0, 0, 1.0])
 
 
 # TODO
@@ -187,22 +184,10 @@ class Renderer:
         return intersections, intersection_mask
 
     def _get_rays(self, pose):
-        # pixel
-        # TODO do this with K_inv
-        # pixel_xs, pixel_ys = torch.meshgrid(
-        #     torch.arange(self.width), torch.arange(self.height)
-        # )
-        # image_plane_pixel = torch.stack(
-        #     [-pixel_xs, -pixel_ys, torch.ones_like(pixel_xs)], axis=-1
-        # )
-
         # Screen coordinates
         pixel_xs, pixel_ys = torch.meshgrid(
             torch.arange(self.width), torch.arange(self.height)
         )
-        # transform image -> camera
-        # TODO do this with K_inv
-
         xs = (pixel_xs - self.width * 0.5) / self.focal
         ys = (pixel_ys - self.height * 0.5) / self.focal
 
@@ -220,31 +205,16 @@ class Renderer:
 
         return ray_origins, image_plane_world_coord - ray_origins
 
-        # directions = torch.stack(
-        #     [-xs, -ys, torch.ones_like(pixel_xs)], axis=-1
-        # )  # (W,H,3)
-
-        # transformed_dirs = directions.unsqueeze(2)  # 32x32x1x3
-        # # transform camera to world
-        # # TODO capture camera/extrinsic matrix in Camera .self
-        # camera_dirs = transformed_dirs * R  # 32x32x3
-        # ray_directions = camera_dirs.sum(axis=-1)  # 32x32x3
-
-        # ray_origins = T.expand(ray_directions.shape)
-        # # TODO calculate normals by transforming point into camera coordiate system and extracting the z coordinate
-        # self.plane_normal, self.c = self._get_image_plane(ray_directions + ray_origins)
-        # return ray_origins, ray_directions
-
-    # def precompute_intersection(self, pose):
-    #     ray_origin, ray_direction = self._get_rays(pose)
-    #     ray_origin, ray_direction = ray_origin.reshape(-1, 3), ray_direction.reshape(
-    #         -1, 3
-    #     )
-    #     ray_direction = ray_direction / torch.norm(ray_direction, dim=-1, keepdim=True)
-    #     sphere_intersect_rays, sphere_mask = self._sphere_intersection(
-    #         ray_origin, ray_direction
-    #     )
-    #     return sphere_intersect_rays, sphere_mask, ray_direction
+    def precompute_intersection(self, pose):
+        ray_origin, ray_direction = self._get_rays(pose)
+        ray_origin, ray_direction = ray_origin.reshape(-1, 3), ray_direction.reshape(
+            -1, 3
+        )
+        ray_direction = ray_direction / torch.norm(ray_direction, dim=-1, keepdim=True)
+        sphere_intersect_rays, sphere_mask = self._sphere_intersection(
+            ray_origin, ray_direction
+        )
+        return sphere_intersect_rays, sphere_mask, ray_direction
 
     def render_depthmap(
         self, model: L.LightningModule, pose: torch.tensor, device="cpu"
@@ -303,39 +273,6 @@ class Renderer:
         normals[mask] = torch.tensor([1, 1, 1]).float()
         normals = normals.view(self.height, self.width, 3).transpose(0, 1)
         self.normal = (((normals + 1) / 2) * 255).numpy().astype("uint8")
-
-    # def render_normal_precomputed(
-    #     self,
-    #     model: L.LightningModule,
-    #     ray_origin: torch.tensor,
-    #     device="cuda",
-    # ):
-    #     # TODO remove all CPU operations that can be precomputee
-    #     ray_origin, ray_direction = self._get_rays(pose)
-    #     ray_origin, ray_direction = ray_origin.reshape(-1, 3), ray_direction.reshape(
-    #         -1, 3
-    #     )
-    #     ray_direction = ray_direction / torch.norm(ray_direction, dim=-1, keepdim=True)
-    #     sphere_intersect_rays, sphere_mask = self._sphere_intersection(
-    #         ray_origin, ray_direction
-    #     )
-
-    #     location, normals = self._find_surface(
-    #         model,
-    #         sphere_intersect_rays,
-    #         ray_direction,
-    #         sphere_mask,
-    #         calc_normals=True,
-    #         device=device,
-    #     )
-    #     mask = location.norm(dim=1) > (1 + self.sphere_eps * 2)
-
-    #     normals = normalize(normals)
-
-    #     normals = normals.cpu()
-    #     normals[mask] = torch.tensor([1, 1, 1]).float()
-    #     normals = normals.view(self.height, self.width, 3).transpose(0, 1)
-    #     self.normal = (((normals + 1) / 2) * 255).numpy().astype("uint8")
 
     def render_image(
         self,

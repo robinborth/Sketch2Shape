@@ -190,7 +190,7 @@ class RenderedDataset(Dataset):
             img = cv2.imread(path)
             data.append(img)
             theta, phi, t = path.split("/")[-1].split("-")[:3]
-            camera_pose.append((int(theta), int(phi), int(t)))
+            camera_pose.append((int(theta), -int(phi), int(t)))
         self.data = data
         self.camera_pose = camera_pose
 
