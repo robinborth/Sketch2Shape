@@ -22,7 +22,8 @@ trainer:
 
 data:
   experiment: overfit_1
-  data_dir: ${paths.deepsdf_dir}/SdfSamples/${data.experiment}
+  # data_dir: ${paths.deepsdf_dir}/SdfSamples/${data.experiment}
+  data_dir: dfsjakfjasdklfjaskl
   norm_dir: ${paths.deepsdf_dir}/NormalizationParameters/${data.experiment}
   surf_dir: ${paths.deepsdf_dir}/SurfaceSamples/${data.experiment}
   batch_size: 1

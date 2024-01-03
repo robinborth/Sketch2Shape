@@ -39,6 +39,9 @@
             "type": "python",
             "request": "launch",
             "program": "scripts/train_deepsdf.py",
+            "args": [
+                "+experiemnt=deepsdf_train_chairs"
+            ],
             "console": "integratedTerminal",
             "justMyCode": true,
         },
