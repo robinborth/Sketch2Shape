@@ -61,6 +61,107 @@ class SphereTracer:
         return points, surface_mask, void_mask
 
 
+@dataclass
+class SphereTracerV2:
+    max_steps: int = 50
+    warmup_steps: int = 10
+    cold_step_scale: float = 0.6
+    warm_step_scale: float = 1.0
+    surface_threshold: float = 1e-03
+    void_threshold: float = 2.0
+
+    def trance(
+        self,
+        points: torch.Tensor,
+        rays: torch.Tensor,
+        sdf: Any,
+    ):
+        points = points.clone()
+        total_points = (points.shape[0],)
+        device = sdf.device
+
+        depth = torch.zeros(total_points).to(device)
+        sd = torch.ones(total_points).to(device)
+        mask = torch.full(total_points, True, dtype=torch.bool).to(device)
+        surface_mask = torch.full(total_points, False, dtype=torch.bool).to(device)
+        void_mask = torch.full(total_points, False, dtype=torch.bool).to(device)
+
+        # sphere tracing
+        for step in range(self.max_steps):
+            sd_out = sdf.predict(points=points)
+
+            step_scale = self.cold_step_scale
+            if step > self.warm_step_scale:
+                step_scale = self.warm_step_scale
+
+            depth += sd_out * step_scale
+            sd = sd_out * step_scale
+
+            surface_idx = sd < self.surface_threshold
+            mask[surface_idx] = False
+            surface_mask[surface_idx] = True
+
+            void_idx = depth > self.void_threshold
+            mask[void_idx] = False
+            void_mask[void_idx] = True
+
+            points = points + sd[..., None] * rays
+
+            if not mask.sum():
+                break
+
+        return points, surface_mask, void_mask
+
+@dataclass
+class SphereTracerV3:
+    max_steps: int = 50
+    warmup_steps: int = 10
+    step_scale: float = 1.5
+    clamp_sdf: float = 0.1
+    surface_threshold: float = 1e-03
+    void_threshold: float = 2.0
+
+    def trance(
+        self,
+        points: torch.Tensor,
+        rays: torch.Tensor,
+        sdf: Any,
+    ):
+        points = points.clone()
+        total_points = (points.shape[0],)
+        device = sdf.device
+
+        depth = torch.zeros(total_points).to(device)
+        sd = torch.ones(total_points).to(device)
+        mask = torch.full(total_points, True, dtype=torch.bool).to(device)
+        surface_mask = torch.full(total_points, False, dtype=torch.bool).to(device)
+        void_mask = torch.full(total_points, False, dtype=torch.bool).to(device)
+
+        # sphere tracing
+        for _ in range(self.max_steps):
+            with torch.no_grad():
+                sd_out = sdf.predict(points=points, mask=mask)
+
+            sd_out = torch.clamp(sd_out, -self.clamp_sdf, self.clamp_sdf)
+            depth[mask] += sd_out * self.step_scale
+            sd[mask] = sd_out * self.step_scale
+
+            surface_idx = sd < self.surface_threshold
+            mask[surface_idx] = False
+            surface_mask[surface_idx] = True
+
+            void_idx = depth > self.void_threshold
+            mask[void_idx] = False
+            void_mask[void_idx] = True
+
+            points[mask] = points[mask] + sd[mask, None] * rays[mask]
+
+            if not mask.sum():
+                break
+
+        return points, surface_mask, void_mask
+
+
 class SignedDistanceFunction:
     def __init__(
         self,
