@@ -4,6 +4,7 @@ _target_: lib.data.deepsdf_datamodule.DeepSDFDataModule
 data_dir: ${paths.data_dir}/deepsdf
 load_ram: True
 subsample: 16384
+half: False
 
 batch_size: 16
 num_workers: 4
@@ -15,17 +16,3 @@ shuffle: False
 dataset:
   _target_: lib.data.deepsdf_dataset.DeepSDFDataset
   _partial_: True
-
-########################################################################
-# Inference Settings
-########################################################################
-
-generate:
-  object_idx: 0
-  resolution: 64
-  visualize: False
-
-num_obj_train: 4
-num_obj_val: 0
-num_obj_test: 0
-dataset_splits_path: ${data.data_dir}/dataset_splits.csv

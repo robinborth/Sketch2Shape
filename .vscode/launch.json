@@ -24,23 +24,23 @@
             "justMyCode": false,
         },
         {
+            "name": "Debug: Training DeepSDF",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/train_deepsdf.py",
+            "args": [
+                "+experiment=deepsdf_overfit_1"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
             "name": "Debug: Eval Siamese",
             "type": "python",
             "request": "launch",
             "program": "scripts/eval_siamese.py",
             "args": [
                 "+experiment=eval"
-            ],
-            "console": "integratedTerminal",
-            "justMyCode": true,
-        },
-        {
-            "name": "Debug: Training DeepSDF",
-            "type": "python",
-            "request": "launch",
-            "program": "scripts/train_deepsdf.py",
-            "args": [
-                "+experiemnt=deepsdf_train_chairs"
             ],
             "console": "integratedTerminal",
             "justMyCode": true,
@@ -139,8 +139,8 @@
             "request": "launch",
             "program": "scripts/eval_deepsdf.py",
             "args": [
-                "logger=wandb"
-            ]
+                "logger=wandb",
+            ],
             "console": "integratedTerminal",
             "justMyCode": false,
         },
@@ -149,7 +149,7 @@
             "type": "python",
             "request": "launch",
             "program": "scripts/deepsdf_optimize_normal.py",
-            "args": []
+            "args": [],
             "console": "integratedTerminal",
             "justMyCode": false,
         }

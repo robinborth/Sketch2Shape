@@ -5,7 +5,7 @@ defaults:
   - data: deepsdf_chair
   - model: deepsdf
   - callbacks: default
-  - logger: null
+  - logger: null 
   - trainer: default
   - hydra: default
   - paths: default
