@@ -5,8 +5,6 @@ from pathlib import Path
 
 import hydra
 import lightning as L
-import numpy as np
-import trimesh
 from omegaconf import DictConfig, OmegaConf
 
 from lib.evaluate import compute_chamfer_distance

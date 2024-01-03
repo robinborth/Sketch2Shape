@@ -1,10 +1,20 @@
+import glob
 import json
 import random
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import trimesh
 from torch.utils.data import Dataset
+
+from lib.render.renderer import Renderer, get_camera_to_world
+
+
+def remove_nans(tensor):
+    tensor_nan = torch.isnan(tensor[:, 3])
+    return tensor[~tensor_nan, :]
 
 
 class DeepSDFDataset(Dataset):
@@ -41,8 +51,8 @@ class DeepSDFDataset(Dataset):
         data = np.load(path)
         if self.subsample is None:
             return data
-        pos_tensor = self._remove_nans(torch.from_numpy(data["pos"]))
-        neg_tensor = self._remove_nans(torch.from_numpy(data["neg"]))
+        pos_tensor = remove_nans(torch.from_numpy(data["pos"]))
+        neg_tensor = remove_nans(torch.from_numpy(data["neg"]))
 
         # split the sample into half
         half = int(self.subsample / 2)
@@ -60,60 +70,38 @@ class DeepSDFDataset(Dataset):
     def _load_sdf_samples_from_ram(self, data):
         if self.subsample is None:
             return data
-        
+
         hlf = self.subsample // 2
 
         ### 3 -> 17.198s (with replacement), 25.338 (without replacement)
-        pos_indices = np.random.choice(len(data[0]), hlf, replace=0)
-        neg_indices = np.random.choice(len(data[1]), hlf, replace=0)
+        # pos_indices = np.random.choice(len(data[0]), hlf, replace=0)
+        # neg_indices = np.random.choice(len(data[1]), hlf, replace=hlf > len(data[1]))
 
-        samples = torch.cat([data[0][pos_indices], data[1][neg_indices]], dim=0)
+        pos_tensor = data[0]
+        neg_tensor = data[1]
+
+        pos_size = pos_tensor.shape[0]
+        neg_size = neg_tensor.shape[0]
+
+        pos_start_ind = random.randint(0, pos_size - hlf)
+        sample_pos = pos_tensor[pos_start_ind : (pos_start_ind + hlf)]
+
+        if neg_size <= hlf:
+            random_neg = (torch.rand(hlf) * neg_tensor.shape[0]).long()
+            sample_neg = torch.index_select(neg_tensor, 0, random_neg)
+        else:
+            neg_start_ind = random.randint(0, neg_size - hlf)
+            sample_neg = neg_tensor[neg_start_ind : (neg_start_ind + hlf)]
+
+        samples = torch.cat([sample_pos, sample_neg], 0)
+
         return samples
-
-        # ### 4 -> 15.653 (official implementation)
-        # pos_tensor = data[0]
-        # neg_tensor = data[1]
-
-        # # split the sample into half
-        # half = int(self.subsample / 2)
-
-        # pos_size = pos_tensor.shape[0]
-        # neg_size = neg_tensor.shape[0]
-
-        # pos_start_ind = random.randint(0, pos_size - half)
-        # sample_pos = pos_tensor[pos_start_ind : (pos_start_ind + half)]
-
-        # if neg_size <= half:
-        #     random_neg = (torch.rand(half) * neg_tensor.shape[0]).long()
-        #     sample_neg = torch.index_select(neg_tensor, 0, random_neg)
-        # else:
-        #     neg_start_ind = random.randint(0, neg_size - half)
-        #     sample_neg = neg_tensor[neg_start_ind : (neg_start_ind + half)]
-
-        # samples = torch.cat([sample_pos, sample_neg], 0)
-
-        # return samples
-
-    def _remove_nans(self, tensor):
-        tensor_nan = torch.isnan(tensor[:, 3])
-        return tensor[~tensor_nan, :]
 
     def _load_to_ram(self, path):
         data = np.load(path)
         # to make it fit into ram
-        pos_tensor = self._remove_nans(torch.from_numpy(data["pos"]))
-        neg_tensor = self._remove_nans(torch.from_numpy(data["neg"]))
-
-        if self.half:
-            pos_tensor = pos_tensor.half()
-            neg_tensor = neg_tensor.half()
-
-        ### 3 -> 17.198s (with replacement), 25.338 (without replacement)
-        # pos_indices = np.random.choice(len(data[0]), hlf, replace=0)
-        # neg_indices = np.random.choice(len(data[1]), hlf, replace=0)
-
-        # pos_shuffle = torch.randperm(pos_tensor.shape[0])
-        # neg_shuffle = torch.randperm(neg_tensor.shape[0])
+        pos_tensor = remove_nans(torch.from_numpy(data["pos"])).half()
+        neg_tensor = remove_nans(torch.from_numpy(data["neg"])).half()
 
         return [pos_tensor, neg_tensor]
 
@@ -123,7 +111,6 @@ class DeepSDFDataset(Dataset):
     def __getitem__(self, idx):
         if self.load_ram:
             _data = self._load_sdf_samples_from_ram(self.data[idx])
-            # TODO don't use the idx from the dataloader
             idx = np.repeat(idx, len(_data))  # needs to be fixed
             return {
                 "xyz": _data[:, :3],
@@ -138,3 +125,85 @@ class DeepSDFDataset(Dataset):
                 "sd": _data[:, 3],
                 "idx": idx,
             }
+
+
+class PointCloudDataset(Dataset):
+    def __init__(self, ply_path: str, norm_path: str):
+        self.ply_path = ply_path
+        self.norm_path = norm_path
+
+        self._load()
+
+    def _load(self):
+        pointclouds = list()
+        shapenet_idxs = list()
+        # should match the same files from both folders, as directory is sorted
+        # will throw an error if size of the directories is different
+        sorted_plyfiles = sorted(list(glob.glob(self.ply_path + "/**/*.ply")))
+        sorted_normfiles = sorted(list(glob.glob(self.norm_path + "/**/*.npz")))
+        for plyfile, normfile in zip(sorted_plyfiles, sorted_normfiles):
+            normfile = np.load(normfile)
+            pointcloud = trimesh.load(plyfile)
+
+            # normalize to unit sphere
+            pointcloud.vertices = (pointcloud.vertices + normfile["offset"]) * normfile[
+                "scale"
+            ]
+
+            pointclouds.append(pointcloud)
+
+            shapenet_idx = plyfile.split("/")[-1][:-4]
+            shapenet_idxs.append(shapenet_idx)
+
+        self.pointclouds = pointclouds
+        self.shapenet_idxs = shapenet_idxs
+
+    def __len__(self):
+        return len(self.pointclouds)
+
+    def __getitem__(self, idx):
+        return {
+            "shapenet_idx": self.shapenet_idxs[idx],
+            "pointcloud": self.pointclouds[idx].vertices,
+        }
+
+
+import cv2
+
+# matplotlib loads 4 instead of 3 dimensions...
+
+
+# Intended to hold one object at a time
+class RenderedDataset(Dataset):
+    # TODO default settings, change later to adapt
+    # TODO create a script to get rendered data from meshes used to create this dataset
+    def __init__(self, data_dir):
+        self.data_dir = data_dir
+        self.camera = Renderer()
+
+        self._load()
+
+    def _load(self):
+        data = list()
+        camera_pose = list()
+        for path in glob.glob(self.data_dir + "/*.png"):
+            img = cv2.imread(path)
+            data.append(img)
+            theta, phi, t = path.split("/")[-1].split("-")[:3]
+            camera_pose.append((int(theta), -int(phi), int(t)))
+        self.data = data
+        self.camera_pose = camera_pose
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        render = self.data[idx]
+        pose = get_camera_to_world(*self.camera_pose[idx])
+        intersection, mask, ray_direction = self.camera.precompute_intersection(pose)
+        return {
+            "render": render,
+            "intersection": intersection,
+            "mask": mask,
+            "ray_direction": ray_direction,
+        }

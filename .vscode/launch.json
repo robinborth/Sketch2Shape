@@ -75,7 +75,7 @@
             "request": "launch",
             "program": "scripts/train_deepsdf.py",
             "args": [
-                "+experiment=deepsdf_overfit_batch16",
+                "+experiment=deepsdf_overfit_16",
             ],
             "console": "integratedTerminal",
             "justMyCode": true,
@@ -122,13 +122,31 @@
             "justMyCode": false,
         },
         {
-            "name": "Debug: Obj Generation",
+            "name": "Debug: Pointcloud reconstruction",
             "type": "python",
             "request": "launch",
-            "program": "scripts/generate_unit_sphere_meshes.py",
+            "program": "scripts/reconstruct_from_pointcloud_deepsdf.py",
+            "args": [],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
+            "name": "Debug: Eval DeepSDF",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/eval_deepsdf.py",
             "args": [
-                "+experiment=deepsdf_overfit_four"
-            ],
+                "logger=wandb"
+            ]
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
+            "name": "Debug: Optimize Normalmap",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/deepsdf_optimize_normal.py",
+            "args": []
             "console": "integratedTerminal",
             "justMyCode": false,
         }

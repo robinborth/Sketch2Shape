@@ -12,7 +12,8 @@ import torch
 import trimesh
 
 # torch._dynamo.config.suppress_errors = True
-from lightning import Callback, LightningDataModule, LightningModule, Trainer
+from lightning import Callback, LightningDataModule, LightningModule
+from lightning.pytorch.callbacks import LearningRateMonitor
 from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig, OmegaConf
 
@@ -25,7 +26,7 @@ log = create_logger("optimize_latent")
 @hydra.main(
     version_base=None,
     config_path="../conf",
-    config_name="deepsdf_optimize_latent",
+    config_name="deepsdf_opt_normal",
 )
 def optimize_latent(cfg: DictConfig) -> None:
     # if not os.path.exists(cfg.model.ckpt_path):
