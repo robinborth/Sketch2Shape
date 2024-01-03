@@ -1,6 +1,7 @@
 # some parts inspired by: https://omaraflak.medium.com/ray-tracing-from-scratch-in-python-41670e6a96f9
 from typing import Optional
 
+import cv2
 import lightning as L
 import matplotlib.pyplot as plt
 import numpy as np
@@ -437,7 +438,7 @@ class Renderer:
         plt.imshow(self.image)
 
     def save_image(self, path):
-        plt.imsave(path, self.image)
+        cv2.imwrite(path, cv2.cvtColor(self.image, cv2.COLOR_RGB2BGR))
 
     def show_depth(self):
         im = plt.imshow(self.depth)
@@ -451,4 +452,4 @@ class Renderer:
         plt.imshow(self.normal)
 
     def save_normal(self, path):
-        plt.imsave(path, self.normal)
+        cv2.imwrite(path, cv2.cvtColor(self.normal, cv2.COLOR_RGB2BGR))

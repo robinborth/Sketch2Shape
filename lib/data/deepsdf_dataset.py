@@ -3,18 +3,15 @@ import json
 import random
 from pathlib import Path
 
+import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import trimesh
 from torch.utils.data import Dataset
 
+from lib.data.sdf_utils import remove_nans
 from lib.render.renderer import Renderer, get_camera_to_world
-
-
-def remove_nans(tensor):
-    tensor_nan = torch.isnan(tensor[:, 3])
-    return tensor[~tensor_nan, :]
 
 
 class DeepSDFDataset(Dataset):
@@ -168,12 +165,10 @@ class PointCloudDataset(Dataset):
         }
 
 
-import cv2
-
 # matplotlib loads 4 instead of 3 dimensions...
-
-
 # Intended to hold one object at a time
+
+
 class RenderedDataset(Dataset):
     # TODO default settings, change later to adapt
     # TODO create a script to get rendered data from meshes used to create this dataset
@@ -187,8 +182,8 @@ class RenderedDataset(Dataset):
         data = list()
         camera_pose = list()
         for path in glob.glob(self.data_dir + "/*.png"):
-            img = cv2.imread(path)
-            data.append(img)
+            img = plt.imread(path)
+            data.append(img.astype(np.float32))
             theta, phi, t = path.split("/")[-1].split("-")[:3]
             camera_pose.append((int(theta), -int(phi), int(t)))
         self.data = data
@@ -198,11 +193,11 @@ class RenderedDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        render = self.data[idx]
+        image = self.data[idx]
         pose = get_camera_to_world(*self.camera_pose[idx])
         intersection, mask, ray_direction = self.camera.precompute_intersection(pose)
         return {
-            "render": render,
+            "gt_image": image,
             "intersection": intersection,
             "mask": mask,
             "ray_direction": ray_direction,

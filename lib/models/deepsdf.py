@@ -130,9 +130,7 @@ class DeepSDF(L.LightningModule):
                 if i in self.hparams["skip_connection"]:
                     _skip = torch.cat(x, dim=2)
                     out = torch.cat((out, _skip), dim=2)
-                    out = layer(out)
-                else:
-                    out = layer(out)
+                out = layer(out)
         return out
 
     def configure_optimizers(self):
@@ -551,6 +549,7 @@ class DeepSDFRenderOptimizer(L.LightningModule):
     ) -> None:
         super().__init__()
         self.save_hyperparameters()
+        # self.automatic_optimization = False
 
         # init model
         self.model = DeepSDF.load_from_checkpoint(self.hparams["ckpt_path"])
@@ -579,25 +578,40 @@ class DeepSDFRenderOptimizer(L.LightningModule):
     #     return self.model.predict((xyz, lat_vec))
 
     def training_step(self, batch, batch_idx):
+        torch.autograd.set_detect_anomaly(True)
         self.model.eval()
-        y = batch["render"]
+        gt_normals = batch["gt_image"]
         intersection = batch["intersection"]
         mask = batch["mask"]
         ray_direction = batch["ray_direction"]
 
+        # opt = self.optimizers()
+        # opt.zero_grad()
+
         normals = self._render_normal(intersection, mask, ray_direction)
 
+        # TODO sync the masking
         mask = intersection.norm(dim=-1) > (1 + self.hparams["sphere_eps"] * 2)
 
-        normals[mask.squeeze()] = torch.tensor([1, 1, 1], device=self.device).float()
+        normals = normalize(normals + 1e-5)  # division by 0 breaks grad
+        # normals[mask.squeeze()] = torch.ones(3, device=self.device, dtype=normals.dtype)
 
-        normals = normalize(normals)
         normals = normals.view(256, 256, 3).transpose(0, 1)
-        y_hat = ((normals + 1) / 2) * 255
+        y_hat = (normals + 1) / 2  # * 255 (gt_normals within [0, 1])
 
-        l2_loss = self.loss(y_hat, y.float().squeeze())
+        # l2_loss = (y_hat - gt_normals).pow(2).sum()
+        l2_loss = self.loss(y_hat, gt_normals.squeeze())
 
-        self.logger.log_image(key="normal", images=[y_hat.detach().cpu().numpy()])
+        # (
+        #     outputs=normals,
+        #     inputs=self.latent,
+        #     grad_outputs=torch.ones_like(normals),
+        #     retain_graph=True,
+        #     create_graph=True,
+        # )[0]
+
+        # self.logger.log_image(key="rendered", images=[y_hat.detach().cpu().numpy()])
+        # self.logger.log_image(key="gt", images=[gt_normals.detach().cpu().numpy()])
         self.log("opt/l1_loss", l2_loss, on_step=True, on_epoch=True)
         if self.hparams["reg_loss"]:
             # TODO will probably throw an error
@@ -608,6 +622,17 @@ class DeepSDFRenderOptimizer(L.LightningModule):
             loss = l2_loss
             self.log("debug/reg_norm", torch.linalg.norm(self.latent, dim=-1))
         self.log("opt/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+
+        # self.manual_backward(loss)
+        # self.latent -= torch.autograd.grad(
+        #     outputs=normals,
+        #     inputs=self.latent,
+        #     grad_outputs=torch.ones_like(normals),
+        #     retain_graph=True,
+        #     create_graph=True,
+        # )[0]
+        # opt.step()
+
         return loss
 
     def _render_normal(self, intersection, mask, ray_direction):
