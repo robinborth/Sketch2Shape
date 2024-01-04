@@ -112,6 +112,7 @@ class SphereTracerV2:
 
         return points, surface_mask, void_mask
 
+
 @dataclass
 class SphereTracerV3:
     max_steps: int = 50
@@ -140,7 +141,7 @@ class SphereTracerV3:
         # sphere tracing
         for _ in range(self.max_steps):
             with torch.no_grad():
-                sd_out = sdf.predict(points=points, mask=mask)
+                sd_out = sdf(points=points, mask=mask)
 
             sd_out = torch.clamp(sd_out, -self.clamp_sdf, self.clamp_sdf)
             depth[mask] += sd_out * self.step_scale
@@ -189,7 +190,7 @@ class SignedDistanceFunction:
         lat_vec = self.lat_vec.expand((total_points, -1))
 
         if mask is not None:
-            return self.model.predict((points[mask], lat_vec[mask])).squeeze()
+            return self.model((points[mask], lat_vec[mask])).squeeze()
         return self.model.predict((points, lat_vec)).squeeze()
 
 

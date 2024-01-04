@@ -24,7 +24,7 @@ from lib.utils import create_logger
 logger = create_logger("shape2sketch")
 
 
-@hydra.main(version_base=None, config_path="../conf", config_name="config")
+@hydra.main(version_base=None, config_path="../conf", config_name="preprocess_sketch")
 def main(cfg: DictConfig) -> None:
     logger.debug("==> loading config ...")
     L.seed_everything(cfg.seed)

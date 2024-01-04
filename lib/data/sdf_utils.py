@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+import torch
 import trimesh
 
 
@@ -24,3 +25,8 @@ def scale_to_unit_cube(mesh: trimesh.Trimesh, scale, offset):
     vertices = (mesh.vertices - centroid) * norm
 
     return trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
+
+
+def remove_nans(tensor):
+    tensor_nan = torch.isnan(tensor[:, 3])
+    return tensor[~tensor_nan, :]

@@ -1,47 +1,30 @@
-import glob
-import json
-import math
-import os
-from pathlib import Path
 from typing import List
 
 import hydra
 import lightning as L
-import numpy as np
-import torch
-import trimesh
-
-# torch._dynamo.config.suppress_errors = True
-from lightning import Callback, LightningDataModule, LightningModule
-from lightning.pytorch.callbacks import LearningRateMonitor
+from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
-from lib.data.deepsdf_dataset import DeepSDFDataset
 from lib.utils import create_logger, instantiate_callbacks, instantiate_loggers
 
-log = create_logger("optimize_latent")
+log = create_logger("optimize_normal")
 
 
 @hydra.main(
     version_base=None,
     config_path="../conf",
-    config_name="deepsdf_opt_normal",
+    config_name="deepsdf_optimize_normal",
 )
-def optimize_latent(cfg: DictConfig) -> None:
-    # if not os.path.exists(cfg.model.ckpt_path):
-    #     raise ValueError("Please provide a checkpoint path to the DeepSDF Model")
-
+def optimize(cfg: DictConfig) -> None:
     log.info("==> loading config ...")
     L.seed_everything(cfg.seed)
 
     log.info(f"==> initializing datamodule <{cfg.data._target_}>")
-    datamodule: LightningDataModule = hydra.utils.instantiate(
-        cfg.data,
-    )
+    datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
 
     log.info(f"==> initializing model <{cfg.model._target_}>")
-    model: LightningModule = hydra.utils.instantiate(cfg.model, ckpt_path=cfg.ckpt_path)
+    model: LightningModule = hydra.utils.instantiate(cfg.model)
 
     log.info("==> initializing callbacks ...")
     callbacks: List[Callback] = instantiate_callbacks(cfg.get("callbacks"))
@@ -59,8 +42,11 @@ def optimize_latent(cfg: DictConfig) -> None:
     log.info("==> start training ...")
     trainer.fit(model=model, datamodule=datamodule)
 
-    model.get_obj()
+    if cfg.save_obj:
+        log.info("==> save object ...")
+        mesh = model.get_obj()
+        mesh.export(f"{cfg.save_obj_path}/{trainer.max_epochs}-test.obj")
 
 
 if __name__ == "__main__":
-    optimize_latent()
+    optimize()

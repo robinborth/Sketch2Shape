@@ -3,18 +3,15 @@ import json
 import random
 from pathlib import Path
 
+import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import trimesh
 from torch.utils.data import Dataset
 
-from lib.render.renderer import Renderer, get_camera_to_world
-
-
-def remove_nans(tensor):
-    tensor_nan = torch.isnan(tensor[:, 3])
-    return tensor[~tensor_nan, :]
+from lib.data.sdf_utils import remove_nans
+from lib.render.camera import Camera
 
 
 class DeepSDFDataset(Dataset):
@@ -168,42 +165,21 @@ class PointCloudDataset(Dataset):
         }
 
 
-import cv2
-
-# matplotlib loads 4 instead of 3 dimensions...
-
-
-# Intended to hold one object at a time
 class RenderedDataset(Dataset):
-    # TODO default settings, change later to adapt
-    # TODO create a script to get rendered data from meshes used to create this dataset
     def __init__(self, data_dir):
         self.data_dir = data_dir
-        self.camera = Renderer()
-
-        self._load()
-
-    def _load(self):
-        data = list()
-        camera_pose = list()
+        self.data = []
         for path in glob.glob(self.data_dir + "/*.png"):
-            img = cv2.imread(path)
-            data.append(img)
-            theta, phi, t = path.split("/")[-1].split("-")[:3]
-            camera_pose.append((int(theta), -int(phi), int(t)))
-        self.data = data
-        self.camera_pose = camera_pose
+            data = {}
+            azim, elev, dist = path.split("/")[-1].split("-")[:3]
+            camera = Camera(azim=int(azim), elev=-int(elev), dist=int(dist))
+            points, rays, mask = camera.unit_sphere_intersection_rays()
+            data["points"], data["rays"], data["mask"] = points, rays, mask
+            data["gt_image"] = plt.imread(path).astype(np.float32)
+            self.data.append(data)
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        render = self.data[idx]
-        pose = get_camera_to_world(*self.camera_pose[idx])
-        intersection, mask, ray_direction = self.camera.precompute_intersection(pose)
-        return {
-            "render": render,
-            "intersection": intersection,
-            "mask": mask,
-            "ray_direction": ray_direction,
-        }
+        return self.data[idx]

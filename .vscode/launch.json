@@ -145,11 +145,10 @@
             "justMyCode": false,
         },
         {
-            "name": "Debug: Optimize Normalmap",
+            "name": "Debug: Optimize Normal",
             "type": "python",
             "request": "launch",
             "program": "scripts/deepsdf_optimize_normal.py",
-            "args": [],
             "console": "integratedTerminal",
             "justMyCode": false,
         }
