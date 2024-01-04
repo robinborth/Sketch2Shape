@@ -26,12 +26,12 @@ model:
   _target_: lib.render.renderer.DeepSDFRender
   ckpt_path: ${paths.root_dir}/logs/save/deepsdf.ckpt
   prior_idx: -1
-  reg_loss: True
+  reg_loss: False
   reg_weight: 1e-10
   optimizer:
     _target_: torch.optim.Adam
     _partial_: true
-    lr: 10
+    lr: 1
   scheduler:
     _partial_: True
     _target_: torch.optim.lr_scheduler.StepLR
