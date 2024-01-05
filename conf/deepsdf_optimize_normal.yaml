@@ -24,17 +24,17 @@ trainer:
   log_every_n_steps: 1
 
 model:
-  _target_: lib.render.renderer.DeepSDFRender
+  _target_: lib.render.renderer.DeepSDFNormalRender
   ckpt_path: ${paths.root_dir}/logs/save/deepsdf.ckpt
-  # prior_idx: -1
-  prior_idx: 37
+  prior_idx: -1
+  # prior_idx: 37
   reg_loss: False
   reg_weight: 1e-08
-  normal_weight: 1
+  image_weight: 1
   optimizer:
     _target_: torch.optim.Adam
     _partial_: true
-    lr: 1e-03
+    lr: 1e-02
   scheduler:
     _partial_: True
     _target_: torch.optim.lr_scheduler.StepLR

@@ -16,7 +16,7 @@ class DeepSDFRender(LightningModule):
         ckpt_path: str,
         reg_loss: bool = True,
         reg_weight: float = 1e-4,
-        normal_weight: float = 1,
+        image_weight: float = 1,
         prior_idx: int = -1,
         resolution: int = 256,
         n_render_steps: int = 100,
@@ -138,6 +138,33 @@ class DeepSDFRender(LightningModule):
             return self.model((points[mask], latent[mask])).squeeze()
         return self.model((points, latent)).squeeze()
 
+    def configure_optimizers(self):
+        optimizer = self.hparams["optimizer"]([self.latent])
+        if self.hparams["scheduler"] is not None:
+            scheduler = self.hparams["scheduler"](optimizer)
+            return {"optimizer": optimizer, "lr_scheduler": scheduler}
+        return optimizer
+
+    def to_mesh(self, resolution: int = 256, chunk_size: int = 65536):
+        min_val, max_val = self.min_val, self.max_val
+        grid_vals = torch.linspace(min_val, max_val, resolution)
+        xs, ys, zs = torch.meshgrid(grid_vals, grid_vals, grid_vals)
+        points = torch.stack((xs.ravel(), ys.ravel(), zs.ravel())).transpose(1, 0)
+
+        loader = DataLoader(points, batch_size=chunk_size)  # type: ignore
+        sd = []
+        for points in tqdm(iter(loader), total=len(loader)):
+            points = points.to(self.model.device)
+            sd_out = self.forward(points).detach().cpu().numpy()
+            sd.append(sd_out)
+        sd_cube = np.concatenate(sd).reshape(resolution, resolution, resolution)
+
+        verts, faces, _, _ = marching_cubes(sd_cube, level=0.0)
+        verts = verts * ((max_val - min_val) / resolution) + min_val
+        return trimesh.Trimesh(vertices=verts, faces=faces)
+
+
+class DeepSDFNormalRender(DeepSDFRender):
     def training_step(self, batch, batch_idx):
         # get the gt image and normals
         gt_image = batch["gt_image"].squeeze()
@@ -155,7 +182,7 @@ class DeepSDFRender(LightningModule):
 
         # calculate the loss for the object and usefull information to wandb
         normal_loss = l1_loss(gt_normals[mask], normals[mask])
-        normal_loss *= self.hparams["normal_weight"]
+        normal_loss *= self.hparams["image_weight"]
         self.log("optimize/normal_loss", normal_loss, on_step=True, on_epoch=True)
 
         # calculate the loss for the object and usefull information to wandb
@@ -184,28 +211,3 @@ class DeepSDFRender(LightningModule):
         self.log_image("mask", self.to_image(mask))
 
         return loss
-
-    def configure_optimizers(self):
-        optimizer = self.hparams["optimizer"]([self.latent])
-        if self.hparams["scheduler"] is not None:
-            scheduler = self.hparams["scheduler"](optimizer)
-            return {"optimizer": optimizer, "lr_scheduler": scheduler}
-        return optimizer
-
-    def to_mesh(self, resolution: int = 256, chunk_size: int = 65536):
-        min_val, max_val = self.min_val, self.max_val
-        grid_vals = torch.linspace(min_val, max_val, resolution)
-        xs, ys, zs = torch.meshgrid(grid_vals, grid_vals, grid_vals)
-        points = torch.stack((xs.ravel(), ys.ravel(), zs.ravel())).transpose(1, 0)
-
-        loader = DataLoader(points, batch_size=chunk_size)  # type: ignore
-        sd = []
-        for points in tqdm(iter(loader), total=len(loader)):
-            points = points.to(self.model.device)
-            sd_out = self.forward(points).detach().cpu().numpy()
-            sd.append(sd_out)
-        sd_cube = np.concatenate(sd).reshape(resolution, resolution, resolution)
-
-        verts, faces, _, _ = marching_cubes(sd_cube, level=0.0)
-        verts = verts * ((max_val - min_val) / resolution) + min_val
-        return trimesh.Trimesh(vertices=verts, faces=faces)
