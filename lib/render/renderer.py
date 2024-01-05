@@ -83,8 +83,8 @@ class DeepSDFRender(LightningModule):
         mask: torch.Tensor,
     ):
         device = self.model.device
-        # points = points.clone()
-        # mask = mask.clone()
+        points = points.clone()
+        mask = mask.clone()
 
         total_points = (points.shape[0],)
         depth = torch.zeros(total_points).to(device)
@@ -113,15 +113,56 @@ class DeepSDFRender(LightningModule):
         surface_mask = sdf < self.surface_eps
         return points, surface_mask
 
-    def render_normals(
+    def sphere_tracing_min_sdf(
         self,
         points: torch.Tensor,
         rays: torch.Tensor,
         mask: torch.Tensor,
     ):
-        points, surface_mask = self.sphere_tracing(points=points, rays=rays, mask=mask)
+        device = self.model.device
+        points = points.clone()
+        mask = mask.clone()
+        total_points = (points.shape[0],)
+        depth = torch.zeros(total_points).to(device)
+        sdf = torch.ones(total_points).to(device)
+
+        min_points = points.clone()
+        min_sdf = sdf.clone()
+
+        # sphere tracing
+        for _ in range(self.n_render_steps):
+            with torch.no_grad():
+                sdf_out = self.forward(points=points, mask=mask).to(points)
+
+            sdf_out = torch.clamp(sdf_out, -self.clamp_sdf, self.clamp_sdf)
+            depth[mask] += sdf_out * self.step_scale
+            sdf[mask] = sdf_out * self.step_scale
+
+            surface_idx = torch.abs(sdf) < self.surface_eps
+            # TODO there are holes in the rendering
+            # void_idx = points.norm(dim=-1) > 1
+            void_idx = depth > 2.0
+            mask[surface_idx | void_idx] = False
+
+            points[mask] = points[mask] + sdf[mask, None] * rays[mask]
+
+            min_mask = torch.abs(sdf) < torch.abs(min_sdf)
+            min_sdf[min_mask] = sdf[min_mask]
+            min_points[min_mask] = points[min_mask]
+
+            if not mask.sum():
+                break
+
+        surface_mask = sdf < self.surface_eps
+        return min_points, min_sdf, surface_mask
+
+    def render_normals(
+        self,
+        points: torch.Tensor,
+        mask: torch.Tensor,
+    ):
         points.requires_grad = True
-        sdf = self.forward(points, surface_mask)
+        sdf = self.forward(points, mask=mask)
         (normals,) = torch.autograd.grad(
             outputs=sdf,
             inputs=points,
@@ -129,8 +170,7 @@ class DeepSDFRender(LightningModule):
             create_graph=True,
             retain_graph=True,
         )
-        normals = torch.nn.functional.normalize(normals, dim=-1)
-        return normals, surface_mask
+        return torch.nn.functional.normalize(normals, dim=-1)
 
     def forward(self, points, mask=None):
         latent = self.latent.expand(points.shape[0], -1)
@@ -172,11 +212,12 @@ class DeepSDFNormalRender(DeepSDFRender):
 
         # calculate the normals map
         gt_surface_mask = batch["gt_surface_mask"].reshape(-1)
-        normals, surface_mask = self.render_normals(
+        points, surface_mask = self.sphere_tracing(
             points=batch["points"].squeeze(),
             mask=batch["mask"].squeeze(),
             rays=batch["rays"].squeeze(),
         )
+        normals = self.render_normals(points=points, mask=surface_mask)
         image = self.normal_to_image(normals, surface_mask)
         mask = gt_surface_mask & surface_mask
 
@@ -201,6 +242,67 @@ class DeepSDFNormalRender(DeepSDFRender):
 
         # log the full loss
         loss = reg_loss + normal_loss
+        self.log("optimize/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+
+        # visualize the different images
+        self.log_image("gt_image", gt_image)
+        self.log_image("image", image)
+        self.log_image("gt_surface_mask", self.to_image(gt_surface_mask))
+        self.log_image("surface_mask", self.to_image(surface_mask))
+        self.log_image("mask", self.to_image(mask))
+
+        return loss
+
+
+class DeepSDFSurfaceNormalRender(DeepSDFRender):
+    def training_step(self, batch, batch_idx):
+        # get the gt image and normals
+        gt_image = batch["gt_image"].squeeze()
+        gt_surface_mask = batch["gt_surface_mask"].reshape(-1)
+        gt_normals = self.image_to_normal(gt_image)
+        unit_sphere_mask = batch["mask"].squeeze()
+
+        # calculate the normals map
+        min_points, _, surface_mask = self.sphere_tracing_min_sdf(
+            points=batch["points"].squeeze(),
+            mask=unit_sphere_mask,
+            rays=batch["rays"].squeeze(),
+        )
+        normals = self.render_normals(points=min_points, mask=surface_mask)
+        image = self.normal_to_image(normals, surface_mask)
+        mask = gt_surface_mask & surface_mask
+
+        # calculate the loss for the object and usefull information to wandb
+        normal_loss = l1_loss(gt_normals[mask], normals[mask])
+        normal_loss *= self.hparams["image_weight"]
+        self.log("optimize/normal_loss", normal_loss, on_step=True, on_epoch=True)
+
+        min_points.requires_grad = True
+        min_sdf = torch.abs(self.forward(min_points).to(min_points))
+        soft_silhouette = min_sdf - self.surface_eps
+        surface_loss = gt_surface_mask * torch.relu(soft_silhouette)
+        surface_loss += ~gt_surface_mask * torch.relu(-soft_silhouette)
+        surface_error_map = surface_loss.clone()
+        self.log_image("surface_error_map", self.to_image(surface_error_map))
+        surface_loss = surface_loss[unit_sphere_mask].mean() * 1e-3
+        self.log("optimize/surface_loss", surface_loss, on_step=True, on_epoch=True)
+
+        # calculate the loss for the object and usefull information to wandb
+        error_map = torch.nn.functional.l1_loss(gt_image, image, reduction="none")
+        self.log_image("error_map", error_map)
+
+        # visualize the latent norm
+        latent_norm = torch.linalg.norm(self.latent, dim=-1)
+        self.log("optimize/latent_norm", latent_norm)
+
+        # add regularization loss
+        reg_loss = torch.tensor(0).to(normal_loss)
+        if self.hparams["reg_loss"]:
+            reg_loss = latent_norm * self.hparams["reg_weight"]
+            self.log("optimize/reg_loss", reg_loss, on_step=True, on_epoch=True)
+
+        # log the full loss
+        loss = reg_loss + normal_loss + surface_loss
         self.log("optimize/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
 
         # visualize the different images
