@@ -26,14 +26,15 @@ trainer:
 model:
   _target_: lib.render.renderer.DeepSDFRender
   ckpt_path: ${paths.root_dir}/logs/save/deepsdf.ckpt
-  prior_idx: -1
+  # prior_idx: -1
+  prior_idx: 37
   reg_loss: False
-  reg_weight: 1e-10
+  reg_weight: 1e-08
   normal_weight: 1
   optimizer:
     _target_: torch.optim.Adam
     _partial_: true
-    lr: 1
+    lr: 1e-03
   scheduler:
     _partial_: True
     _target_: torch.optim.lr_scheduler.StepLR

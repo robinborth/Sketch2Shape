@@ -169,7 +169,7 @@ class DeepSDFRender(LightningModule):
         # add regularization loss
         reg_loss = torch.tensor(0).to(normal_loss)
         if self.hparams["reg_loss"]:
-            reg_loss = self.hparams["reg_weight"] * latent_norm
+            reg_loss = latent_norm * self.hparams["reg_weight"]
             self.log("optimize/reg_loss", reg_loss, on_step=True, on_epoch=True)
 
         # log the full loss

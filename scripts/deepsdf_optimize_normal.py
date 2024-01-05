@@ -32,7 +32,7 @@ def optimize(cfg: DictConfig) -> None:
     log.info("==> initializing logger ...")
     logger: WandbLogger = instantiate_loggers(cfg.get("logger"))
     if logger is not None:
-        logger.watch(model, log="all", log_graph=True)
+        logger.watch(model, log="all")
 
     log.info(f"==> initializing trainer <{cfg.trainer._target_}>")
     trainer: Trainer = hydra.utils.instantiate(
@@ -46,7 +46,7 @@ def optimize(cfg: DictConfig) -> None:
 
     if cfg.save_obj:
         log.info("==> save object ...")
-        mesh = model.get_obj()
+        mesh = model.to_mesh()
         mesh.export(f"{cfg.save_obj_path}/{trainer.max_epochs}-test.obj")
 
 
