@@ -52,12 +52,16 @@ class Camera:
         points = P[:3, -1].expand(image_plane_world_coord.shape)
         rays = torch.nn.functional.normalize(image_plane_world_coord - points, dim=-1)
 
+        # HACK fix the width, height indexing
+        points = points.permute(1, 0, 2)
+        rays = rays.permute(1, 0, 2)
+
         return points, rays
 
     def unit_sphere_intersection_rays(self):
         points, rays = self.rays()
-        points = points.view(-1, 3)
-        rays = rays.view(-1, 3)
+        points = points.reshape(-1, 3)
+        rays = rays.reshape(-1, 3)
 
         # https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection.html
         L = -points

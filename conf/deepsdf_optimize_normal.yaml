@@ -4,6 +4,7 @@ defaults:
   - data: deepsdf_chair
   - trainer: default
   - logger: wandb
+  # - logger: null
   - hydra: default
   - paths: default
   - debug: null
@@ -28,6 +29,7 @@ model:
   prior_idx: -1
   reg_loss: False
   reg_weight: 1e-10
+  normal_weight: 1
   optimizer:
     _target_: torch.optim.Adam
     _partial_: true

@@ -176,6 +176,7 @@ class RenderedDataset(Dataset):
             points, rays, mask = camera.unit_sphere_intersection_rays()
             data["points"], data["rays"], data["mask"] = points, rays, mask
             data["gt_image"] = plt.imread(path).astype(np.float32)
+            data["gt_surface_mask"] = ~np.isclose(data["gt_image"].sum(axis=-1), 3.0)
             self.data.append(data)
 
     def __len__(self):
