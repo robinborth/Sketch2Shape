@@ -154,7 +154,7 @@ class DeepSDFRender(LightningModule):
                 break
 
         surface_mask = sdf < self.surface_eps
-        return min_points, min_sdf, surface_mask
+        return min_points, surface_mask
 
     def render_normals(
         self,
@@ -263,12 +263,12 @@ class DeepSDFSurfaceNormalRender(DeepSDFRender):
         unit_sphere_mask = batch["mask"].squeeze()
 
         # calculate the normals map
-        min_points, _, surface_mask = self.sphere_tracing_min_sdf(
+        points, surface_mask = self.sphere_tracing_min_sdf(
             points=batch["points"].squeeze(),
             mask=unit_sphere_mask,
             rays=batch["rays"].squeeze(),
         )
-        normals = self.render_normals(points=min_points, mask=surface_mask)
+        normals = self.render_normals(points=points, mask=surface_mask)
         image = self.normal_to_image(normals, surface_mask)
         mask = gt_surface_mask & surface_mask
 
@@ -277,8 +277,8 @@ class DeepSDFSurfaceNormalRender(DeepSDFRender):
         normal_loss *= self.hparams["image_weight"]
         self.log("optimize/normal_loss", normal_loss, on_step=True, on_epoch=True)
 
-        min_points.requires_grad = True
-        min_sdf = torch.abs(self.forward(min_points).to(min_points))
+        points.requires_grad = True
+        min_sdf = torch.abs(self.forward(points).to(points))
         soft_silhouette = min_sdf - self.surface_eps
         surface_loss = gt_surface_mask * torch.relu(soft_silhouette)
         surface_loss += ~gt_surface_mask * torch.relu(-soft_silhouette)

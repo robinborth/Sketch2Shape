@@ -46,7 +46,7 @@ def optimize(cfg: DictConfig) -> None:
 
     if cfg.save_obj:
         log.info("==> save object ...")
-        mesh = model.to_mesh()
+        mesh = model.to_mesh(resolution=128)
         mesh.export(f"{cfg.save_obj_path}/{trainer.max_epochs}-test.obj")
 
 
