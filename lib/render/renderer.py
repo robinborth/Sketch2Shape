@@ -7,28 +7,17 @@ from lib.models.deepsdf import DeepSDFLatentOptimizer
 class DeepSDFRender(DeepSDFLatentOptimizer):
     def __init__(
         self,
-        ckpt_path: str = "best.ckpt",
-        prior_idx: int = -1,
-        optimizer=None,
-        scheduler=None,
-        resolution: int = 256,
         reg_loss: bool = True,
-        reg_weight: float = 1e-4,
-        image_weight: float = 1,
+        reg_weight: float = 1e-05,
         n_render_steps: int = 100,
         clamp_sdf: float = 0.1,
         step_scale: float = 1.5,
         surface_eps: float = 1e-03,
-        sphere_eps: float = 3e-2,
+        sphere_eps: float = 3e-02,
         log_images: bool = True,
+        **kwargs,
     ) -> None:
-        super().__init__(
-            ckpt_path=ckpt_path,
-            prior_idx=prior_idx,
-            optimizer=optimizer,
-            scheduler=scheduler,
-            resolution=resolution,
-        )
+        super().__init__(**kwargs)
 
     def log_image(self, key: str, image: torch.Tensor):
         image = image.detach().cpu().numpy()
@@ -156,6 +145,13 @@ class DeepSDFRender(DeepSDFLatentOptimizer):
 
 
 class DeepSDFNormalRender(DeepSDFRender):
+    def __init__(
+        self,
+        normal_weight: float = 1.0,
+        **kwargs,
+    ) -> None:
+        super().__init__(**kwargs)
+
     def training_step(self, batch, batch_idx):
         self.model.eval()
 
@@ -176,8 +172,8 @@ class DeepSDFNormalRender(DeepSDFRender):
 
         # calculate the loss for the object and usefull information to wandb
         normal_loss = l1_loss(gt_normals[mask], normals[mask])
-        normal_loss *= self.hparams["image_weight"]
-        self.log("optimize/normal_loss", normal_loss, on_step=True, on_epoch=True)
+        normal_loss *= self.hparams["normal_weight"]
+        self.log("optimize/normal_loss", normal_loss)
 
         # calculate the loss for the object and usefull information to wandb
         error_map = torch.nn.functional.l1_loss(gt_image, image, reduction="none")
@@ -191,11 +187,11 @@ class DeepSDFNormalRender(DeepSDFRender):
         reg_loss = torch.tensor(0).to(normal_loss)
         if self.hparams["reg_loss"]:
             reg_loss = latent_norm * self.hparams["reg_weight"]
-            self.log("optimize/reg_loss", reg_loss, on_step=True, on_epoch=True)
+            self.log("optimize/reg_loss", reg_loss)
 
         # log the full loss
         loss = reg_loss + normal_loss
-        self.log("optimize/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        self.log("optimize/loss", loss)
 
         # visualize the different images
         self.log_image("gt_image", gt_image)
@@ -208,6 +204,14 @@ class DeepSDFNormalRender(DeepSDFRender):
 
 
 class DeepSDFSurfaceNormalRender(DeepSDFRender):
+    def __init__(
+        self,
+        normal_weight: float = 1.0,
+        silhouette_weight: float = 1e-03,
+        **kwargs,
+    ) -> None:
+        super().__init__(**kwargs)
+
     def training_step(self, batch, batch_idx):
         self.model.eval()
 
@@ -229,18 +233,19 @@ class DeepSDFSurfaceNormalRender(DeepSDFRender):
 
         # calculate the loss for the object and usefull information to wandb
         normal_loss = l1_loss(gt_normals[mask], normals[mask])
-        normal_loss *= self.hparams["image_weight"]
-        self.log("optimize/normal_loss", normal_loss, on_step=True, on_epoch=True)
+        normal_loss *= self.hparams["normal_weight"]
+        self.log("optimize/normal_loss", normal_loss)
 
         points.requires_grad = True
         min_sdf = torch.abs(self.forward(points).to(points))
         soft_silhouette = min_sdf - self.hparams["surface_eps"]
-        surface_loss = gt_surface_mask * torch.relu(soft_silhouette)
-        surface_loss += ~gt_surface_mask * torch.relu(-soft_silhouette)
-        surface_error_map = surface_loss.clone()
-        self.log_image("surface_error_map", self.to_image(surface_error_map))
-        surface_loss = surface_loss[unit_sphere_mask].mean() * 1e-3
-        self.log("optimize/surface_loss", surface_loss, on_step=True, on_epoch=True)
+        silhouette_loss = gt_surface_mask * torch.relu(soft_silhouette)
+        silhouette_loss += ~gt_surface_mask * torch.relu(-soft_silhouette)
+        silhouette_error_map = silhouette_loss.clone()
+        self.log_image("silhouette_error_map", self.to_image(silhouette_error_map))
+        silhouette_loss = silhouette_loss[unit_sphere_mask].mean()
+        silhouette_loss *= self.hparams["silhouette_weight"]
+        self.log("optimize/silhouette_loss", silhouette_loss)
 
         # calculate the loss for the object and usefull information to wandb
         error_map = torch.nn.functional.l1_loss(gt_image, image, reduction="none")
@@ -254,11 +259,11 @@ class DeepSDFSurfaceNormalRender(DeepSDFRender):
         reg_loss = torch.tensor(0).to(normal_loss)
         if self.hparams["reg_loss"]:
             reg_loss = latent_norm * self.hparams["reg_weight"]
-            self.log("optimize/reg_loss", reg_loss, on_step=True, on_epoch=True)
+            self.log("optimize/reg_loss", reg_loss)
 
         # log the full loss
-        loss = reg_loss + normal_loss + surface_loss
-        self.log("optimize/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+        loss = reg_loss + normal_loss + silhouette_loss
+        self.log("optimize/loss", loss)
 
         # visualize the different images
         self.log_image("gt_image", gt_image)

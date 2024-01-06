@@ -31,7 +31,8 @@ model:
   # prior_idx: 37
   reg_loss: True
   reg_weight: 1e-05
-  image_weight: 1
+  silhouette_weight: 1e-03
+  normal_weight: 1.0
   optimizer:
     _target_: torch.optim.Adam
     _partial_: true
