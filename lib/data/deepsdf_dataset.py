@@ -3,7 +3,6 @@ import json
 import random
 from pathlib import Path
 
-import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -26,33 +25,35 @@ class DeepSDFDataset(Dataset):
         self.load_ram = load_ram
         self.subsample = subsample
         self.half = half
-        self._load()
+        self.load()
 
-    def _load(self):
+    def load(self):
         path = Path(self.data_dir)
-        self.idx2shape = dict()
-        self.npy_paths = list()
-        self.data = list()
+        self.idx2shape = {}
+        self.npy_paths = []
+        self.data = []
         for idx, path in enumerate(path.glob("**/*.npz")):
             self.npy_paths.append(str(path))
             self.idx2shape[idx] = path.parts[-1][:-4]
-            if self.load_ram:
-                self.data.append(self._load_to_ram(path))
+            if self.load_ram:  # to make it fit into ram
+                data = np.load(path)
+                pos_tensor = remove_nans(torch.from_numpy(data["pos"])).half()
+                neg_tensor = remove_nans(torch.from_numpy(data["neg"])).half()
+                self.data.append([pos_tensor, neg_tensor])
 
         self.shape2idx = {v: k for k, v in self.idx2shape.items()}
-        # save shape2idx file
         with open(f"{self.data_dir}/shape2idx.json", "w") as f:
             f.write(json.dumps(self.shape2idx))
 
-    def _load_sdf_samples(self, path):
-        data = np.load(path)
+    def load_from_disk(self, idx: int):
+        data = np.load(self.npy_paths[idx])
         if self.subsample is None:
             return data
+
+        half = self.subsample // 2
+
         pos_tensor = remove_nans(torch.from_numpy(data["pos"]))
         neg_tensor = remove_nans(torch.from_numpy(data["neg"]))
-
-        # split the sample into half
-        half = int(self.subsample / 2)
 
         random_pos = (torch.rand(half) * pos_tensor.shape[0]).long()
         random_neg = (torch.rand(half) * neg_tensor.shape[0]).long()
@@ -64,64 +65,36 @@ class DeepSDFDataset(Dataset):
 
         return samples
 
-    def _load_sdf_samples_from_ram(self, data):
+    def load_from_ram(self, idx: int):
+        data = self.data[idx]
         if self.subsample is None:
             return data
 
-        hlf = self.subsample // 2
+        half = self.subsample // 2
 
-        ### 3 -> 17.198s (with replacement), 25.338 (without replacement)
-        # pos_indices = np.random.choice(len(data[0]), hlf, replace=0)
-        # neg_indices = np.random.choice(len(data[1]), hlf, replace=hlf > len(data[1]))
+        pos_tensor, neg_tensor = data
+        pos_size, neg_size = pos_tensor.shape[0], neg_tensor.shape[0]
 
-        pos_tensor = data[0]
-        neg_tensor = data[1]
+        pos_start_ind = random.randint(0, pos_size - half)
+        sample_pos = pos_tensor[pos_start_ind : (pos_start_ind + half)]
 
-        pos_size = pos_tensor.shape[0]
-        neg_size = neg_tensor.shape[0]
-
-        pos_start_ind = random.randint(0, pos_size - hlf)
-        sample_pos = pos_tensor[pos_start_ind : (pos_start_ind + hlf)]
-
-        if neg_size <= hlf:
-            random_neg = (torch.rand(hlf) * neg_tensor.shape[0]).long()
+        if neg_size <= half:
+            random_neg = (torch.rand(half) * neg_tensor.shape[0]).long()
             sample_neg = torch.index_select(neg_tensor, 0, random_neg)
         else:
-            neg_start_ind = random.randint(0, neg_size - hlf)
-            sample_neg = neg_tensor[neg_start_ind : (neg_start_ind + hlf)]
+            neg_start_ind = random.randint(0, neg_size - half)
+            sample_neg = neg_tensor[neg_start_ind : (neg_start_ind + half)]
 
         samples = torch.cat([sample_pos, sample_neg], 0)
 
         return samples
 
-    def _load_to_ram(self, path):
-        data = np.load(path)
-        # to make it fit into ram
-        pos_tensor = remove_nans(torch.from_numpy(data["pos"])).half()
-        neg_tensor = remove_nans(torch.from_numpy(data["neg"])).half()
-
-        return [pos_tensor, neg_tensor]
-
     def __len__(self):
         return len(self.npy_paths)
 
     def __getitem__(self, idx):
-        if self.load_ram:
-            _data = self._load_sdf_samples_from_ram(self.data[idx])
-            idx = np.repeat(idx, len(_data))  # needs to be fixed
-            return {
-                "xyz": _data[:, :3],
-                "sd": _data[:, 3],
-                "idx": idx,
-            }
-        else:
-            _data = self._load_sdf_samples(self.npy_paths[idx])
-            idx = np.repeat(idx, len(_data))  # needs to be fixed
-            return {
-                "xyz": _data[:, :3],
-                "sd": _data[:, 3],
-                "idx": idx,
-            }
+        data = self.load_from_ram(idx) if self.load_ram else self.load_from_disk(idx)
+        return {"points": data[:, :3], "gt_sdf": data[:, 3], "idx": idx}
 
 
 class PointCloudDataset(Dataset):

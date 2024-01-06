@@ -3,8 +3,6 @@ from typing import List
 import hydra
 import lightning as L
 import torch
-
-# torch._dynamo.config.suppress_errors = True
 from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig

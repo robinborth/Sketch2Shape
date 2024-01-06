@@ -1,19 +1,17 @@
 import math
 import os
-from typing import Any, List
 
-import lightning as L
 import numpy as np
 import torch
 import torch.nn as nn
 import trimesh
+from lightning import LightningModule
 from skimage.measure import marching_cubes
 
-from lib._render.daniel_renderer import Renderer, normalize
 from lib.evaluate import compute_chamfer_distance
 
 
-class DeepSDF(L.LightningModule):
+class DeepSDF(LightningModule):
     def __init__(
         self,
         loss: torch.nn.Module,
@@ -22,99 +20,111 @@ class DeepSDF(L.LightningModule):
         latent_size: int = 512,
         num_hidden_layers: int = 8,
         latent_vector_size: int = 256,
+        num_scenes: int = 1,  # TODO rename num_latent_vectors
         clamp: bool = True,
         clamp_val: float = 0.1,
         reg_loss: bool = True,
-        num_scenes: int = 1,
-        sigma: float = 1e-4,
+        sigma: float = 1e-4,  # TODO rename reg_weight
         skip_connection: list[int] = [4],
-        dropout: bool = True,
-        dropout_p: float = 0.2,
-        dropout_latent: bool = False,
-        dropout_latent_p: float = 0.2,
+        dropout: bool = True,  # TODO drop and only use dropout_p
+        dropout_p: float = 0.2,  # TODO rename dropout
+        dropout_latent: bool = False,  # TODO drop deprecated
+        dropout_latent_p: float = 0.2,  # TODO drop deprecated
         weight_norm: bool = False,
         decoder_scheduler=None,
         latents_scheduler=None,
     ):
         super().__init__()
-        # this line allows to access init params with 'self.hparams' attribute
-        # also ensures init params will be stored in ckpt
         self.save_hyperparameters(logger=False)
         self.automatic_optimization = False
 
         self.loss = loss
-
-        self._build_model()
-
-        # latent vectors
-        self.lat_vecs = nn.Embedding(
-            self.hparams["num_scenes"], self.hparams["latent_vector_size"]
-        )
-        std_lat_vec = 1.0 / math.sqrt(self.hparams["latent_vector_size"])
-        torch.nn.init.normal_(self.lat_vecs.weight.data, 0.0, std_lat_vec)
-
-        # Whether to use schedulers or not
         self.schedulers = decoder_scheduler is not None
 
-        # latent dropout
-        if self.hparams["dropout_latent"]:
-            self.latent_dropout = nn.Dropout(p=self.hparams["dropout_latent_p"])
+        # inital layers and first input layer
+        layers = []  # type: ignore
+        layer = nn.Linear(3 + latent_vector_size, latent_size)
+        if weight_norm:
+            layer = nn.utils.parametrizations.weight_norm(layer)
+        layers.append(nn.Sequential(layer, nn.ReLU()))
 
-    def forward(self, x):
+        # backbone layers
+        for layer_idx in range(2, num_hidden_layers + 1):
+            output_size = latent_size
+            if layer_idx in skip_connection:
+                output_size = latent_size - latent_vector_size - 3
+            layer = nn.Linear(latent_size, output_size)
+            if weight_norm:
+                layer = nn.utils.parametrizations.weight_norm(layer)
+            layers.append(nn.Sequential(layer, nn.ReLU(), nn.Dropout(p=dropout_p)))
+
+        # # output layer and final deepsdf backbone
+        layers.append(nn.Sequential(nn.Linear(latent_size, 1), nn.Tanh()))
+        self.decoder = nn.Sequential(*layers)
+
+        # latent vectors
+        self.lat_vecs = nn.Embedding(num_scenes, latent_vector_size)
+        std_lat_vec = 1.0 / math.sqrt(latent_vector_size)
+        torch.nn.init.normal_(self.lat_vecs.weight.data, 0.0, std_lat_vec)
+
+    def forward(self, points: torch.Tensor, latent: torch.Tensor):
+        """The forward pass of the deepsdf model.
+
+        Args:
+            points (torch.Tensor): The points of dim (B, N, 3) or (N, 3).
+            latent (torch.Tensor): The latent code of dim (B, L) or (L).
+
+        Returns:
+            torch.Tensor: The sdf values of dim (B, N)
         """
-        x is a tuple with the coordinates at position 0 and latent_vectors at position 1
-        """
-        if self.hparams["dropout_latent"]:
-            x[1] = self.latent_dropout(x[1])
-        out = torch.cat(x, dim=-1)
-        for i, layer in enumerate(self.decoder):
-            if i in self.hparams["skip_connection"]:
-                _skip = torch.cat(x, dim=-1)
+        N, L = points.shape[-2], latent.shape[-1]
+        if len(latent.shape) == 1:
+            latent = latent.unsqueeze(-2).expand(N, L)
+        else:
+            latent = latent.unsqueeze(-2).expand(-1, N, L)
+
+        out = torch.cat((points, latent), dim=-1)
+        for layer_idx, layer in enumerate(self.decoder):
+            if layer_idx in self.hparams["skip_connection"]:
+                _skip = torch.cat((points, latent), dim=-1)
                 out = torch.cat((out, _skip), dim=-1)
             out = layer(out)
-        return out
+
+        return out.squeeze(-1)
 
     def training_step(self, batch, batch_idx):
-        xyz = batch["xyz"]
-        y = batch["sd"].flatten()
-        lat_vec = self.lat_vecs(batch["idx"])
-
         opt1, opt2 = self.optimizers()
         opt1.zero_grad()
         opt2.zero_grad()
 
-        y_hat = self.forward((xyz, lat_vec)).flatten()
+        gt_sdf = batch["gt_sdf"]  # (B, N)
+        points = batch["points"]  # (B, N, 3)
+        latent = self.lat_vecs(batch["idx"])  # (B, L)
+
+        sdf = self.forward(points=points, latent=latent)  # (B, N)
 
         if self.hparams["clamp"]:
-            y_hat = torch.clamp(
-                y_hat, -self.hparams["clamp_val"], self.hparams["clamp_val"]
-            )
-            y = torch.clamp(y, -self.hparams["clamp_val"], self.hparams["clamp_val"])
+            clamp_val = self.hparams["clamp_val"]
+            sdf = torch.clamp(sdf, -clamp_val, clamp_val)
+            gt_sdf = torch.clamp(gt_sdf, -clamp_val, clamp_val)
 
-        l1_loss = self.loss(y_hat, y)
+        l1_loss = self.loss(sdf, gt_sdf)
         self.log("train/l1_loss", l1_loss, on_step=True, on_epoch=True)
 
+        reg_loss = torch.tensor(0).to(l1_loss)
         if self.hparams["reg_loss"]:
-            reg_loss = torch.mean(torch.linalg.norm(lat_vec, dim=2))
-            reg_loss = (
-                reg_loss * min(1, self.current_epoch / 100) * self.hparams["sigma"]
-            )
+            reg_loss = torch.linalg.norm(latent, dim=-1).mean()
+            reg_loss *= min(1, self.current_epoch / 100)  # TODO add to hparams
+            reg_loss *= self.hparams["sigma"]
             self.log("train/reg_loss", reg_loss, on_step=True, on_epoch=True)
-            loss = l1_loss + reg_loss
-        else:
-            loss = l1_loss
+
+        loss = l1_loss + reg_loss
+        self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
 
         self.manual_backward(loss)
         opt1.step()
         opt2.step()
 
-        self.log(
-            "train/loss",
-            loss,
-            on_step=True,
-            on_epoch=True,
-            prog_bar=True,
-        )
         return loss
 
     def on_train_epoch_end(self):
@@ -122,16 +132,6 @@ class DeepSDF(L.LightningModule):
             sch1, sch2 = self.lr_schedulers()
             sch1.step()
             sch2.step()
-
-    def predict(self, x):
-        with torch.no_grad():
-            out = torch.cat(x, dim=2)
-            for i, layer in enumerate(self.decoder):
-                if i in self.hparams["skip_connection"]:
-                    _skip = torch.cat(x, dim=2)
-                    out = torch.cat((out, _skip), dim=2)
-                out = layer(out)
-        return out
 
     def configure_optimizers(self):
         optim_decoder = self.hparams["decoder_optimizer"](self.decoder.parameters())
@@ -145,71 +145,9 @@ class DeepSDF(L.LightningModule):
             )
         return [optim_decoder, optim_latents]
 
-    def _build_model(self):
-        # build the mlp
-        layers = list()
-        layers.append(
-            nn.Sequential(
-                nn.utils.parametrizations.weight_norm(
-                    nn.Linear(
-                        3 + self.hparams["latent_vector_size"],
-                        self.hparams["latent_size"],
-                    )
-                )
-                if self.hparams["weight_norm"]
-                else nn.Linear(
-                    3 + self.hparams["latent_vector_size"], self.hparams["latent_size"]
-                ),
-                nn.ReLU(),
-            )
-        )
-        for i in range(2, self.hparams["num_hidden_layers"] + 1):
-            if i in self.hparams["skip_connection"]:
-                layers.append(
-                    nn.Sequential(
-                        nn.utils.parametrizations.weight_norm(
-                            nn.Linear(
-                                self.hparams["latent_size"],
-                                self.hparams["latent_size"]
-                                - self.hparams["latent_vector_size"]
-                                - 3,
-                            )
-                        )
-                        if self.hparams["weight_norm"]
-                        else nn.Linear(
-                            self.hparams["latent_size"],
-                            self.hparams["latent_size"]
-                            - self.hparams["latent_vector_size"]
-                            - 3,
-                        ),
-                        nn.ReLU(),
-                        nn.Dropout(p=self.hparams["dropout_p"]),
-                    )
-                )
-            else:
-                layers.append(
-                    nn.Sequential(
-                        nn.utils.parametrizations.weight_norm(
-                            nn.Linear(
-                                self.hparams["latent_size"], self.hparams["latent_size"]
-                            )
-                        )
-                        if self.hparams["weight_norm"]
-                        else nn.Linear(
-                            self.hparams["latent_size"], self.hparams["latent_size"]
-                        ),
-                        nn.ReLU(),
-                        nn.Dropout(p=self.hparams["dropout_p"]),
-                    )
-                )
-        layers.append(
-            nn.Sequential(nn.Linear(self.hparams["latent_size"], 1), nn.Tanh())
-        )
-        self.decoder = nn.Sequential(*layers)
-
 
 # custom validation loop
-class DeepSDFValidator(L.LightningModule):
+class DeepSDFValidator(LightningModule):
     # TODO optimize the decoder performance
     # [ ] identify bottleneck using lightning simple profiler
     # [ ] https://lightning.ai/docs/pytorch/stable/tuning/profiler_intermediate.html
@@ -368,7 +306,7 @@ class DeepSDFValidator(L.LightningModule):
 
 # Intendet to be used for one object at a Time, whereas the validator can optimize
 # multiple ones
-class DeepSDFOptimizer(L.LightningModule):
+class DeepSDFOptimizer(LightningModule):
     # TODO
     # [ ] send to correct device automatically (self.latent is the issue)
     # [ ] check out why chair with prior_idx 37 is weird
@@ -396,24 +334,11 @@ class DeepSDFOptimizer(L.LightningModule):
         self.loss = loss
 
         self.resolution = resolution
-        self.idx2chamfer = dict()
 
         if self.hparams["save_obj"] and not os.path.exists(
             self.hparams["save_obj_path"]
         ):
             os.mkdir(self.hparams["save_obj_path"])
-
-    def _load_model(self):
-        self.model = DeepSDF.load_from_checkpoint(
-            self.hparams["ckpt_path"], map_location="cpu"
-        )
-        self.model.freeze()
-
-    # TODO unnecessary right now, not calling setup at all
-    def setup(self, stage: str):
-        if stage == "fit":
-            self.shape2idx = self.trainer.datamodule.train_dataset.shape2idx
-            self._init_latent()
 
     def _init_latent(self):
         if self.hparams["prior_idx"] >= 0:
@@ -429,14 +354,6 @@ class DeepSDFOptimizer(L.LightningModule):
             self.latent.requires_grad_()
 
         self.model.lat_vecs = None
-
-    def forward(self, x):
-        lat_vec = self.latent.expand(x.shape[1], -1).unsqueeze(0)
-        return self.model((x, lat_vec))
-
-    def predict(self, x):
-        lat_vec = self.latent.expand(x.shape[1], -1).unsqueeze(0)
-        return self.model.predict((x, lat_vec))
 
     def training_step(self, batch, batch_idx):
         self.model.eval()
@@ -463,14 +380,6 @@ class DeepSDFOptimizer(L.LightningModule):
         self.log("opt/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
         return loss
 
-    def configure_optimizers(self):
-        optim = self.hparams["optim"]([self.latent])
-        if self.hparams["scheduler"] is not None:
-            scheduler = self.hparams["scheduler"](optim)
-            self.save_lr = scheduler.get_lr()
-            return {"optimizer": optim, "lr_scheduler": scheduler}
-        return optim
-
     def validation_step(self, batch, batch_idx):
         if len(batch["shapenet_idx"]) > 1:
             raise ValueError("Make sure that the batch_size for validation loader is 1")
@@ -480,254 +389,3 @@ class DeepSDFOptimizer(L.LightningModule):
         self.log("val/chamfer", chamfer, on_epoch=True)
 
         self.idx2chamfer["idx"] = chamfer
-
-    def get_obj(self, device="cuda"):
-        self.to(device)
-        chunck_size = 500_000
-        # hparams
-        grid_vals = torch.arange(-1, 1, float(2 / self.resolution))
-        grid = torch.meshgrid(grid_vals, grid_vals, grid_vals)
-
-        xyz = torch.stack(
-            (grid[0].ravel(), grid[1].ravel(), grid[2].ravel())
-        ).transpose(1, 0)
-
-        del grid, grid_vals
-
-        # based on rough trial and error
-        n_chunks = (xyz.shape[0] // chunck_size) + 1
-        #    a.element_size() * a.nelement()
-
-        xyz_chunks = xyz.unsqueeze(0).chunk(n_chunks, dim=1)
-        sd_list = list()
-        for _xyz in xyz_chunks:
-            _xyz = _xyz.to(device)
-            sd = self.predict(_xyz).squeeze().cpu().numpy()
-            sd_list.append(sd)
-        sd = np.concatenate(sd_list)
-        sd_r = sd.reshape(self.resolution, self.resolution, self.resolution)
-
-        verts, faces, _, _ = marching_cubes(sd_r, level=0.0)
-
-        x_max = np.array([1, 1, 1])
-        x_min = np.array([-1, -1, -1])
-        verts = verts * ((x_max - x_min) / (self.resolution)) + x_min
-
-        # Create a trimesh object
-        mesh = trimesh.Trimesh(vertices=verts, faces=faces)
-
-        if self.hparams["save_obj"]:
-            # Save the mesh as an OBJ file
-            print("exporting")
-            mesh.export(
-                f"{self.hparams['save_obj_path']}/{self.trainer.max_epochs}-test.obj"
-            )
-
-        return mesh
-
-
-class DeepSDFRenderOptimizer(L.LightningModule):
-    # TODO
-    # [ ] send to correct device automatically (self.latent is the issue)
-    # [ ] check out why chair with prior_idx 37 is weird
-    def __init__(
-        self,
-        ckpt_path: str,
-        optim: torch.optim.Optimizer,
-        loss: torch.nn.Module,
-        scheduler=None,
-        resolution: int = 256,
-        reg_loss: bool = True,
-        sigma: float = 1e-4,
-        emp_init: bool = False,
-        save_obj: bool = False,
-        save_obj_path: str = "",
-        prior_idx: int = -1,
-        n_render_steps: int = 100,
-        surface_eps: float = 1e-4,
-        sphere_eps: float = 3e-2,
-    ) -> None:
-        super().__init__()
-        self.save_hyperparameters()
-        # self.automatic_optimization = False
-
-        # init model
-        self.model = DeepSDF.load_from_checkpoint(self.hparams["ckpt_path"])
-        self.model.freeze()
-
-        # init latent
-        if self.hparams["prior_idx"] >= 0:  # using a prior
-            idx = torch.tensor([self.hparams["prior_idx"]])
-            latent = self.model.lat_vecs(idx.to(self.model.device))
-        else:
-            mean = self.model.lat_vecs.weight.mean(0)
-            std = self.model.lat_vecs.weight.std(0)
-            latent = torch.normal(mean, std)
-        self.register_buffer("latent", latent)
-        self.latent.requires_grad = True
-        self.model.lat_vecs = None
-
-        self.loss = loss
-
-    def forward(self, xyz):
-        lat_vec = self.latent.expand(xyz.shape[0], xyz.shape[1], -1)
-        return self.model((xyz, lat_vec))
-
-    # def predict(self, xyz):
-    #     lat_vec = self.latent.expand(xyz.shape[0], xyz.shape[1], -1)
-    #     return self.model.predict((xyz, lat_vec))
-
-    def training_step(self, batch, batch_idx):
-        torch.autograd.set_detect_anomaly(True)
-        self.model.eval()
-        gt_normals = batch["gt_image"]
-        intersection = batch["intersection"]
-        mask = batch["mask"]
-        ray_direction = batch["ray_direction"]
-
-        # opt = self.optimizers()
-        # opt.zero_grad()
-
-        normals = self._render_normal(intersection, mask, ray_direction)
-
-        # TODO sync the masking
-        mask = intersection.norm(dim=-1) > (1 + self.hparams["sphere_eps"] * 2)
-
-        normals = normalize(normals + 1e-5)  # division by 0 breaks grad
-        # normals[mask.squeeze()] = torch.ones(3, device=self.device, dtype=normals.dtype)
-
-        normals = normals.view(256, 256, 3).transpose(0, 1)
-        y_hat = (normals + 1) / 2  # * 255 (gt_normals within [0, 1])
-
-        # l2_loss = (y_hat - gt_normals).pow(2).sum()
-        l2_loss = self.loss(y_hat, gt_normals.squeeze())
-
-        # (
-        #     outputs=normals,
-        #     inputs=self.latent,
-        #     grad_outputs=torch.ones_like(normals),
-        #     retain_graph=True,
-        #     create_graph=True,
-        # )[0]
-
-        # self.logger.log_image(key="rendered", images=[y_hat.detach().cpu().numpy()])
-        # self.logger.log_image(key="gt", images=[gt_normals.detach().cpu().numpy()])
-        self.log("opt/l1_loss", l2_loss, on_step=True, on_epoch=True)
-        if self.hparams["reg_loss"]:
-            # TODO will probably throw an error
-            reg_loss = self.hparams["sigma"] * torch.linalg.norm(self.latent, dim=-1)
-            loss = l2_loss + reg_loss
-            self.log("opt/reg_loss", reg_loss, on_step=True, on_epoch=True)
-        else:
-            loss = l2_loss
-            self.log("debug/reg_norm", torch.linalg.norm(self.latent, dim=-1))
-        self.log("opt/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
-
-        # self.manual_backward(loss)
-        # self.latent -= torch.autograd.grad(
-        #     outputs=normals,
-        #     inputs=self.latent,
-        #     grad_outputs=torch.ones_like(normals),
-        #     retain_graph=True,
-        #     create_graph=True,
-        # )[0]
-        # opt.step()
-
-        return loss
-
-    def _render_normal(self, intersection, mask, ray_direction):
-        # TODO consider moving surface and sdfs to dataloader
-        surface = torch.zeros_like(intersection, device=self.device)
-        sdfs = torch.zeros(intersection.shape[1], device=self.device).half()
-        for i in range(self.hparams["n_render_steps"]):
-            with torch.no_grad():
-                sdf = self.forward(intersection[:, ~mask.squeeze()])
-            sdfs[~mask.squeeze()] = sdf.squeeze()
-            surface_mask = (sdfs < self.hparams["surface_eps"]) | (
-                intersection.norm(dim=2) > (1 + self.hparams["sphere_eps"] * 2)
-            )
-            # TODO clip
-            inv_acceleration = min(i / 10, 1)
-            intersection[:, ~surface_mask.squeeze()] = (
-                intersection + ray_direction * sdfs.unsqueeze(1) * inv_acceleration
-            )[:, ~surface_mask.squeeze()]
-
-        # only mask points whre norm < 1.06
-        # surface[:, surface_mask.squeeze()] = intersection[:, surface_mask.squeeze()]
-
-        # Differentiable Part starts here
-
-        intersection.requires_grad_()
-        # actual_surface_mask = intersection.norm(dim=2) > (
-        #     1 + self.hparams["sphere_eps"] * 2
-        # )
-        # normals = torch.ones_like(intersection)
-        # normals.requires_grad_()
-        # inp = intersection[:, ~actual_surface_mask.squeeze()]
-        out = self.forward(intersection)
-        # https://discuss.pytorch.org/t/what-determines-if-torch-autograd-grad-output-has-requires-grad-true/17104
-        normals = torch.autograd.grad(
-            outputs=out,
-            inputs=intersection,
-            grad_outputs=torch.ones_like(out),
-            retain_graph=True,
-            create_graph=True,
-        )[0]
-        return normals.squeeze()
-
-    def configure_optimizers(self):
-        optim = self.hparams["optim"]([self.latent])
-        if self.hparams["scheduler"] is not None:
-            scheduler = self.hparams["scheduler"](optim)
-            self.save_lr = scheduler.get_lr()
-            return {"optimizer": optim, "lr_scheduler": scheduler}
-        return optim
-
-    def get_obj(self, device="cuda", resolution=256):
-        self.to(device)
-        chunck_size = 500_000
-        # hparams
-        grid_vals = torch.arange(-1, 1, float(2 / resolution))
-        grid = torch.meshgrid(grid_vals, grid_vals, grid_vals)
-
-        xyz = torch.stack(
-            (grid[0].ravel(), grid[1].ravel(), grid[2].ravel())
-        ).transpose(1, 0)
-
-        del grid, grid_vals
-
-        # based on rough trial and error
-        n_chunks = (xyz.shape[0] // chunck_size) + 1
-        #    a.element_size() * a.nelement()
-
-        xyz_chunks = xyz.unsqueeze(0).chunk(n_chunks, dim=1)
-        sd_list = list()
-        for _xyz in xyz_chunks:
-            _xyz = _xyz.to(device)
-            sd = self.predict(_xyz).squeeze().cpu().numpy()
-            sd_list.append(sd)
-        sd = np.concatenate(sd_list)
-        sd_r = sd.reshape(resolution, resolution, resolution)
-
-        verts, faces, _, _ = marching_cubes(sd_r, level=0.0)
-
-        x_max = np.array([1, 1, 1])
-        x_min = np.array([-1, -1, -1])
-        verts = verts * ((x_max - x_min) / (resolution)) + x_min
-
-        # Create a trimesh object
-        mesh = trimesh.Trimesh(vertices=verts, faces=faces)
-
-        # # TODO don't save here do it in the script
-        # if self.hparams["save_obj"] and not os.path.exists(
-        #     self.hparams["save_obj_path"]
-        # ):
-        #     os.mkdir(self.hparams["save_obj_path"])
-        # if self.hparams["save_obj"]:
-        #     # Save the mesh as an OBJ file
-        #     print("exporting")
-        #     mesh.export(
-        #         f"{self.hparams['save_obj_path']}/{self.trainer.max_epochs}-test.obj"
-        #     )
-
-        return mesh
