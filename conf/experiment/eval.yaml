@@ -25,9 +25,10 @@ data:
     _target_: pytorch_metric_learning.samplers.MPerClassSampler
     _partial_: True
     m: 32
-  dataset:
-    _target_: lib.data.siamese_dataset.SiameseDatasetDynamicLoadDynamicTransform
-  collate_fn: null
+  transforms:
+    _target_: torchvision.transforms.Compose
+    transforms:
+      - _target_: torchvision.transforms.ToTensor
 
 tags: ["siamese", "eval"]
 

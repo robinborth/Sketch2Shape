@@ -148,6 +148,8 @@ class RenderedDataset(Dataset):
             camera = Camera(azim=int(azim), elev=-int(elev), dist=int(dist))
             points, rays, mask = camera.unit_sphere_intersection_rays()
             data["points"], data["rays"], data["mask"] = points, rays, mask
+            data["camera_position"] = camera.camera_position()
+            data["light_position"] = np.array([0, 0, 0], dtype=np.float32)
             data["gt_image"] = plt.imread(path).astype(np.float32)
             data["gt_surface_mask"] = ~np.isclose(data["gt_image"].sum(axis=-1), 3.0)
             self.data.append(data)

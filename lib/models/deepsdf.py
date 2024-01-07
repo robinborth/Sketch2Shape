@@ -1,5 +1,4 @@
 import math
-import os
 
 import numpy as np
 import torch
@@ -184,7 +183,6 @@ class DeepSDFLatentOptimizer(LightningModule):
             latent = self.model.lat_vecs.weight.mean(0)
         self.register_buffer("latent", latent)
         self.latent.requires_grad = True
-        self.model.lat_vecs = None
 
     def forward(self, points: torch.Tensor, mask=None):
         return self.model(points=points, latent=self.latent, mask=mask)
@@ -205,6 +203,7 @@ class DeepSDFLatentOptimizer(LightningModule):
         self.log("val/chamfer", chamfer, on_epoch=True)
 
     def to_mesh(self, resolution: int = 256, chunk_size: int = 65536):
+        self.model.eval()
         min_val, max_val = self.min_val, self.max_val
         grid_vals = torch.linspace(min_val, max_val, resolution)
         xs, ys, zs = torch.meshgrid(grid_vals, grid_vals, grid_vals)

@@ -31,6 +31,9 @@ class Camera:
     def get_camera_to_world(self):
         return torch.inverse(self.get_world_to_camera())
 
+    def camera_position(self):
+        return self.get_camera_to_world()[:3, -1]
+
     def rays(self):
         P = self.get_camera_to_world()
 

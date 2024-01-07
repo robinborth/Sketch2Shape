@@ -17,9 +17,9 @@
             "type": "python",
             "request": "launch",
             "program": "scripts/train_siamese.py",
-            "args": [
-                "+experiment=siamese"
-            ],
+            // "args": [
+            //     "+experiment=siamese"
+            // ],
             "console": "integratedTerminal",
             "justMyCode": false,
         },
