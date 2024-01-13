@@ -1,4 +1,4 @@
-import torch
+import numpy as np
 
 from lib.render.utils import get_rotation_x, get_rotation_y, get_translation
 
@@ -29,7 +29,7 @@ class Camera:
         return mat
 
     def get_camera_to_world(self):
-        return torch.inverse(self.get_world_to_camera())
+        return np.linalg.inv(self.get_world_to_camera())
 
     def camera_position(self):
         return self.get_camera_to_world()[:3, -1]
@@ -38,26 +38,26 @@ class Camera:
         P = self.get_camera_to_world()
 
         # Screen coordinates
-        pixel_xs, pixel_ys = torch.meshgrid(
-            torch.arange(self.width), torch.arange(self.height)
-        )
+        pixel_xs, pixel_ys = np.meshgrid(np.arange(self.width), np.arange(self.height))
         xs = (pixel_xs - self.width * 0.5) / self.focal
         ys = (pixel_ys - self.height * 0.5) / self.focal
 
         # homogeneous coordinates
-        coords = [-xs, -ys, torch.ones_like(pixel_xs), torch.ones_like(pixel_xs)]
-        image_plane_camera = torch.stack(coords, axis=-1)
+        coords = [-xs, -ys, np.ones_like(pixel_xs), np.ones_like(pixel_xs)]
+        image_plane_camera = np.stack(coords, axis=-1)
 
-        image_plane_world = P @ image_plane_camera.view(-1, 4).T
-        image_plane_world = image_plane_world.T.view(self.width, self.height, 4)
+        image_plane_world = P @ image_plane_camera.reshape(-1, 4).T
+        image_plane_world = image_plane_world.T.reshape(self.width, self.height, 4)
         image_plane_world_coord = image_plane_world[:, :, :3]
 
-        points = P[:3, -1].expand(image_plane_world_coord.shape)
-        rays = torch.nn.functional.normalize(image_plane_world_coord - points, dim=-1)
+        points = [P[:3, -1]] * (self.width * self.height)
+        points = np.stack(points).reshape(self.width, self.height, 3)
+        rays = image_plane_world_coord - points
+        rays = rays / np.linalg.norm(rays, axis=-1)[..., None]
 
         # HACK fix the width, height indexing
-        points = points.permute(1, 0, 2)
-        rays = rays.permute(1, 0, 2)
+        points = points.astype(np.float32)
+        rays = rays.astype(np.float32)
 
         return points, rays
 
@@ -69,10 +69,14 @@ class Camera:
 
         # https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection.html
         L = -points
-        t_ca = (L * rays).sum(dim=-1)
-        d = torch.sqrt((L * L).sum(dim=-1) - t_ca**2)
-        t_hc = torch.sqrt(radius**2 - d**2)
-        t_hc = torch.nan_to_num(t_hc, -1)
+        t_ca = (L * rays).sum(axis=-1)
+        _d = (L * L).sum(axis=-1) - t_ca**2
+        d = np.sqrt(np.abs(_d))
+        d[_d < 0] = 0
+
+        _t_hc = radius**2 - d**2
+        t_hc = np.sqrt(np.abs(_t_hc))
+        t_hc[_t_hc < 0] = -1
         mask = (t_ca >= 0) & (t_hc >= 0)
 
         depth_0 = t_ca - t_hc

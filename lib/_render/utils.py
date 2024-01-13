@@ -1,35 +1,42 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 
 
+def get_translation(t):
+    mat = np.identity(4)
+    mat[2][3] += t
+    return mat
+
+
 def R_x(theta: float):
-    _theta = torch.deg2rad(torch.tensor(theta, dtype=torch.float32))
-    return torch.tensor(
+    _theta = np.deg2rad(np.array(theta, dtype=np.float32))
+    return np.array(
         [
             [1, 0, 0],
-            [0, torch.cos(_theta), -torch.sin(_theta)],
-            [0, torch.sin(_theta), torch.cos(_theta)],
+            [0, np.cos(_theta), -np.sin(_theta)],
+            [0, np.sin(_theta), np.cos(_theta)],
         ]
     )
 
 
 def R_y(theta: float):
-    _theta = torch.deg2rad(torch.tensor(theta, dtype=torch.float32))
-    return torch.tensor(
+    _theta = np.deg2rad(np.array(theta, dtype=np.float32))
+    return np.array(
         [
-            [torch.cos(_theta), 0, torch.sin(_theta)],
+            [np.cos(_theta), 0, np.sin(_theta)],
             [0, 1, 0],
-            [-torch.sin(_theta), 0, torch.cos(_theta)],
+            [-np.sin(_theta), 0, np.cos(_theta)],
         ]
     )
 
 
 def R_z(theta: float):
-    _theta = torch.deg2rad(torch.tensor(theta, dtype=torch.float32))
-    return torch.tensor(
+    _theta = np.deg2rad(np.array(theta, dtype=np.float32))
+    return np.array(
         [
-            [torch.cos(_theta), -torch.sin(_theta), 0],
-            [torch.sin(_theta), torch.cos(_theta), 0],
+            [np.cos(_theta), -np.sin(_theta), 0],
+            [np.sin(_theta), np.cos(_theta), 0],
             [0, 0, 1],
         ]
     )
@@ -40,7 +47,7 @@ def R_azim_elev(azim: float = 0.0, elev: float = 0.0):
 
 
 def normalize(point):
-    return point / torch.linalg.norm(point, dim=-1)[..., None]
+    return point / np.linalg.norm(point, dim=-1)[..., None]
 
 
 def dot(x, y):
