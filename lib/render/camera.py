@@ -65,12 +65,13 @@ class Camera:
         points, rays = self.rays()
         points = points.reshape(-1, 3)
         rays = rays.reshape(-1, 3)
+        radius = self.sphere_eps + 1.0
 
         # https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection.html
         L = -points
         t_ca = (L * rays).sum(dim=-1)
         d = torch.sqrt((L * L).sum(dim=-1) - t_ca**2)
-        t_hc = torch.sqrt(1 - d**2)
+        t_hc = torch.sqrt(radius**2 - d**2)
         t_hc = torch.nan_to_num(t_hc, -1)
         mask = (t_ca >= 0) & (t_hc >= 0)
 
