@@ -28,7 +28,7 @@ data:
     _partial_: True
     m: 4
   dataset:
-    _target_: lib.data.siamese_dataset.SiameseDatasetDynamicLoadDynamicTransform
+    _target_: lib.data.siamese_dataset.SiameseDataset
   collate_fn: null
 
 model:

@@ -9,12 +9,12 @@ from lib.data.metainfo import MetaInfo
 class SiameseDataset(Dataset):
     def __init__(
         self,
-        metainfo: MetaInfo,
+        data_dir: str = "data/",
+        split: Optional[str] = None,
         transforms: Optional[Callable] = None,
     ):
         self.transforms = transforms
-        self.metainfo = metainfo
-        self.data_dir = metainfo.data_dir
+        self.metainfo = MetaInfo(data_dir=data_dir, split=split)
 
     def _load(self, obj_id: str, render_type: str, image_id: str):
         path = self.metainfo.render_path(

@@ -18,22 +18,19 @@ class DeepSDF(LightningModule):
         loss: torch.nn.Module,
         decoder_optimizer: torch.optim.Optimizer,
         latents_optimizer: torch.optim.Optimizer,
+        decoder_scheduler=None,
+        latents_scheduler=None,
         latent_size: int = 512,
         num_hidden_layers: int = 8,
         latent_vector_size: int = 256,
-        num_scenes: int = 1,  # TODO rename num_latent_vectors
+        num_latent_vectors: int = 1,
         clamp: bool = True,
         clamp_val: float = 0.1,
         reg_loss: bool = True,
-        sigma: float = 1e-4,  # TODO rename reg_weight
+        reg_weight: float = 1e-4,
         skip_connection: list[int] = [4],
-        dropout: bool = True,  # TODO drop and only use dropout_p
-        dropout_p: float = 0.2,  # TODO rename dropout
-        dropout_latent: bool = False,  # TODO drop deprecated
-        dropout_latent_p: float = 0.2,  # TODO drop deprecated
+        dropout: float = 0.0,
         weight_norm: bool = False,
-        decoder_scheduler=None,
-        latents_scheduler=None,
     ):
         super().__init__()
         self.save_hyperparameters(logger=False)
@@ -57,14 +54,14 @@ class DeepSDF(LightningModule):
             layer = nn.Linear(latent_size, output_size)
             if weight_norm:
                 layer = nn.utils.parametrizations.weight_norm(layer)
-            layers.append(nn.Sequential(layer, nn.ReLU(), nn.Dropout(p=dropout_p)))
+            layers.append(nn.Sequential(layer, nn.ReLU(), nn.Dropout(p=dropout)))
 
         # # output layer and final deepsdf backbone
         layers.append(nn.Sequential(nn.Linear(latent_size, 1), nn.Tanh()))
         self.decoder = nn.Sequential(*layers)
 
         # latent vectors
-        self.lat_vecs = nn.Embedding(num_scenes, latent_vector_size)
+        self.lat_vecs = nn.Embedding(num_latent_vectors, latent_vector_size)
         std_lat_vec = 1.0 / math.sqrt(latent_vector_size)
         torch.nn.init.normal_(self.lat_vecs.weight.data, 0.0, std_lat_vec)
 
@@ -124,7 +121,7 @@ class DeepSDF(LightningModule):
         if self.hparams["reg_loss"]:
             reg_loss = torch.linalg.norm(latent, dim=-1).mean()
             reg_loss *= min(1, self.current_epoch / 100)  # TODO add to hparams
-            reg_loss *= self.hparams["sigma"]
+            reg_loss *= self.hparams["reg_weight"]
             self.log("train/reg_loss", reg_loss, on_step=True, on_epoch=True)
 
         loss = l1_loss + reg_loss

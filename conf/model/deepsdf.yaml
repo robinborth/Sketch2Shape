@@ -1,18 +1,16 @@
+# @package model
 _target_: lib.models.deepsdf.DeepSDF
 
 latent_size: 512
 num_hidden_layers: 8
 latent_vector_size: 256
+num_latent_vectors: ${data.num_obj_train}
 clamp: True
 clamp_val: 0.1
 reg_loss: True
-num_scenes: 1
-sigma: 1e-4
+reg_weight: 1e-4
 skip_connection: [4]
-dropout: True
-dropout_p: 0.2
-dropout_latent: False
-dropout_latent_p: 0.2
+dropout: 0.0
 weight_norm: False
 
 loss:

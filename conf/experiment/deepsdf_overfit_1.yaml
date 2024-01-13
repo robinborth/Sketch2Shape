@@ -15,19 +15,12 @@ trainer:
   log_every_n_steps: 1
 
 data:
-  # TODO this should be in the default config
-  experiment: overfit_1
-  data_dir: ${paths.deepsdf_dir}/SdfSamples/${data.experiment}
-  norm_dir: ${paths.deepsdf_dir}/NormalizationParameters/${data.experiment}
-  surf_dir: ${paths.deepsdf_dir}/SurfaceSamples/${data.experiment}
   batch_size: 1
   num_workers: 2
-  pin_memory: False
-  drop_last: True
-  persistent_workers: True
   subsample: 65536
-  load_ram: True
   half: False
+  dataset:
+    _target_: lib.data.deepsdf_dataset.DeepSDFDatasetMemory
 
 model:
   latent_size: 512

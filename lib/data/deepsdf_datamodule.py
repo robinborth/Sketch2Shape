@@ -13,7 +13,6 @@ class DeepSDFDataModule(LightningDataModule):
         self,
         # settings
         data_dir: str = "data/",
-        load_ram: bool = True,
         subsample: int = 16384,
         half: bool = False,
         # training
@@ -28,15 +27,12 @@ class DeepSDFDataModule(LightningDataModule):
         **kwargs,
     ) -> None:
         super().__init__()
-
-        # this line allows to access init params with 'self.hparams' attribute
-        # also ensures init params will be stored in ckpt
         self.save_hyperparameters(logger=False)
 
     def setup(self, stage: str) -> None:
         self.train_dataset = self.hparams["dataset"](
             data_dir=self.hparams["data_dir"],
-            load_ram=self.hparams["load_ram"],
+            split="train",
             subsample=self.hparams["subsample"],
             half=self.hparams["half"],
         )
@@ -126,15 +122,10 @@ class RenderedSDFDataModule(LightningDataModule):
         **kwargs,
     ) -> None:
         super().__init__()
-
-        # this line allows to access init params with 'self.hparams' attribute
-        # also ensures init params will be stored in ckpt
         self.save_hyperparameters(logger=False)
 
     def setup(self, stage: str) -> None:
-        self.train_dataset = self.hparams["dataset"](
-            data_dir=self.hparams["data_dir"],
-        )
+        self.train_dataset = self.hparams["dataset"](data_dir=self.hparams["data_dir"])
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(

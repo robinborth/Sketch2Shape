@@ -10,6 +10,7 @@ from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 
+from lib.data.metainfo import MetaInfo
 from lib.eval.tester import SiameseTester
 from lib.eval.utils import plot_top_32
 from lib.models.siamese import Siamese
@@ -79,7 +80,7 @@ def train(cfg: DictConfig) -> None:
 
         log.info(f"==> load model <{cfg.model._target_}>")
         model = Siamese.load_from_checkpoint(ckpt_path).decoder
-        model.metainfo = datamodule.metainfo
+        model.metainfo = MetaInfo(data_dir=cfg.data.data_dir)
         tester = SiameseTester(model=model)
 
         log.info(f"==> index datasets <{cfg.trainer._target_}>")

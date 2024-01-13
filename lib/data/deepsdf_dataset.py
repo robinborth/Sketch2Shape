@@ -2,6 +2,7 @@ import glob
 import json
 import random
 from pathlib import Path
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,44 +10,45 @@ import torch
 import trimesh
 from torch.utils.data import Dataset
 
+from lib.data.metainfo import MetaInfo
 from lib.data.sdf_utils import remove_nans
 from lib.render.camera import Camera
 
 
-class DeepSDFDataset(Dataset):
+class DeepSDFDatasetBase(Dataset):
     def __init__(
         self,
         data_dir: str = "data/",
-        load_ram: bool = True,
+        split: Optional[str] = None,
         subsample: int = 16384,
         half: bool = False,
     ) -> None:
-        self.data_dir = data_dir
-        self.load_ram = load_ram
+        self.metainfo = MetaInfo(data_dir=data_dir, split=split)
         self.subsample = subsample
         self.half = half
+
         self.load()
 
-    def load(self):
-        path = Path(self.data_dir)
-        self.idx2shape = {}
-        self.npy_paths = []
-        self.data = []
-        for idx, path in enumerate(path.glob("**/*.npz")):
-            self.npy_paths.append(str(path))
-            self.idx2shape[idx] = path.parts[-1][:-4]
-            if self.load_ram:  # to make it fit into ram
-                data = np.load(path)
-                pos_tensor = remove_nans(torch.from_numpy(data["pos"])).half()
-                neg_tensor = remove_nans(torch.from_numpy(data["neg"])).half()
-                self.data.append([pos_tensor, neg_tensor])
+    def load(self) -> None:
+        raise NotImplementedError()
 
-        self.shape2idx = {v: k for k, v in self.idx2shape.items()}
-        with open(f"{self.data_dir}/shape2idx.json", "w") as f:
-            f.write(json.dumps(self.shape2idx))
+    def fetch(self, idx: int) -> np.ndarray:
+        raise NotImplementedError()
 
-    def load_from_disk(self, idx: int):
-        data = np.load(self.npy_paths[idx])
+    def __len__(self) -> int:
+        return self.metainfo.obj_id_count
+
+    def __getitem__(self, idx: int):
+        data = self.fetch(idx)
+        return {"points": data[:, :3], "gt_sdf": data[:, 3], "idx": idx}
+
+
+class DeepSDFDataset(DeepSDFDatasetBase):
+    def fetch(self, idx: int):
+        obj_id = self.metainfo.obj_ids[idx]
+        sdf_samples_path = self.metainfo.sdf_samples_path(obj_id=obj_id)
+        data = np.load(sdf_samples_path)
+
         if self.subsample is None:
             return data
 
@@ -65,15 +67,29 @@ class DeepSDFDataset(Dataset):
 
         return samples
 
-    def load_from_ram(self, idx: int):
+
+class DeepSDFDatasetMemory(DeepSDFDatasetBase):
+    def load(self):
+        self.data = []
+        for obj_id in self.metainfo.obj_ids:
+            sdf_samples_path = self.metainfo.sdf_samples_path(obj_id=obj_id)
+            data = np.load(sdf_samples_path)
+            pos_tensor = remove_nans(torch.from_numpy(data["pos"])).half()
+            neg_tensor = remove_nans(torch.from_numpy(data["neg"])).half()
+            self.data.append({"pos": pos_tensor, "neg": neg_tensor})
+
+    def fetch(self, idx: int):
         data = self.data[idx]
         if self.subsample is None:
             return data
 
         half = self.subsample // 2
 
-        pos_tensor, neg_tensor = data
-        pos_size, neg_size = pos_tensor.shape[0], neg_tensor.shape[0]
+        pos_tensor = data["pos"]
+        neg_tensor = data["neg"]
+
+        pos_size = pos_tensor.shape[0]
+        neg_size = neg_tensor.shape[0]
 
         pos_start_ind = random.randint(0, pos_size - half)
         sample_pos = pos_tensor[pos_start_ind : (pos_start_ind + half)]
@@ -88,13 +104,6 @@ class DeepSDFDataset(Dataset):
         samples = torch.cat([sample_pos, sample_neg], 0)
 
         return samples
-
-    def __len__(self):
-        return len(self.npy_paths)
-
-    def __getitem__(self, idx):
-        data = self.load_from_ram(idx) if self.load_ram else self.load_from_disk(idx)
-        return {"points": data[:, :3], "gt_sdf": data[:, 3], "idx": idx}
 
 
 class PointCloudDataset(Dataset):

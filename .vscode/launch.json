@@ -28,9 +28,9 @@
             "type": "python",
             "request": "launch",
             "program": "scripts/train_deepsdf.py",
-            "args": [
-                "+experiment=deepsdf_overfit_1"
-            ],
+            // "args": [
+            //     "+experiment=deepsdf_overfit_1"
+            // ],
             "console": "integratedTerminal",
             "justMyCode": false,
         },

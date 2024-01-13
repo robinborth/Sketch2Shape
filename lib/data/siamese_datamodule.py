@@ -35,19 +35,22 @@ class SiameseDataModule(LightningDataModule):
         if stage in ["fit", "all"]:
             self.train_metainfo = MetaInfo(data_dir=data_dir, split="train")
             self.train_dataset = self.hparams["dataset"](
-                metainfo=self.train_metainfo,
+                data_dir=data_dir,
+                split="train",
                 transforms=self.hparams["transforms"],
             )
         if stage in ["validate", "fit", "all"]:
             self.val_metainfo = MetaInfo(data_dir=data_dir, split="val")
             self.val_dataset = self.hparams["dataset"](
-                metainfo=self.val_metainfo,
+                data_dir=data_dir,
+                split="val",
                 transforms=self.hparams["transforms"],
             )
         if stage in ["test", "all"]:
             self.test_metainfo = MetaInfo(data_dir=data_dir, split="test")
             self.test_dataset = self.hparams["dataset"](
-                metainfo=self.test_metainfo,
+                data_dir=data_dir,
+                split="test",
                 transforms=self.hparams["transforms"],
             )
 

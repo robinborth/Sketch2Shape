@@ -1,30 +1,14 @@
 # @package data
 
-_target_: lib.data.siamese_datamodule.SiameseDataModule
-
 dataset_name: shapenet_chair_10
-data_dir: ${paths.data_dir}/${data.dataset_name}
-
-batch_size: 128
-num_workers: 7
-pin_memory: True
-drop_last: True
-shuffle: True
-persistent_workers: True
-
-sampler: null
-dataset: 
-  _target_: lib.data.siamese_dataset.SiameseDatasetDynamicLoadDynamicTransform
-  _partial_: True
-
 
 ########################################################################
 # Split Settings
 ########################################################################
 
-num_obj_train: 16
-num_obj_val: 16
-num_obj_test: 16
+num_obj_train: 4
+num_obj_val: 4
+num_obj_test: 2
 
 ########################################################################
 # Rendering Setting
