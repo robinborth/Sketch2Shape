@@ -15,6 +15,7 @@ class SiameseDataset(Dataset):
     ):
         self.transforms = transforms
         self.metainfo = MetaInfo(data_dir=data_dir, split=split)
+        self.metainfo.load_sketch_image_pairs()
 
     def _load(self, obj_id: str, render_type: str, image_id: str):
         path = self.metainfo.render_path(

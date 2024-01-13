@@ -56,6 +56,7 @@ class SiameseDataModule(LightningDataModule):
 
     def build_sampler(self, metainfo: MetaInfo):
         sampler = None
+        metainfo.load_sketch_image_pairs()
         if self.hparams["sampler"]:
             sampler = self.hparams["sampler"](
                 labels=metainfo.labels,

@@ -1,7 +1,8 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
+import open3d as o3d
 import pandas as pd
 
 from lib.utils import create_logger
@@ -22,8 +23,9 @@ class MetaInfo:
         except Exception as e:
             logger.error("Not able to load dataset_splits file.")
 
+    def load_sketch_image_pairs(self):
         data = []
-        for _, row in metainfo.iterrows():
+        for _, row in self._metainfo.iterrows():
             obj_id, label = row["obj_id"], row["label"]
             images_path = self.data_dir / "shapes" / obj_id / "images"
             assert images_path.exists()
@@ -59,17 +61,59 @@ class MetaInfo:
         df = self._metainfo
         return int(df.loc[df["obj_id"] == obj_id].iloc[0]["label"])
 
-    def model_normalized_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "model_normalized.obj"
+    def load_mesh(
+        self,
+        obj_id: str,
+        file_name: str = "normalized_mesh.obj",
+        normalize: bool = False,
+    ) -> o3d.geometry.TriangleMesh:
+        path = self.data_dir / "shapes" / obj_id / file_name
+        mesh = o3d.io.read_triangle_mesh(str(path))
+        if not normalize:
+            return mesh
 
-    def normalization_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "normalization.npz"
+        points = np.asarray(mesh.vertices)
+        translate = (np.min(points, axis=0) + np.max(points, axis=0)) / 2.0
+        points -= translate
+        points /= np.linalg.norm(points, axis=-1).max()
+        mesh.vertices = o3d.utility.Vector3dVector(points)
+        return mesh
 
-    def sdf_samples_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "sdf_samples.npz"
+    def save_mesh(
+        self,
+        obj_id: str,
+        mesh: o3d.geometry.TriangleMesh,
+    ) -> None:
+        path = self.data_dir / "shapes" / obj_id / "mesh.obj"
+        o3d.io.write_triangle_mesh(str(path), mesh)
 
-    def surface_samples_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "surface_samples.ply"
+    def save_normalized_mesh(
+        self,
+        obj_id: str,
+        mesh: o3d.geometry.TriangleMesh,
+    ) -> None:
+        path = self.data_dir / "shapes" / obj_id / "normalized_mesh.obj"
+        o3d.io.write_triangle_mesh(str(path), mesh)
+
+    def load_sdf_samples(self, obj_id: str) -> Tuple[np.ndarray, np.ndarray]:
+        path = self.data_dir / "shapes" / obj_id / "sdf_samples.npz"
+        data = np.load(path)
+        points = data[:, :3]
+        sdfs = data[:, 3]
+        return points, sdfs
+
+    def save_sdf_samples(self, obj_id: str, points: np.ndarray, sdfs: np.ndarray):
+        path = self.data_dir / "shapes" / obj_id / "sdf_samples.npz"
+        data = np.concatenate([points, sdfs], axis=-1)
+        np.save(path, data)
+
+    def load_surface_samples(self, obj_id: str) -> np.ndarray:
+        path = self.data_dir / "shapes" / obj_id / "surface_samples.npz"
+        return np.load(path)
+
+    def save_surface_samples(self, obj_id: str, points: np.ndarray, ) -> None:
+        path = self.data_dir / "shapes" / obj_id / "surface_samples.npz"
+        return np.save(path, points)
 
     def render_path(self, obj_id: str, render_type: str, image_id: str) -> Path:
         return self.data_dir / "shapes" / obj_id / render_type / f"{image_id}.jpg"

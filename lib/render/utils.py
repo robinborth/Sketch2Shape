@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import torch
 
+# TODO change to numpy
+
 
 def get_translation(t):
     mat = torch.eye(4)

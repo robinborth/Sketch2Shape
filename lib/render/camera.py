@@ -12,7 +12,7 @@ class Camera:
         width: int = 256,
         height: int = 256,
         focal: int = 512,
-        sphere_eps: float = 3e-2,
+        sphere_eps: float = 1e-1,
     ):
         self.azim = azim
         self.elev = elev
