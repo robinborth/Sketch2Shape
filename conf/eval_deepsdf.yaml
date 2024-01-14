@@ -1,25 +1,22 @@
 # @package _global_
-# TODO
-# fix profiler
-# get this in a right order, possibly with experiment yaml files
 
 defaults:
-  - trainer: default
-  - data: deepsdf_chair
-  - logger: null
   - _self_
+  - data:
+    - shapenet_chair_1
+    - deepsdf 
+  - model: deepsdf
+  - callbacks: default
+  - logger: null 
+  - trainer: default
   - hydra: default
   - paths: default
-  - debug: null
-
-  # optional local config for machine/user specific settings
-  # it's optional since it doesn't need to exist and is excluded from version control
   - optional local: default
 
-# tags to help you identify your experiments
-# you can overwrite this in experiment configs
-# overwrite from command line with `python train.py tags="[first_tag, second_tag]"`
+task_name: eval_deepsdf
 tags: ["eval", "deepsdf"]
+save_outcomes: True
+ckpt_path: todo 
 
 trainer:
   accelerator: gpu
@@ -28,58 +25,14 @@ trainer:
   precision: 16-mixed
   log_every_n_steps: 10
 
-ckpt_folder: "/home/korth/sketch2shape/logs/train/runs/train_chairs_norm/checkpoints"
-save_outcomes: True
 
-eval_every_n_ckpt: 5
-
-model:
-  _target_: lib.models.deepsdf.DeepSDFValidator
-  save_obj: False #set to false if you dont want to risk
-  save_obj_path: ${paths.output_dir}/obj/
-
-  # the DeepSDF model checkpoint
-  loss:
-    _target_: torch.nn.L1Loss
-    reduction: mean
-
-  optim:
-    _target_: torch.optim.Adam
-    _partial_: true
-    lr: 5e-3
-
-  scheduler:
-    _partial_: True
-    _target_: torch.optim.lr_scheduler.StepLR
-    step_size: 400
-    gamma: 0.1
-
-  emp_init: false
-  sigma: 1e-4
-
-data_train:
-  experiment: train_eval_loop # train_eval_loop # val # val_16 # overfit_2_temp # val_16
-  data_dir: ${paths.deepsdf_dir}/SdfSamples/${data_train.experiment}
-  norm_dir: ${paths.deepsdf_dir}/NormalizationParameters/${data_train.experiment}
-  ply_dir: ${paths.deepsdf_dir}/SurfaceSamples/${data_train.experiment}
-  batch_size: 48 #48
-  num_workers: 7
-  pin_memory: True
-  drop_last: False
-  shuffle: True
-  persistent_workers: True
-  subsample: 16384
+data:
   _target_: lib.data.deepsdf_datamodule.DeepSDFValidationDataModule
-
+  batch_size: 1
+  num_workers: 1
+  subsample: 65536
   dataset:
-    _target_: lib.data.deepsdf_dataset.DeepSDFDataset
-    _partial_: True
-
-  val_dataset:
-    _target_: lib.data.deepsdf_dataset.PointCloudDataset
-    _partial_: True
-    ply_path: ${data_train.ply_dir}
-    norm_path: ${data_train.norm_dir}
+    _target_: lib.data.deepsdf_dataset.DeepSDFDatasetMemory
 
 data_val:
   experiment: val # train_eval_loop # val # val_16 # overfit_2_temp # val_16

@@ -1,0 +1,12 @@
+# @package _global_
+
+defaults:
+  - _self_
+  - data: shapenet_chair_1
+  - hydra: default
+  - paths: default
+  - optional local: default
+
+task_name: preprocess
+seed: 123
+source: /shared/data/ShapeNetCore/03001627

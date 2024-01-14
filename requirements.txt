@@ -1,22 +1,18 @@
 # dev
 lightning
-# torch
-# torchvision
+torch
 wandb
 hydra-core
 jupyter
 pandas
 open3d
 pytorch-metric-learning
-fvcore
-iopath
+# fvcore
+# iopath
 # pytorch3d
-rich
 opencv-python
 scikit-image
-trimesh
-h5py
-visdom
+rich
 
 # test
 black

@@ -2,7 +2,7 @@
 
 _target_: lib.data.siamese_datamodule.SiameseDataModule
 # paths
-data_dir: ${paths.data_dir}/${data.dataset_name}
+data_dir: ${data.data_dir} 
 # training
 batch_size: 128
 num_workers: 7

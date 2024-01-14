@@ -3,7 +3,6 @@ import math
 import numpy as np
 import torch
 import torch.nn as nn
-import trimesh
 from lightning import LightningModule
 from skimage.measure import marching_cubes
 from torch.utils.data import DataLoader
@@ -13,6 +12,7 @@ from lib.evaluate import compute_chamfer_distance
 
 
 class DeepSDF(LightningModule):
+    # TODO should we weight the negative examples more?
     def __init__(
         self,
         loss: torch.nn.Module,
@@ -194,11 +194,6 @@ class DeepSDFLatentOptimizer(LightningModule):
             return {"optimizer": optimizer, "lr_scheduler": scheduler}
         return optimizer
 
-    def validation_step(self, batch, batch_idx):
-        mesh = self.to_mesh()
-        chamfer = compute_chamfer_distance(batch["pointcloud"], mesh)
-        self.log("val/chamfer", chamfer, on_epoch=True)
-
     def to_mesh(self, resolution: int = 256, chunk_size: int = 65536):
         self.model.eval()
         min_val, max_val = self.min_val, self.max_val
@@ -216,4 +211,4 @@ class DeepSDFLatentOptimizer(LightningModule):
 
         verts, faces, _, _ = marching_cubes(sd_cube, level=0.0)
         verts = verts * ((max_val - min_val) / resolution) + min_val
-        return trimesh.Trimesh(vertices=verts, faces=faces)
+        # return Trimesh(vertices=verts, faces=faces)

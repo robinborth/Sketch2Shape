@@ -1,0 +1,91 @@
+# @package data
+
+dataset_name: shapenet_chair_1
+data_dir: ${paths.data_dir}/${data.dataset_name}
+
+########################################################################
+# Training Splits 
+########################################################################
+
+num_obj_train: 1
+num_obj_val: 0
+num_obj_test: 0
+
+########################################################################
+# General Camera Settings 
+########################################################################
+
+camera_dist: 4.0
+camera_width: 256
+camera_height: 256
+camera_focal: 512
+camera_sphere_eps: 1e-1
+
+########################################################################
+# Preprocess Mesh 
+########################################################################
+
+preprocess_mesh:
+  _target_: lib.data.preprocess.PreprocessMesh
+  data_dir: ${data.data_dir}
+  skip: True
+
+########################################################################
+# Preprocessing Siamese
+########################################################################
+
+preprocess_siamese:
+  _target_: lib.data.preprocess.PreprocessSiamese
+  # processing settings
+  data_dir: ${data.data_dir}
+  skip: True
+  # camera settings
+  azims: [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330]
+  elevs: [-45, 0 , 45]
+  dist: ${data.camera_dist} 
+  width: ${data.camera_width} 
+  height: ${data.camera_height} 
+  focal: ${data.camera_focal} 
+  sphere_eps: ${data.camera_sphere_eps} 
+  # sketch settings
+  t_lower: 20 # 20
+  t_upper: 40 # 40
+  aperture_size: 3  # 3, 5, 7
+  l2_gradient: True
+
+########################################################################
+# Preprocessing SDF
+########################################################################
+
+preprocess_sdf:
+  _target_: lib.data.preprocess.PreprocessSDF
+  # processing settings
+  data_dir: ${data.data_dir}
+  skip: True
+  # camera settings
+  azims: [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330]
+  elevs: [-90, -60, -30, 0, 30, 60,  90]
+  dist: ${data.camera_dist} 
+  width: ${data.camera_width} 
+  height: ${data.camera_height} 
+  focal: ${data.camera_focal} 
+  sphere_eps: ${data.camera_sphere_eps} 
+  # base samples
+  cloud_samples: 500000
+  # sample surface points
+  surface_samples: 50000
+  # sample inside points
+  inside_samples: 150000
+  inside_buffer_multiplier: 1.2
+  inside_delta_mean: 0.0
+  inside_delta_var: 1e-02
+  # sample outside points
+  outside_samples: 300000
+  outside_buffer_multiplier: 1.2
+  outside_delta_mean: 0.0
+  outside_delta_var: 5e-02
+  # sample unit sphere points
+  unit_samples: 50000
+  unit_buffer_multiplier: 1.2
+  unit_alpha: 2.0
+  unit_beta: 0.5

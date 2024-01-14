@@ -1,6 +1,3 @@
-import os
-import random
-import shutil
 from pathlib import Path
 
 import hydra
@@ -9,56 +6,42 @@ import pandas as pd
 from omegaconf import DictConfig
 from tqdm import tqdm
 
+from lib.data.metainfo import MetaInfo
 from lib.utils import create_logger
 
 logger = create_logger("copy_shapenet")
 
 
-@hydra.main(version_base=None, config_path="../conf", config_name="config")
+# python scripts/copy_shapenet.py +source=/shared/data/ShapeNetCore/03001627
+@hydra.main(version_base=None, config_path="../conf", config_name="preprocess_data")
 def main(cfg: DictConfig) -> None:
     logger.debug("==> loading config ...")
     L.seed_everything(cfg.seed)
 
-    # get the paths to the shapes
-    model_paths = list(
-        Path(cfg.paths.shapenet_dir).glob("*/models/model_normalized.obj")
-    )
-    total_num = cfg.data.num_obj_train + cfg.data.num_obj_val + cfg.data.num_obj_test
-    paths = random.choices(model_paths, k=total_num)
+    metainfo = MetaInfo(cfg.data.data_dir)
 
-    logger.debug(f"==> start copy {total_num} sketches ... ")
-    obj_ids = []
-    for source_path in tqdm(paths):
-        try:
-            # track the object_ids
-            obj_id = source_path.parent.parent.stem
-            obj_ids.append(obj_id)
+    assert cfg.source
+    obj_ids = [obj_file.stem for obj_file in Path(cfg.source).iterdir()]
 
-            # create the folder
-            destination_directory = Path(cfg.data.data_dir, obj_id)
-            os.makedirs(destination_directory, exist_ok=True)
+    num_samples = cfg.data.num_obj_train + cfg.data.num_obj_val + cfg.data.num_obj_test
+    obj_ids = obj_ids[:num_samples]
+    assert num_samples == len(obj_ids)
 
-            # copy the obj file to the folder
-            destination_path = Path(destination_directory, source_path.name)
-            shutil.copy2(source_path, destination_path)
-        except Exception as e:
-            logger.error(f"An error occurred: {str(e)}")
+    logger.debug(f"==> start copy {num_samples} sketches ... ")
+    for obj_id in tqdm(obj_ids):
+        source_path = Path(cfg.source) / obj_id / "models/model_normalized.obj"
+        metainfo.save_mesh(source_path=source_path, obj_id=obj_id)
 
-    logger.debug("==> save the dataset splits ... ")
+    data = []
     splits = (
         ["train"] * cfg.data.num_obj_train
         + ["val"] * cfg.data.num_obj_val
         + ["test"] * cfg.data.num_obj_test
     )
-    assert len(splits) == len(paths)
-    df = pd.DataFrame(
-        {
-            "obj_id": obj_ids,
-            "labels": list(range(len(obj_ids))),
-            "split": splits,
-        }
-    )
-    df.to_csv(cfg.data.dataset_splits_path, index=None)
+    for label, obj_id in enumerate(obj_ids):
+        data.append({"obj_id": obj_id, "label": label, "split": splits[label]})
+    df = pd.DataFrame(data)
+    df.to_csv(Path(cfg.data.data_dir) / "metainfo.csv", index=False)
 
 
 if __name__ == "__main__":

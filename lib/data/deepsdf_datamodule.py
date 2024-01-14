@@ -5,7 +5,7 @@ from lightning import LightningDataModule
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
-from lib.data.deepsdf_dataset import DeepSDFDataset
+from lib.data.deepsdf_dataset import DeepSDFDataset, DeepSDFLatentOptimizerDataset
 
 
 class DeepSDFDataModule(LightningDataModule):
@@ -49,59 +49,45 @@ class DeepSDFDataModule(LightningDataModule):
         )
 
 
-class DeepSDFValidationDataModule(LightningDataModule):
+class DeepSDFLatentOptimizationDataModule(LightningDataModule):
     def __init__(
         self,
         # settings
         data_dir: str = "data/",
-        load_ram: bool = True,
+        obj_id: str = "obj_id",
         subsample: int = 16384,
         half: bool = False,
         # training
-        batch_size: int = 32,
+        batch_size: int = 1,
         num_workers: int = 0,
         pin_memory: bool = False,
         drop_last: bool = True,
         persistent_workers: bool = False,
         shuffle: bool = False,
         # dataset
-        dataset: Optional[DeepSDFDataset] = None,
+        dataset: Optional[DeepSDFLatentOptimizerDataset] = None,
         **kwargs,
     ) -> None:
         super().__init__()
-
-        # this line allows to access init params with 'self.hparams' attribute
-        # also ensures init params will be stored in ckpt
         self.save_hyperparameters(logger=False)
 
     def setup(self, stage: str) -> None:
-        self.train_dataset = self.hparams["dataset"](
+        self.dataset = self.hparams["dataset"](
             data_dir=self.hparams["data_dir"],
-            load_ram=self.hparams["load_ram"],
+            obj_id=self.hparams["obj_id"],
             subsample=self.hparams["subsample"],
             half=self.hparams["half"],
         )
-        self.val_dataset = self.hparams["val_dataset"]()
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
-            dataset=self.train_dataset,
+            dataset=self.dataset,
             batch_size=self.hparams["batch_size"],
             num_workers=self.hparams["num_workers"],
             pin_memory=self.hparams["pin_memory"],
             drop_last=self.hparams["drop_last"],
             persistent_workers=self.hparams["persistent_workers"],
             shuffle=self.hparams["shuffle"],
-        )
-
-    def val_dataloader(self) -> DataLoader:
-        return DataLoader(
-            dataset=self.val_dataset,
-            batch_size=1,
-            num_workers=self.hparams["num_workers"],
-            pin_memory=self.hparams["pin_memory"],
-            drop_last=self.hparams["drop_last"],
-            persistent_workers=self.hparams["persistent_workers"],
         )
 
 

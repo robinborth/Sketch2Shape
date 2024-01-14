@@ -1,5 +1,6 @@
 import numpy as np
-import trimesh
+
+# import trimesh
 from sklearn.neighbors import KDTree
 
 

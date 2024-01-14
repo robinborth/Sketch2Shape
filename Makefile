@@ -19,20 +19,6 @@ clean:
 	rm -rf outputs/
 	rm -rf wandb/
 
-########################################################################
-# Data Preprocessing
-########################################################################
-
-train_siamese:
-	python scripts/run_train.py
-
-copy_shapenet:
-	python scripts/copy_shapenet.py
-
-create_sketches:
-	python scripts/create_sketches.py
-
-
 
 ########################################################################
 # Experiments
@@ -42,7 +28,6 @@ train_deepsdf:
 	python scripts/train_deepsdf.py +experiment=deepsdf_overfit_1 logger=wandb
 	python scripts/train_deepsdf.py +experiment=deepsdf_overfit_4 logger=wandb
 	python scripts/train_deepsdf.py +experiment=deepsdf_overfit_16 logger=wandb
-
 
 train_siamese:
 	# python scripts/train_siamese.py +experiment=siamese
