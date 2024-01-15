@@ -2,8 +2,8 @@
 
 defaults:
   - override /data:
-    - shapenet_chair_1 
-    - deepsdf
+    - shapenet_chair_1
+    - train_deepsdf
   - override /model: deepsdf
   - override /callbacks: 
     - default
