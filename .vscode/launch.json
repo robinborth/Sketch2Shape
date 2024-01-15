@@ -37,6 +37,17 @@
             "justMyCode": true,
         },
         {
+            "name": "Debug: Eval DeepSDF",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/eval_deepsdf.py",
+            "args": [
+                "ckpt_path=/home/borth/sketch2shape/logs/train_deepsdf/runs/2024-01-14_18-11-30/checkpoints/epoch_7436.ckpt"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+        },
+        {
             "name": "Debug: Copy Shapenet",
             "type": "python",
             "request": "launch",

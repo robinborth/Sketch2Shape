@@ -1,6 +1,5 @@
-import math
-
 import numpy as np
+import open3d as o3d
 import torch
 import torch.nn as nn
 from lightning import LightningModule
@@ -8,7 +7,9 @@ from skimage.measure import marching_cubes
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from lib.evaluate import compute_chamfer_distance
+############################################################
+# DeepSDF Training
+############################################################
 
 
 class DeepSDF(LightningModule):
@@ -62,7 +63,7 @@ class DeepSDF(LightningModule):
 
         # latent vectors
         self.lat_vecs = nn.Embedding(num_latent_vectors, latent_vector_size)
-        std_lat_vec = 1.0 / math.sqrt(latent_vector_size)
+        std_lat_vec = 1.0 / np.sqrt(latent_vector_size)
         torch.nn.init.normal_(self.lat_vecs.weight.data, 0.0, std_lat_vec)
 
     def forward(self, points: torch.Tensor, latent: torch.Tensor, mask=None):
@@ -152,7 +153,14 @@ class DeepSDF(LightningModule):
         return [optim_decoder, optim_latents]
 
 
-class DeepSDFLatentOptimizer(LightningModule):
+############################################################
+# DeepSDF Latent Optimizier Base
+# This is used for all the optimization and evalution parts
+# in the project, e.g. also for the rendering modules.
+############################################################
+
+
+class DeepSDFLatentOptimizerBase(LightningModule):
     def __init__(
         self,
         ckpt_path: str = "best.ckpt",
@@ -160,6 +168,7 @@ class DeepSDFLatentOptimizer(LightningModule):
         optimizer=None,
         scheduler=None,
         resolution: int = 256,
+        chunk_size: int = 65536,
     ) -> None:
         super().__init__()
         self.save_hyperparameters(logger=False)
@@ -187,6 +196,12 @@ class DeepSDFLatentOptimizer(LightningModule):
     def training_step(self, batch, batch_idx):
         raise NotImplementedError("Please provide the optimization implementation.")
 
+    def validation_step(self, batch, batch_idx):
+        gt_surface_samples = batch["gt_surface_samples"]
+        mesh = self.to_mesh(self.hparams["resolution"], self.hparams["chunk_size"])
+        chamfer = self.compute_chamfer_distance(mesh, gt_surface_samples)
+        self.log("val/chamfer", chamfer)
+
     def configure_optimizers(self):
         optimizer = self.hparams["optimizer"]([self.latent])
         if self.hparams["scheduler"] is not None:
@@ -194,9 +209,14 @@ class DeepSDFLatentOptimizer(LightningModule):
             return {"optimizer": optimizer, "lr_scheduler": scheduler}
         return optimizer
 
-    def to_mesh(self, resolution: int = 256, chunk_size: int = 65536):
+    def to_mesh(
+        self,
+        resolution: int = 256,
+        chunk_size: int = 65536,
+    ) -> o3d.geometry.TriangleMesh:
         self.model.eval()
         min_val, max_val = self.min_val, self.max_val
+        # TODO only sample in the unit sphere, the other points should be positive
         grid_vals = torch.linspace(min_val, max_val, resolution)
         xs, ys, zs = torch.meshgrid(grid_vals, grid_vals, grid_vals)
         points = torch.stack((xs.ravel(), ys.ravel(), zs.ravel())).transpose(1, 0)
@@ -211,4 +231,70 @@ class DeepSDFLatentOptimizer(LightningModule):
 
         verts, faces, _, _ = marching_cubes(sd_cube, level=0.0)
         verts = verts * ((max_val - min_val) / resolution) + min_val
-        # return Trimesh(vertices=verts, faces=faces)
+        return o3d.geometry.TriangleMesh(verts)
+
+
+############################################################
+# DeepSDF Latent Optimization (Validation)
+############################################################
+
+
+class DeepSDFLatentOptimizer(DeepSDFLatentOptimizerBase):
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.model.lat_vecs = None
+
+    def training_step(self, batch, batch_idx):
+        gt_sdf = batch["gt_sdf"]  # (B, N)
+        points = batch["points"]  # (B, N, 3)
+
+        sdf = self.forward(points=points)  # (B, N)
+
+        if self.hparams["clamp"]:
+            clamp_val = self.hparams["clamp_val"]
+            sdf = torch.clamp(sdf, -clamp_val, clamp_val)
+            gt_sdf = torch.clamp(gt_sdf, -clamp_val, clamp_val)
+
+        l1_loss = self.loss(sdf, gt_sdf)
+        self.log("train/l1_loss", l1_loss, on_step=True, on_epoch=True)
+
+        reg_loss = torch.tensor(0).to(l1_loss)
+        if self.hparams["reg_loss"]:
+            reg_loss = torch.linalg.norm(self.latent, dim=-1).mean()
+            reg_loss *= min(1, self.current_epoch / 100)
+            reg_loss *= self.hparams["reg_weight"]
+            self.log("train/reg_loss", reg_loss, on_step=True, on_epoch=True)
+
+        loss = l1_loss + reg_loss
+        self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+
+
+############################################################
+# Latent Code Traversal
+############################################################
+
+
+class DeepSDFLatentTraversal(DeepSDFLatentOptimizerBase):
+    def __init__(
+        self,
+        prior_idx_start: int = -1,
+        prior_idx_end: int = -1,
+        **kwargs,
+    ) -> None:
+        super().__init__(**kwargs)
+        self.model.lat_vecs = None
+
+    def validation_step(self, batch, batch_idx):
+        t = batch["step"]  # t = [0, 1]
+
+        latent_start = self.latent  # mean latent
+        if (idx_start := self.hparams["prior_idx_start"]) >= 0:
+            latent_start = self.lat_vecs[idx_start]
+
+        latent_end = self.latent  # mean latent
+        if (idx_end := self.hparams["prior_idx_end"]) >= 0:
+            latent_end = self.lat_vecs[idx_end]
+
+        self.latent = t * latent_start + (1 - t) * latent_end
+        mesh = self.to_mesh(self.hparams["resolution"], self.hparams["chunk_size"])
+        # TODO save the mesh or do something with it

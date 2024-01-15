@@ -7,7 +7,7 @@ from lightning import LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 
-from lib.eval.tester import SiameseTester
+from lib.eval.siamese_tester import SiameseTester
 from lib.models.decoder import EvalCLIP, EvalResNet18
 from lib.models.siamese import Siamese
 from lib.utils import create_logger, instantiate_loggers

@@ -16,7 +16,7 @@ defaults:
 task_name: eval_deepsdf
 tags: ["eval", "deepsdf"]
 save_outcomes: True
-ckpt_path: todo 
+ckpt_path: ???
 
 trainer:
   accelerator: gpu
@@ -24,7 +24,6 @@ trainer:
   check_val_every_n_epoch: ${trainer.max_epochs}
   precision: 16-mixed
   log_every_n_steps: 10
-
 
 data:
   _target_: lib.data.deepsdf_datamodule.DeepSDFValidationDataModule

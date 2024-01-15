@@ -1,15 +1,14 @@
 # dev
 lightning
 torch
+torchvision
+transformers
 wandb
 hydra-core
 jupyter
 pandas
 open3d
 pytorch-metric-learning
-# fvcore
-# iopath
-# pytorch3d
 opencv-python
 scikit-image
 rich

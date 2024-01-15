@@ -1,8 +1,4 @@
-import matplotlib.pyplot as plt
 import numpy as np
-import torch
-
-# TODO change to numpy
 
 
 def get_translation(t):
@@ -45,15 +41,3 @@ def get_rotation_z(theta: float):
             [0, 0, 0, 1],
         ]
     )
-
-
-def visualize_mask(camera, mask):
-    mask_image = mask.view(camera.resolution, camera.resolution).detach().cpu().numpy()
-    plt.imshow(mask_image.T)
-
-
-def visualize_image(image):
-    image = image.detach().cpu().numpy()
-    plt.imshow(image)
-    plt.show()
-    return image

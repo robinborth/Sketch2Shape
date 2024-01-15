@@ -8,6 +8,10 @@ from torch.utils.data import Dataset
 from lib.data.metainfo import MetaInfo
 from lib.render.camera import Camera
 
+############################################################
+# DeepSDF Training Datasets
+############################################################
+
 
 class DeepSDFDatasetBase(Dataset):
     def __init__(
@@ -36,7 +40,7 @@ class DeepSDFDatasetBase(Dataset):
         return {"points": points, "gt_sdf": gt_sdf, "idx": idx}
 
 
-class DeepSDFDataset(DeepSDFDatasetBase):
+class DeepSDFDiskDataset(DeepSDFDatasetBase):
     def fetch(self, idx: int):
         obj_id = self.metainfo.obj_ids[idx]
         points, sdfs = self.metainfo.load_sdf_samples(obj_id=obj_id)
@@ -49,7 +53,7 @@ class DeepSDFDataset(DeepSDFDatasetBase):
         return points[random_mask], sdfs[random_mask]
 
 
-class DeepSDFDatasetMemory(DeepSDFDatasetBase):
+class DeepSDFMemoryDataset(DeepSDFDatasetBase):
     def load(self):
         self.points = []
         self.sdfs = []
@@ -67,6 +71,39 @@ class DeepSDFDatasetMemory(DeepSDFDatasetBase):
             return points, sdfs
         random_mask = np.random.choice(points.shape[0], self.subsample)
         return points[random_mask], sdfs[random_mask]
+
+
+############################################################
+# Evaluation Dataset
+############################################################
+
+
+class LatentOptimizerDataset(Dataset):
+    def __init__(self, data_dir: str = "/data"):
+        self.data_dir = data_dir
+        self.data = []
+        for path in glob.glob(self.data_dir + "/*.png"):
+            data = {}
+            azim, elev, dist = path.split("/")[-1].split("-")[:3]
+            camera = Camera(azim=int(azim), elev=-int(elev), dist=int(dist))
+            points, rays, mask = camera.unit_sphere_intersection_rays()
+            data["points"], data["rays"], data["mask"] = points, rays, mask
+            data["camera_position"] = camera.camera_position()
+            data["light_position"] = np.array([0, 0, 0], dtype=np.float32)
+            data["gt_image"] = plt.imread(path).astype(np.float32)
+            data["gt_surface_mask"] = ~np.isclose(data["gt_image"].sum(axis=-1), 3.0)
+            self.data.append(data)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx]
+
+
+############################################################
+# Latent Optimization Datasets
+############################################################
 
 
 class DeepSDFLatentOptimizerDataset(Dataset):
@@ -93,7 +130,7 @@ class DeepSDFLatentOptimizerDataset(Dataset):
         return {"gt_points": self.points[random_mask], "label": self.label[random_mask]}
 
 
-class RenderedDataset(Dataset):
+class NormalLatentOptimizerDataset(Dataset):
     # TODO should we use the metainfo here as well?
     def __init__(self, data_dir: str = "/data"):
         self.data_dir = data_dir
@@ -115,3 +152,16 @@ class RenderedDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.data[idx]
+
+
+class SketchLatentOptimizerDataset(Dataset):
+    pass
+
+
+############################################################
+# Latent Traversal Datasets
+############################################################
+
+
+class LatentTraversalDataset(Dataset):
+    pass

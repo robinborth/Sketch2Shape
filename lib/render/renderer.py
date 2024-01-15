@@ -1,11 +1,11 @@
 import torch
 from torch.nn.functional import l1_loss, normalize
 
-from lib.models.deepsdf import DeepSDFLatentOptimizer
+from lib.models.deepsdf import DeepSDFLatentOptimizerBase
 from lib.models.siamese import Siamese
 
 
-class DeepSDFRender(DeepSDFLatentOptimizer):
+class DeepSDFRenderBase(DeepSDFLatentOptimizerBase):
     def __init__(
         self,
         reg_loss: bool = True,
@@ -23,6 +23,7 @@ class DeepSDFRender(DeepSDFLatentOptimizer):
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
+        self.model.lat_vecs = None
 
     def log_image(self, key: str, image: torch.Tensor):
         image = image.detach().cpu().numpy()
@@ -173,7 +174,7 @@ class DeepSDFRender(DeepSDFLatentOptimizer):
         return min_points, surface_mask
 
 
-class DeepSDFNormalRender(DeepSDFRender):
+class DeepSDFNormalRender(DeepSDFRenderBase):
     def __init__(
         self,
         normal_weight: float = 1.0,
@@ -232,7 +233,7 @@ class DeepSDFNormalRender(DeepSDFRender):
         return loss
 
 
-class DeepSDFNormalSilhouetteRender(DeepSDFRender):
+class DeepSDFNormalSilhouetteRender(DeepSDFRenderBase):
     def __init__(
         self,
         normal_weight: float = 1.0,
@@ -305,7 +306,7 @@ class DeepSDFNormalSilhouetteRender(DeepSDFRender):
         return loss
 
 
-class DeepSDFSiameseRender(DeepSDFRender):
+class DeepSDFSiameseRender(DeepSDFRenderBase):
     def __init__(
         self,
         siamese_ckpt_path: str = "best.ckpt",

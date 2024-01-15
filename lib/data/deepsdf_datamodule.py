@@ -3,7 +3,7 @@ from typing import Optional
 from hydra.utils import instantiate
 from lightning import LightningDataModule
 from omegaconf import DictConfig
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 from lib.data.deepsdf_dataset import DeepSDFDataset, DeepSDFLatentOptimizerDataset
 
@@ -65,23 +65,43 @@ class DeepSDFLatentOptimizationDataModule(LightningDataModule):
         persistent_workers: bool = False,
         shuffle: bool = False,
         # dataset
-        dataset: Optional[DeepSDFLatentOptimizerDataset] = None,
+        train_dataset: Optional[Dataset] = None,
+        val_dataset: Optional[Dataset] = None,
         **kwargs,
     ) -> None:
         super().__init__()
         self.save_hyperparameters(logger=False)
 
     def setup(self, stage: str) -> None:
-        self.dataset = self.hparams["dataset"](
-            data_dir=self.hparams["data_dir"],
-            obj_id=self.hparams["obj_id"],
-            subsample=self.hparams["subsample"],
-            half=self.hparams["half"],
-        )
+        if stage == "fit":
+            self.train_dataset = self.hparams["train_dataset"](
+                data_dir=self.hparams["data_dir"],
+                obj_id=self.hparams["obj_id"],
+                subsample=self.hparams["subsample"],
+                half=self.hparams["half"],
+            )
+        if stage in ["validate", "fit"]:
+            self.val_dataset = self.hparams["val_dataset"](
+                data_dir=self.hparams["data_dir"],
+                obj_id=self.hparams["obj_id"],
+                subsample=self.hparams["subsample"],
+                half=self.hparams["half"],
+            )
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
-            dataset=self.dataset,
+            dataset=self.train_dataset,
+            batch_size=self.hparams["batch_size"],
+            num_workers=self.hparams["num_workers"],
+            pin_memory=self.hparams["pin_memory"],
+            drop_last=self.hparams["drop_last"],
+            persistent_workers=self.hparams["persistent_workers"],
+            shuffle=self.hparams["shuffle"],
+        )
+
+    def val_dataloader(self) -> DataLoader:
+        return DataLoader(
+            dataset=self.val_dataset,
             batch_size=self.hparams["batch_size"],
             num_workers=self.hparams["num_workers"],
             pin_memory=self.hparams["pin_memory"],

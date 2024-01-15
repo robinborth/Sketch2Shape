@@ -11,7 +11,7 @@ from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 
 from lib.data.metainfo import MetaInfo
-from lib.eval.tester import SiameseTester
+from lib.eval.siamese_tester import SiameseTester
 from lib.eval.utils import plot_top_32
 from lib.models.siamese import Siamese
 from lib.utils import (
