@@ -68,7 +68,7 @@ class DeepSDFLatentOptimizationDataModule(LightningDataModule):
     def setup(self, stage: str) -> None:
         if stage == "fit":
             self.train_dataset = self.hparams["train_dataset"](obj_id=self.obj_id)
-        if stage in ["test", "fit"]:
+        if stage == "test":
             self.eval_dataset = self.hparams["eval_dataset"](obj_id=self.obj_id)
 
     def train_dataloader(self) -> DataLoader:

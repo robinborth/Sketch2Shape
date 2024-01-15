@@ -14,3 +14,6 @@ output_dir: ${hydra:runtime.output_dir}
 
 # path to working directory
 work_dir: ${hydra:runtime.cwd}
+
+# the path of the mesh reconstructions of the latent optimizations
+mesh_dir: ${paths.output_dir}/mesh

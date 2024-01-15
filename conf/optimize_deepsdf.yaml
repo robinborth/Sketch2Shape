@@ -15,18 +15,19 @@ defaults:
 seed: 123
 task_name: optimize_deepsdf
 tags: ["deepsdf", "optimize_deepsdf"]
-save_obj: True
-save_obj_path: ${paths.root_dir}/temp 
+train: True 
+test: True
+save_mesh: True
 
 trainer:
   accelerator: gpu
-  max_epochs: 500
+  max_epochs: 100
   log_every_n_steps: 1
   num_sanity_val_steps: 0
 
 model:
   _target_: lib.models.deepsdf.DeepSDFLatentOptimizer
-  ckpt_path: /home/borth/sketch2shape/logs/train_deepsdf/runs/2024-01-15_12-50-49/checkpoints/last.ckpt
+  ckpt_path: /home/borth/sketch2shape/logs/train_deepsdf/runs/2024-01-15_17-21-21/checkpoints/last.ckpt
   prior_idx: 0
   reg_loss: True
   reg_weight: 1e-05

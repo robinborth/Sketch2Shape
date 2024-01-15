@@ -8,7 +8,8 @@ def compute_chamfer_distance(
     gt_surface_samples: np.ndarray,
 ):
     n_samples = gt_surface_samples.shape[0]
-    surface_samples = o3d.sample_points.sample_points_uniformly(mesh, n_samples)
+    surface_samples = mesh.sample_points_uniformly(number_of_points=n_samples)
+    surface_samples = np.asarray(surface_samples.points)
 
     latent_kd_tree = KDTree(surface_samples)
     latent_dist, _ = latent_kd_tree.query(gt_surface_samples)

@@ -1,7 +1,9 @@
+from pathlib import Path
 from typing import List
 
 import hydra
 import lightning as L
+import open3d as o3d
 from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig
@@ -57,13 +59,19 @@ def optimize(cfg: DictConfig) -> None:
         log.info("==> logging hyperparameters ...")
         log_hyperparameters(object_dict)
 
-    log.info("==> start training ...")
-    trainer.fit(model=model, datamodule=datamodule)
+    if cfg.train:
+        log.info("==> start training ...")
+        trainer.fit(model=model, datamodule=datamodule)
 
-    if cfg.save_obj:
-        log.info("==> save object ...")
-        mesh = model.to_mesh(resolution=128)
-        mesh.export(f"{cfg.save_obj_path}/{trainer.max_epochs}-test.obj")
+    if cfg.test:
+        log.info("==> start evalution ...")
+        trainer.test(model=model, datamodule=datamodule)
+
+    if cfg.save_mesh and (mesh := model.mesh):
+        log.info("==> save mesh ...")
+        path = Path(cfg.paths.mesh_dir, f"{obj_id}.obj")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        o3d.io.write_triangle_mesh(path.as_posix(), mesh=mesh, write_triangle_uvs=False)
 
 
 if __name__ == "__main__":

@@ -7,6 +7,8 @@ from skimage.measure import marching_cubes
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from lib.eval.chamfer_distance import compute_chamfer_distance
+
 ############################################################
 # DeepSDF Training
 ############################################################
@@ -169,7 +171,7 @@ class DeepSDFLatentOptimizerBase(LightningModule):
         reg_weight: float = 1e-05,
         optimizer=None,
         scheduler=None,
-        resolution: int = 256,
+        resolution: int = 128,
         chunk_size: int = 65536,
     ) -> None:
         super().__init__()
@@ -191,6 +193,7 @@ class DeepSDFLatentOptimizerBase(LightningModule):
             latent = self.model.lat_vecs.weight.mean(0)
         self.register_buffer("latent", latent)
         self.model.lat_vecs = None
+        self.mesh: o3d.geometry.TriangleMesh = None
 
     def forward(self, points: torch.Tensor, mask=None):
         return self.model(points=points, latent=self.latent, mask=mask)
@@ -199,9 +202,9 @@ class DeepSDFLatentOptimizerBase(LightningModule):
         raise NotImplementedError("Please provide the optimization implementation.")
 
     def test_step(self, batch, batch_idx):
-        gt_surface_samples = batch["surface_samples"]
+        gt_surface_samples = batch["surface_samples"].detach().cpu().numpy().squeeze()
         mesh = self.to_mesh(self.hparams["resolution"], self.hparams["chunk_size"])
-        chamfer = self.compute_chamfer_distance(mesh, gt_surface_samples)
+        chamfer = compute_chamfer_distance(mesh, gt_surface_samples)
         self.log("val/chamfer", chamfer)
 
     def configure_optimizers(self):
@@ -222,7 +225,7 @@ class DeepSDFLatentOptimizerBase(LightningModule):
         min_val, max_val = self.min_val, self.max_val
         # TODO only sample in the unit sphere, the other points should be positive
         grid_vals = torch.linspace(min_val, max_val, resolution)
-        xs, ys, zs = torch.meshgrid(grid_vals, grid_vals, grid_vals)
+        xs, ys, zs = torch.meshgrid(grid_vals, grid_vals, grid_vals, indexing="ij")
         points = torch.stack((xs.ravel(), ys.ravel(), zs.ravel())).transpose(1, 0)
 
         loader = DataLoader(points, batch_size=chunk_size)  # type: ignore
@@ -235,7 +238,13 @@ class DeepSDFLatentOptimizerBase(LightningModule):
 
         verts, faces, _, _ = marching_cubes(sd_cube, level=0.0)
         verts = verts * ((max_val - min_val) / resolution) + min_val
-        return o3d.geometry.TriangleMesh(verts)
+
+        # override the current mesh
+        self.mesh = o3d.geometry.TriangleMesh()
+        self.mesh.vertices = o3d.utility.Vector3dVector(verts)
+        self.mesh.triangles = o3d.utility.Vector3iVector(faces)
+
+        return self.mesh
 
 
 ############################################################

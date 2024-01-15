@@ -19,13 +19,13 @@ model:
   decoder_scheduler:
     _partial_: True
     _target_: torch.optim.lr_scheduler.StepLR
-    step_size: 100
-    gamma: 0.95
+    step_size: 50
+    gamma: 0.99
   latents_scheduler:
     _partial_: True
     _target_: torch.optim.lr_scheduler.StepLR
-    step_size: 100
-    gamma: 0.95
+    step_size: 50
+    gamma: 0.99
 
 trainer:
   accelerator: gpu
