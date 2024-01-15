@@ -36,8 +36,8 @@ class DeepSDFDatasetBase(Dataset):
         return self.metainfo.obj_id_count
 
     def __getitem__(self, idx: int):
-        points, gt_sdf = self.fetch(idx)
-        return {"points": points, "gt_sdf": gt_sdf, "idx": idx}
+        points, sdf = self.fetch(idx)
+        return {"points": points, "sdf": sdf, "idx": idx}
 
 
 class DeepSDFDiskDataset(DeepSDFDatasetBase):
@@ -78,27 +78,16 @@ class DeepSDFMemoryDataset(DeepSDFDatasetBase):
 ############################################################
 
 
-class LatentOptimizerDataset(Dataset):
-    def __init__(self, data_dir: str = "/data"):
-        self.data_dir = data_dir
-        self.data = []
-        for path in glob.glob(self.data_dir + "/*.png"):
-            data = {}
-            azim, elev, dist = path.split("/")[-1].split("-")[:3]
-            camera = Camera(azim=int(azim), elev=-int(elev), dist=int(dist))
-            points, rays, mask = camera.unit_sphere_intersection_rays()
-            data["points"], data["rays"], data["mask"] = points, rays, mask
-            data["camera_position"] = camera.camera_position()
-            data["light_position"] = np.array([0, 0, 0], dtype=np.float32)
-            data["gt_image"] = plt.imread(path).astype(np.float32)
-            data["gt_surface_mask"] = ~np.isclose(data["gt_image"].sum(axis=-1), 3.0)
-            self.data.append(data)
+class SurfaceSamplesDataset(Dataset):
+    def __init__(self, data_dir: str = "/data", obj_id: str = "obj_id"):
+        self.metainfo = MetaInfo(data_dir=data_dir)
+        self.gt_surface_samples = self.metainfo.load_surface_samples(obj_id=obj_id)
 
     def __len__(self):
-        return len(self.data)
+        return 1
 
-    def __getitem__(self, idx):
-        return self.data[idx]
+    def __getitem__(self, idx: int):
+        return {"surface_samples": self.gt_surface_samples}
 
 
 ############################################################
@@ -116,7 +105,6 @@ class DeepSDFLatentOptimizerDataset(Dataset):
     ):
         self.metainfo = MetaInfo(data_dir=data_dir)
         self.subsample = subsample
-        self.label = self.metainfo.load_surface_samples(obj_id=obj_id)
         self.points, self.sdfs = self.metainfo.load_sdf_samples(obj_id=obj_id)
         if half:
             self.points = self.points.astype(np.float16)
@@ -127,25 +115,31 @@ class DeepSDFLatentOptimizerDataset(Dataset):
 
     def __getitem__(self, idx: int):
         random_mask = np.random.choice(self.points.shape[0], self.subsample)
-        return {"gt_points": self.points[random_mask], "label": self.label[random_mask]}
+        return {"points": self.points[random_mask], "sdf": self.sdfs[random_mask]}
 
 
 class NormalLatentOptimizerDataset(Dataset):
-    # TODO should we use the metainfo here as well?
-    def __init__(self, data_dir: str = "/data"):
-        self.data_dir = data_dir
+    def __init__(
+        self,
+        data_dir: str = "/data",
+        obj_id: str = "obj_id",
+        azims: list[int] = [],
+        elevs: list[int] = [],
+        dist: float = 4.0,
+    ):
+        self.metainfo = MetaInfo(data_dir=data_dir)
         self.data = []
-        for path in glob.glob(self.data_dir + "/*.png"):
-            data = {}
-            azim, elev, dist = path.split("/")[-1].split("-")[:3]
-            camera = Camera(azim=int(azim), elev=-int(elev), dist=int(dist))
-            points, rays, mask = camera.unit_sphere_intersection_rays()
-            data["points"], data["rays"], data["mask"] = points, rays, mask
-            data["camera_position"] = camera.camera_position()
-            data["light_position"] = np.array([0, 0, 0], dtype=np.float32)
-            data["gt_image"] = plt.imread(path).astype(np.float32)
-            data["gt_surface_mask"] = ~np.isclose(data["gt_image"].sum(axis=-1), 3.0)
-            self.data.append(data)
+        label = 0
+        for azim in azims:
+            for elev in elevs:
+                data = {}
+                camera = Camera(azim=azim, elev=-elev, dist=dist)
+                points, rays, mask = camera.unit_sphere_intersection_rays()
+                data["points"], data["rays"], data["mask"] = points, rays, mask
+                data["camera_position"] = camera.camera_position()
+                data["normal"] = self.metainfo.load_normal(obj_id, f"{label:05}")
+                label += 1
+                self.data.append(data)
 
     def __len__(self):
         return len(self.data)

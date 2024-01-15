@@ -1,0 +1,21 @@
+# @package data
+
+_target_: lib.data.deepsdf_datamodule.DeepSDFLatentOptimizationDataModule
+# paths
+obj_id: ???
+# training
+batch_size: 4
+num_workers: 4
+pin_memory: False
+drop_last: True
+persistent_workers: True
+shuffle: False
+# dataset 
+train_dataset:
+  _target_: ??? 
+  _partial_: True
+  data_dir: ${data.data_dir} 
+eval_dataset:
+  _target_: lib.data.deepsdf_dataset.SurfaceSamplesDataset
+  _partial_: True
+  data_dir: ${data.data_dir} 

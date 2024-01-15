@@ -1,18 +1,14 @@
-import random
 from typing import List
 
 import hydra
 import lightning as L
 import matplotlib.pyplot as plt
-import torch
-import wandb
 from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 
 from lib.data.metainfo import MetaInfo
 from lib.eval.siamese_tester import SiameseTester
-from lib.eval.utils import plot_top_32
 from lib.models.siamese import Siamese
 from lib.utils import (
     create_logger,

@@ -15,6 +15,7 @@ weight_norm: False
 
 loss:
   _target_: torch.nn.L1Loss
+  _partial_: true
   reduction: mean
 
 decoder_optimizer:

@@ -1,7 +1,6 @@
 import random
 from typing import Any
 
-import faiss
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -10,6 +9,7 @@ import wandb
 from lightning import LightningModule
 from torchmetrics.aggregation import CatMetric, MeanMetric
 
+from lib.data.metainfo import MetaInfo
 from lib.eval.utils import (
     get_all_vectors_from_faiss_index,
     image_grid,
@@ -22,14 +22,17 @@ class SiameseTester(LightningModule):
     def __init__(
         self,
         model: nn.Module,
+        data_dir: str = "/data",
         index_mode: str = "image",  # image, sketch, all
         query_mode: str = "sketch",  # image, sketch, all
     ):
         super().__init__()
         self.model = model
+        self.metainfo = MetaInfo(data_dir=data_dir)
 
-        self.index = faiss.IndexFlatL2(self.model.embedding_size)
-        self.normalized_index = faiss.IndexFlatIP(self.model.embedding_size)
+        # remove the dependency
+        # self.index = faiss.IndexFlatL2(self.model.embedding_size)
+        # self.normalized_index = faiss.IndexFlatIP(self.model.embedding_size)
 
         self._labels: list[int] = []
         self._image_ids: list[int] = []
@@ -118,6 +121,7 @@ class SiameseTester(LightningModule):
             self.k_for_total_percent(percent=0.05),
             self.k_for_num_objects(num_objects=20),
         )
+        # TODO implement that by myself
         dist, idx = self.index.search(query_emb, k=k)
         cos_sim, cos_idx = self.normalized_index.search(normalized_query_emb, k=k)
 

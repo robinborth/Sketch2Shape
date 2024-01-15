@@ -1,0 +1,56 @@
+# @package _global_
+
+defaults:
+  - data:
+    - shapenet_chair_1
+    - optimize_latent 
+  - trainer: default
+  - logger: null
+  - hydra: default
+  - paths: default
+  - debug: null
+  - optional local: default
+  - _self_
+
+seed: 123
+task_name: optimize_deepsdf
+tags: ["deepsdf", "optimize_deepsdf"]
+save_obj: True
+save_obj_path: ${paths.root_dir}/temp 
+
+trainer:
+  accelerator: gpu
+  max_epochs: 500
+  log_every_n_steps: 1
+  num_sanity_val_steps: 0
+
+model:
+  _target_: lib.models.deepsdf.DeepSDFLatentOptimizer
+  ckpt_path: /home/borth/sketch2shape/logs/train_deepsdf/runs/2024-01-15_12-50-49/checkpoints/last.ckpt
+  prior_idx: 0
+  reg_loss: True
+  reg_weight: 1e-05
+  loss:
+    _target_: torch.nn.L1Loss
+    _partial_: true
+    reduction: mean
+  optimizer:
+    _target_: torch.optim.Adam
+    _partial_: true
+    lr: 1e-02
+  scheduler:
+    _partial_: True
+    _target_: torch.optim.lr_scheduler.StepLR
+    step_size: 100
+    gamma: 0.5
+
+data:
+  batch_size: 1
+  num_workers: 7
+  pin_memory: True
+  persistent_workers: True
+  drop_last: False
+  train_dataset:
+    _target_: lib.data.deepsdf_dataset.DeepSDFLatentOptimizerDataset
+    subsample: 16384
+    half: False

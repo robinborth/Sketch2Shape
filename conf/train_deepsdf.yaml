@@ -3,7 +3,7 @@
 defaults:
   - _self_
   - data:
-    - shapenet_chair_16
+    - shapenet_chair_1
     - train_deepsdf 
   - model: deepsdf
   - callbacks: default

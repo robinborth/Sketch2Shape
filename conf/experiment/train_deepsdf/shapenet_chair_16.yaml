@@ -1,0 +1,50 @@
+# @package _global_
+
+defaults:
+  - override /data:
+    - shapenet_chair_16
+    - train_deepsdf
+  - override /model: deepsdf
+  - override /callbacks: 
+    - default
+    - early_stopping
+    - learning_rate_monitor 
+    - rich_progress_bar 
+  - override /trainer: default
+  - override /logger: wandb
+
+tags: ["overfit_16"]
+
+model:
+  decoder_scheduler:
+    _partial_: True
+    _target_: torch.optim.lr_scheduler.StepLR
+    step_size: 100
+    gamma: 0.95
+  latents_scheduler:
+    _partial_: True
+    _target_: torch.optim.lr_scheduler.StepLR
+    step_size: 100
+    gamma: 0.95
+
+trainer:
+  accelerator: gpu
+  max_epochs: 100000
+  log_every_n_steps: 1
+
+data:
+  batch_size: 4
+  num_workers: 7
+  subsample: 16384
+  half: False
+  dataset:
+    _target_: lib.data.deepsdf_dataset.DeepSDFMemoryDataset
+
+logger:
+  wandb:
+    tags: ${tags}
+    group: deepsdf
+  
+callbacks:
+  early_stopping:
+    patience: 1000

@@ -37,7 +37,7 @@ class DeepSDF(LightningModule):
         self.save_hyperparameters(logger=False)
         self.automatic_optimization = False
 
-        self.loss = loss
+        self.loss = loss()
         self.schedulers = decoder_scheduler is not None
 
         # inital layers and first input layer
@@ -104,7 +104,7 @@ class DeepSDF(LightningModule):
         opt1.zero_grad()
         opt2.zero_grad()
 
-        gt_sdf = batch["gt_sdf"]  # (B, N)
+        gt_sdf = batch["sdf"]  # (B, N)
         points = batch["points"]  # (B, N, 3)
         latent = self.lat_vecs(batch["idx"])  # (B, L)
 
@@ -165,6 +165,8 @@ class DeepSDFLatentOptimizerBase(LightningModule):
         self,
         ckpt_path: str = "best.ckpt",
         prior_idx: int = -1,
+        reg_loss: bool = True,
+        reg_weight: float = 1e-05,
         optimizer=None,
         scheduler=None,
         resolution: int = 256,
@@ -188,7 +190,7 @@ class DeepSDFLatentOptimizerBase(LightningModule):
         else:
             latent = self.model.lat_vecs.weight.mean(0)
         self.register_buffer("latent", latent)
-        self.latent.requires_grad = True
+        self.model.lat_vecs = None
 
     def forward(self, points: torch.Tensor, mask=None):
         return self.model(points=points, latent=self.latent, mask=mask)
@@ -196,13 +198,15 @@ class DeepSDFLatentOptimizerBase(LightningModule):
     def training_step(self, batch, batch_idx):
         raise NotImplementedError("Please provide the optimization implementation.")
 
-    def validation_step(self, batch, batch_idx):
-        gt_surface_samples = batch["gt_surface_samples"]
+    def test_step(self, batch, batch_idx):
+        gt_surface_samples = batch["surface_samples"]
         mesh = self.to_mesh(self.hparams["resolution"], self.hparams["chunk_size"])
         chamfer = self.compute_chamfer_distance(mesh, gt_surface_samples)
         self.log("val/chamfer", chamfer)
 
     def configure_optimizers(self):
+        self.latent = self.latent.detach()
+        self.latent.requires_grad = True
         optimizer = self.hparams["optimizer"]([self.latent])
         if self.hparams["scheduler"] is not None:
             scheduler = self.hparams["scheduler"](optimizer)
@@ -240,15 +244,22 @@ class DeepSDFLatentOptimizerBase(LightningModule):
 
 
 class DeepSDFLatentOptimizer(DeepSDFLatentOptimizerBase):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        loss: torch.nn.Module,
+        clamp: bool = True,
+        clamp_val: float = 0.1,
+        **kwargs,
+    ) -> None:
         super().__init__(**kwargs)
         self.model.lat_vecs = None
+        self.loss = loss()
 
     def training_step(self, batch, batch_idx):
-        gt_sdf = batch["gt_sdf"]  # (B, N)
-        points = batch["points"]  # (B, N, 3)
+        gt_sdf = batch["sdf"].squeeze()  # (N)
+        points = batch["points"].squeeze()  # (N, 3)
 
-        sdf = self.forward(points=points)  # (B, N)
+        sdf = self.forward(points=points)  # (N)
 
         if self.hparams["clamp"]:
             clamp_val = self.hparams["clamp_val"]
@@ -267,6 +278,8 @@ class DeepSDFLatentOptimizer(DeepSDFLatentOptimizerBase):
 
         loss = l1_loss + reg_loss
         self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+
+        return loss
 
 
 ############################################################

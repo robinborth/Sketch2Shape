@@ -8,8 +8,6 @@ from lib.models.siamese import Siamese
 class DeepSDFRenderBase(DeepSDFLatentOptimizerBase):
     def __init__(
         self,
-        reg_loss: bool = True,
-        reg_weight: float = 1e-05,
         n_render_steps: int = 100,
         clamp_sdf: float = 0.1,
         step_scale: float = 1.5,
@@ -23,7 +21,7 @@ class DeepSDFRenderBase(DeepSDFLatentOptimizerBase):
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
-        self.model.lat_vecs = None
+        # self.model.lat_vecs = None
 
     def log_image(self, key: str, image: torch.Tensor):
         image = image.detach().cpu().numpy()

@@ -20,16 +20,16 @@ model:
     _partial_: True
     _target_: torch.optim.lr_scheduler.StepLR
     step_size: 100
-    gamma: 0.95
+    gamma: 0.99
   latents_scheduler:
     _partial_: True
     _target_: torch.optim.lr_scheduler.StepLR
-    step_size: 100 
-    gamma: 0.95
+    step_size: 50
+    gamma: 0.99
 
 trainer:
   accelerator: gpu
-  max_epochs: 100000
+  max_epochs: 1000
   log_every_n_steps: 1
 
 data:
@@ -38,7 +38,7 @@ data:
   subsample: 16384
   half: False
   dataset:
-    _target_: lib.data.deepsdf_dataset.DeepSDFDatasetMemory
+    _target_: lib.data.deepsdf_dataset.DeepSDFMemoryDataset
 
 logger:
   wandb:

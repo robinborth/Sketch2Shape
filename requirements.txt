@@ -2,15 +2,15 @@
 lightning
 torch
 torchvision
+pytorch-metric-learning
+open3d
+opencv-python
+scikit-image
 transformers
 wandb
 hydra-core
 jupyter
 pandas
-open3d
-pytorch-metric-learning
-opencv-python
-scikit-image
 rich
 
 # test
@@ -19,4 +19,3 @@ flake8
 mypy
 isort
 pytest
-pre-commit

@@ -26,7 +26,7 @@
             "request": "launch",
             "program": "scripts/train_deepsdf.py",
             "args": [
-                "+experiment/train_deepsdf=deepsdf_overfit_1"
+                "+experiment/train_deepsdf=shapenet_chair_1"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
@@ -73,7 +73,15 @@
             "name": "Debug: Optimize Normal",
             "type": "python",
             "request": "launch",
-            "program": "scripts/deepsdf_optimize_normal.py",
+            "program": "scripts/optimize_normals.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
+            "name": "Debug: Optimize DeepSDF",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/optimize_deepsdf.py",
             "console": "integratedTerminal",
             "justMyCode": false,
         },
