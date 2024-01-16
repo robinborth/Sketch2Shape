@@ -28,7 +28,7 @@ trainer:
 model:
   _target_: lib.models.deepsdf.DeepSDFLatentOptimizer
   ckpt_path: /home/borth/sketch2shape/logs/train_deepsdf/runs/2024-01-15_17-21-21/checkpoints/last.ckpt
-  prior_idx: 0
+  prior_idx: -1
   reg_loss: True
   reg_weight: 1e-05
   loss:

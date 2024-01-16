@@ -82,6 +82,10 @@
             "type": "python",
             "request": "launch",
             "program": "scripts/optimize_deepsdf.py",
+            "args": [
+                "+data=shapenet_chair_16",
+                "train=False"
+            ],
             "console": "integratedTerminal",
             "justMyCode": false,
         },

@@ -34,7 +34,7 @@ class MetaInfo:
         data = []
         for _, row in self._metainfo.iterrows():
             obj_id, label = row["obj_id"], row["label"]
-            images_path = self.data_dir / "shapes" / obj_id / "images"
+            images_path = self.data_dir / "shapes" / obj_id / "sketches"
             assert images_path.exists()
             for image_file in sorted(images_path.iterdir()):
                 image_id = image_file.stem

@@ -1,6 +1,5 @@
 from typing import Callable, Optional
 
-import cv2
 from torch.utils.data import Dataset
 
 from lib.data.metainfo import MetaInfo
@@ -17,17 +16,6 @@ class SiameseDataset(Dataset):
         self.metainfo = MetaInfo(data_dir=data_dir, split=split)
         self.metainfo.load_sketch_image_pairs()
 
-    def _load(self, obj_id: str, render_type: str, image_id: str):
-        path = self.metainfo.render_path(
-            obj_id=obj_id,
-            render_type=render_type,
-            image_id=image_id,
-        )
-        image = cv2.imread(path.as_posix())  # TODO check if this is correct
-        if self.transforms is not None:
-            return self.transforms(image)
-        return image
-
     def __len__(self):
         return self.metainfo.pair_count
 
@@ -37,8 +25,11 @@ class SiameseDataset(Dataset):
         image_id = info["image_id"]
         label = info["label"]
 
-        sketch = self._load(obj_id, "sketches", image_id)
-        image = self._load(obj_id, "images", image_id)
+        sketch = self.metainfo.load_sketch(obj_id, image_id)
+        image = self.metainfo.load_normal(obj_id, image_id)
+        if self.transforms is not None:
+            sketch = self.transforms(sketch)
+            image = self.transforms(image)
 
         return {
             "sketch": sketch,

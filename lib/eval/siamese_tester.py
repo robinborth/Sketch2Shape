@@ -10,48 +10,53 @@ from lightning import LightningModule
 from torchmetrics.aggregation import CatMetric, MeanMetric
 
 from lib.data.metainfo import MetaInfo
-from lib.eval.utils import (
-    get_all_vectors_from_faiss_index,
-    image_grid,
-    plot_single_image,
-    transform_to_plot,
-)
+from lib.models.decoder import EvalCLIP, EvalResNet18
+from lib.models.siamese import Siamese
+from lib.visualize.image import image_grid, plot_single_image, transform_to_plot
 
 
 class SiameseTester(LightningModule):
     def __init__(
         self,
-        model: nn.Module,
+        ckpt_path: str = ".ckpt",
         data_dir: str = "/data",
         index_mode: str = "image",  # image, sketch, all
         query_mode: str = "sketch",  # image, sketch, all
     ):
         super().__init__()
-        self.model = model
+
+        self.model = self.load_model(ckpt_path=ckpt_path)
         self.metainfo = MetaInfo(data_dir=data_dir)
 
-        # remove the dependency
-        # self.index = faiss.IndexFlatL2(self.model.embedding_size)
-        # self.normalized_index = faiss.IndexFlatIP(self.model.embedding_size)
-
+        self._index: list = []
         self._labels: list[int] = []
         self._image_ids: list[int] = []
 
         self.index_mode = index_mode
         self.query_mode = query_mode
 
-        # TODO clean that up
-        self.l2_distance_at_1_object = MeanMetric()
         self.cosine_similarity_at_1_object = MeanMetric()
-        self.recall_at_1_object = MeanMetric()
-        self.recall_at_2_object = MeanMetric()
         self.recall_at_5_object = MeanMetric()
-        self.recall_at_10_object = MeanMetric()
-        self.recall_at_20_object = MeanMetric()
         self.recall_at_1_percent = MeanMetric()
-        self.recall_at_5_percent = MeanMetric()
+        self.heatmap_at_1_object = CatMetric()
 
-        self.recall_heatmap = CatMetric()
+    def load_model(self, ckpt_path: str) -> nn.Module:
+        if ckpt_path == "resnet18":
+            return EvalResNet18()
+        if ckpt_path == "clip":
+            return EvalCLIP()
+        return Siamese.load_from_checkpoint(ckpt_path).decoder
+
+    @property
+    def max_k(self):
+        return max(
+            self.k_for_total_percent(percent=0.01),
+            self.k_for_num_objects(num_objects=5),
+        )
+
+    @property
+    def index(self):
+        return np.stack(self._index)
 
     @property
     def labels(self):
@@ -84,140 +89,75 @@ class SiameseTester(LightningModule):
     def k_for_num_objects(self, num_objects: int = 1):
         return int(num_objects * self.num_views_per_object)
 
-    @property
-    def index_vectors(self):
-        return get_all_vectors_from_faiss_index(self.index)
-
     def normalize(self, embedding):
         l2_distance = np.linalg.norm(embedding, axis=-1)
         return embedding / l2_distance.reshape(-1, 1)
 
     def forward(self, batch):
-        return self.model(batch).detach().cpu().numpy()
+        output = self.model(batch).detach().cpu().numpy()
+        return self.normalize(output)
 
     def validation_step(self, batch, batch_idx, dataloader_idx):
         index_emb = self.forward(batch[self.index_mode])
-        self.index.add(index_emb)
-
-        normalized_emb = self.normalize(index_emb)
-        self.normalized_index.add(normalized_emb)
-
+        self._index.append(index_emb)
         self._labels.extend(batch["label"].detach().cpu().numpy())
         self._image_ids.extend(batch["image_id"].detach().cpu().numpy())
 
-    def _calc_recall(self, k, idx, gt_labels):
+    def calculate_recall(self, recall_type, idx, gt_labels):
+        out = {}
+        _, _, n, _type = recall_type.split("_")
+        k = self.k_for_total_percent(percent=n)
+        if _type == "object":
+            k = self.k_for_num_objects(num_objects=n)
         labels = self.labels[idx[:, :k]]
         retrievals_matrix = labels == gt_labels
-        return retrievals_matrix.sum(axis=1) / self.num_views_per_object
+        out[recall_type] = retrievals_matrix.sum(axis=1) / self.num_views_per_object
+        out[f"recall_at_{n}_{_type}"] = k
+        return out
+
+    def search(self, query_emb: np.ndarray, k: int = 1):
+        similarity = query_emb @ self.index.T
+        idx = np.argsort(similarity)[:, :k]
+        return similarity.take(idx), idx
 
     def predict_step(self, batch, batch_idx) -> Any:
-        out = {}
-
+        # get the similarity
         gt_labels = batch["label"].cpu().numpy().reshape(-1, 1)
         query_emb = self.forward(batch[self.query_mode])
-        normalized_query_emb = self.normalize(query_emb)
-
-        k = max(
-            self.k_for_total_percent(percent=0.05),
-            self.k_for_num_objects(num_objects=20),
-        )
-        # TODO implement that by myself
-        dist, idx = self.index.search(query_emb, k=k)
-        cos_sim, cos_idx = self.normalized_index.search(normalized_query_emb, k=k)
-
         k_at_1_object = self.k_for_num_objects(num_objects=1)
-        out["recall_at_1_object"] = self._calc_recall(k_at_1_object, idx, gt_labels)
-        out["k_at_1_object"] = k_at_1_object
-
-        k_at_2_object = self.k_for_num_objects(num_objects=2)
-        out["recall_at_2_object"] = self._calc_recall(k_at_2_object, idx, gt_labels)
-        out["k_at_2_object"] = k_at_2_object
-
-        k_at_5_object = self.k_for_num_objects(num_objects=5)
-        out["recall_at_5_object"] = self._calc_recall(k_at_5_object, idx, gt_labels)
-        out["k_at_5_object"] = k_at_5_object
-
-        k_at_10_object = self.k_for_num_objects(num_objects=10)
-        out["recall_at_10_object"] = self._calc_recall(k_at_10_object, idx, gt_labels)
-        out["k_at_10_object"] = k_at_10_object
-
-        k_at_20_object = self.k_for_num_objects(num_objects=20)
-        out["recall_at_20_object"] = self._calc_recall(k_at_20_object, idx, gt_labels)
-        out["k_at_20_object"] = k_at_20_object
-
-        k_at_1_percent = self.k_for_total_percent(percent=0.01)
-        out["recall_at_1_percent"] = self._calc_recall(k_at_1_percent, idx, gt_labels)
-        out["k_at_1_percent"] = k_at_1_percent
-
-        k_at_5_percent = self.k_for_total_percent(percent=0.05)
-        out["recall_at_5_percent"] = self._calc_recall(k_at_5_percent, idx, gt_labels)
-        out["k_at_5_percent"] = k_at_5_percent
-
-        out["l2_distance_at_1_object"] = dist[:, :k_at_1_object]
-        out["cosine_similarity_at_1_object"] = cos_sim[:, :k_at_1_object]
-
+        similarity, idx = self.search(query_emb, k=self.max_k)
+        # get the output
+        out = {}
+        out.update(self.calculate_recall("recall_at_1_object", idx, gt_labels))
+        out.update(self.calculate_recall("recall_at_5_object", idx, gt_labels))
+        out.update(self.calculate_recall("recall_at_1_percent", idx, gt_labels))
+        out["cosine_similarity_at_1_object"] = similarity[:, :k_at_1_object]
         out["labels_at_1_object"] = self.labels[idx[:, :k_at_1_object]]
         out["image_ids_at_1_object"] = self.image_ids[idx[:, :k_at_1_object]]
         out["labels"] = batch["label"].cpu().numpy()
         out["image_ids"] = batch["image_id"].cpu().numpy()
-
-        sorted_indices = np.argsort(out["image_ids"])
-        out["recall_heatmap"] = np.take_along_axis(
-            out["recall_at_1_object"], sorted_indices, axis=0
+        out["heatmap_at_1_object"] = np.take_along_axis(
+            arr=out["recall_at_1_object"],
+            indices=np.argsort(out["image_ids"]),
+            axis=0,
         )
-
         return out
 
     def test_step(self, batch, batch_idx):
         out = self.predict_step(batch, batch_idx=batch_idx)
-        self.l2_distance_at_1_object.update(out["l2_distance_at_1_object"])
-        self.log(
-            f"l2_distance_at_1_object_k_{out['k_at_1_object']}",
-            self.l2_distance_at_1_object,
-        )
-
-        self.cosine_similarity_at_1_object.update(out["cosine_similarity_at_1_object"])
-        self.log(
-            f"cosine_similarity_at_1_object_k_{out['k_at_1_object']}",
-            self.cosine_similarity_at_1_object,
-        )
-
-        self.recall_at_1_object.update(out["recall_at_1_object"])
-        self.log(
-            f"recall_at_1_object_k_{out['k_at_1_object']}", self.recall_at_1_object
-        )
-
-        self.recall_at_2_object.update(out["recall_at_2_object"])
-        self.log(
-            f"recall_at_2_object_k_{out['k_at_2_object']}", self.recall_at_2_object
-        )
-
-        self.recall_at_5_object.update(out["recall_at_5_object"])
-        self.log(
-            f"recall_at_5_object_k_{out['k_at_5_object']}", self.recall_at_5_object
-        )
-
-        self.recall_at_10_object.update(out["recall_at_10_object"])
-        self.log(
-            f"recall_at_10_object_k_{out['k_at_10_object']}", self.recall_at_10_object
-        )
-
-        self.recall_at_20_object.update(out["recall_at_20_object"])
-        self.log(
-            f"recall_at_20_object_k_{out['k_at_20_object']}", self.recall_at_20_object
-        )
-
-        self.recall_at_1_percent.update(out["recall_at_1_percent"])
-        self.log(
-            f"recall_at_1_percent_k_{out['k_at_1_percent']}", self.recall_at_1_percent
-        )
-
-        self.recall_at_5_percent.update(out["recall_at_5_percent"])
-        self.log(
-            f"recall_at_5_percent_k_{out['k_at_5_percent']}", self.recall_at_5_percent
-        )
 
         self.recall_heatmap.update(out["recall_heatmap"])
+        for metric_name in [
+            "cosine_similarity_at_1_object",
+            "recall_at_1_object",
+            "recall_at_5_object",
+            "recall_at_1_percent",
+        ]:
+            _, _, n, _type = metric_name.split("_")
+            metric = getattr(self, metric_name)
+            metric.update(out[metric_name])
+            k = out[f"k_at_{n}_{_type}"]
+            self.log(f"{metric_name}_k_{k}")
 
         if batch_idx % 8 == 0:
             metainfo = self.model.metainfo

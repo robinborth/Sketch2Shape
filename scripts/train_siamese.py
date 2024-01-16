@@ -2,14 +2,11 @@ from typing import List
 
 import hydra
 import lightning as L
-import matplotlib.pyplot as plt
 from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 
-from lib.data.metainfo import MetaInfo
 from lib.eval.siamese_tester import SiameseTester
-from lib.models.siamese import Siamese
 from lib.utils import (
     create_logger,
     instantiate_callbacks,
@@ -60,7 +57,7 @@ def train(cfg: DictConfig) -> None:
         log.info("==> start training ...")
         trainer.fit(model=model, datamodule=datamodule, ckpt_path=cfg.get("ckpt_path"))
 
-    if cfg.get("test"):
+    if cfg.get("eval"):
         log.info("==> start testing ...")
         ckpt_path = trainer.checkpoint_callback.best_model_path  # type: ignore
         if ckpt_path == "":
@@ -68,16 +65,12 @@ def train(cfg: DictConfig) -> None:
             ckpt_path = None
         log.info(f"Best ckpt path: {ckpt_path}")
 
-        log.info(f"==> initializing datamodule <{cfg.data._target_}>")
-        cfg.data.batch_size = 32
-        cfg.data.sampler.m = 32
+        log.info(f"==> initializing datamodule <{cfg.eval_data._target_}>")
         datamodule = hydra.utils.instantiate(cfg.data, train=False)
         datamodule.setup("all")
 
         log.info(f"==> load model <{cfg.model._target_}>")
-        model = Siamese.load_from_checkpoint(ckpt_path).decoder
-        model.metainfo = MetaInfo(data_dir=cfg.data.data_dir)
-        tester = SiameseTester(model=model)
+        tester = SiameseTester(cfg.ckpt_path, data_dir=cfg.data.data_dir)
 
         log.info(f"==> index datasets <{cfg.trainer._target_}>")
         trainer = hydra.utils.instantiate(cfg.trainer, logger=logger)

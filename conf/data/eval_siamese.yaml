@@ -1,17 +1,20 @@
-# @package data
+# @package eval_data
 
 _target_: lib.data.siamese_datamodule.SiameseDataModule
 # paths
 data_dir: ${paths.data_dir}/${data.dataset_name}
 # training
-batch_size: 128
+batch_size: 32
 num_workers: 7
 pin_memory: True
 drop_last: True
-shuffle: True
 persistent_workers: True
+shuffle: True
 # dataset 
-sampler: null
+sampler:
+  _target_: pytorch_metric_learning.samplers.MPerClassSampler
+  _partial_: True
+  m: ${data_tester.batch_size} 
 dataset: 
   _target_: lib.data.siamese_dataset.SiameseDataset
   _partial_: True
@@ -19,5 +22,4 @@ transforms:
   _target_: torchvision.transforms.Compose
   transforms:
     - _target_: torchvision.transforms.ToTensor
-    - _target_: torchvision.transforms.RandomHorizontalFlip
 

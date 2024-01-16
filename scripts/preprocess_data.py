@@ -5,7 +5,7 @@ from tqdm import tqdm
 from lib.data.preprocess import PreprocessMesh, PreprocessSDF, PreprocessSiamese
 from lib.utils import create_logger
 
-logger = create_logger("preprocess")
+logger = create_logger("preprocess_data")
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="preprocess_data")

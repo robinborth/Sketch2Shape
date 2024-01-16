@@ -19,4 +19,4 @@ def compute_chamfer_distance(
     gt_dist, _ = gt_kd_tree.query(surface_samples)
     gt_chamfer = np.mean(np.square(gt_dist))
 
-    return np.mean([latent_chamfer, gt_chamfer])
+    return latent_chamfer + gt_chamfer

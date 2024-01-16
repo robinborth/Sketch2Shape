@@ -7,6 +7,6 @@ defaults:
   - paths: default
   - optional local: default
 
-task_name: preprocess
 seed: 123
+task_name: preprocess_data
 source: /shared/data/ShapeNetCore/03001627
