@@ -35,4 +35,5 @@ class SiameseDataset(Dataset):
             "sketch": sketch,
             "image": image,
             "label": label,
+            "image_id": int(image_id),
         }

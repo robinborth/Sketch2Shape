@@ -9,12 +9,12 @@ num_workers: 7
 pin_memory: True
 drop_last: True
 persistent_workers: True
-shuffle: True
+shuffle: False
 # dataset 
 sampler:
   _target_: pytorch_metric_learning.samplers.MPerClassSampler
   _partial_: True
-  m: ${data_tester.batch_size} 
+  m: ${eval_data.batch_size} 
 dataset: 
   _target_: lib.data.siamese_dataset.SiameseDataset
   _partial_: True

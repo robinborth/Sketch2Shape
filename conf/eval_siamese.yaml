@@ -2,7 +2,9 @@
 
 defaults:
   - _self_
-  - data: siamese_chair_large
+  - data:
+    - shapenet_chair_16
+    - eval_siamese
   - model: siamese 
   - callbacks: default
   - logger: null 
@@ -13,5 +15,5 @@ defaults:
 
 task_name: eval_siamese
 tags: ["eval_siamese"]
-ckpt_path: ???
+ckpt_path: resnet18
 seed: 123
