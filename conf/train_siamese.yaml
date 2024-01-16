@@ -2,7 +2,6 @@
 
 defaults:
   - data:
-    - shapenet_chair_16
     - train_siamese
     - eval_siamese
   - model: siamese 
@@ -16,12 +15,12 @@ defaults:
   - debug: null
   - _self_
 
+seed: 123
 task_name: train_siamese
 tags: ["train_siamese"]
 train: True
 eval: True
 ckpt_path: null
-seed: 123
 
 trainer:
   accelerator: gpu

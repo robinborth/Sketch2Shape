@@ -1,86 +1,25 @@
 # Sketch2Shape
-The project for the computer vision lab. 
 
-## Requirenments 
+The project for the computer vision lab.
+
+## Requirenments
 
 - Ubuntu 20.04 LTS
-- Python 3.10
+- Python 3.11
 - Pytorch 2.1
-
-For further information how to install the requirenemtns see the section in installation.
 
 ## Installation
 
-In order to install mini-conda for python installation on ubuntu execture the following [https://docs.conda.io/projects/miniconda/en/latest/](ref):
-```bash
-mkdir -p ~/miniconda3
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
-bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
-rm -rf ~/miniconda3/miniconda.sh
-```
-
-In order to disable that the base environment is set:
+In order install the dependencies please execute the following.
 
 ```bash
-conda config --set auto_activate_base false
-```
-
-Then install the requirements.txt like following:
-
-```bash
-conda create --name sketch2shape python=3.9 -y
+conda create -n sketch2shape python=3.11
 conda activate sketch2shape
-conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
-# conda install pytorch=2.1 torchvision -c pytorch
-# conda install -c fvcore -c iopath -c conda-forge fvcore iopath
-# conda install pytorch3d -c pytorch3d
 pip install -r requirements.txt
 pip install -e .
 ```
 
-Additional setup for vast.ai
-
-```bash
-apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
-```
-
-pytorch3d
-
-```bash
-git clone https://github.com/facebookresearch/pytorch3d.git
-cd pytorch3d
-apt-get install g++ -y
-pip install -e .
-```
-
-tsne-cuda
-```bash
-pip3 install tsnecuda==3.0.1+cu122 -f https://tsnecuda.isx.ai/tsnecuda_stable.html
-```
-
-In order to find the interpreter path for VSCode do following:
-
-```bash
-conda activate sketch2shape
-which python
-```
-
-## CMake & Open3D
-In order to utilzie headless rendering in open3d, we need to build open3d with OSMesa from source. Please follow the official [docs](http://www.open3d.org/docs/release/tutorial/visualization/headless_rendering.html). Further make sure that CMake 3.20 is installed, [here](https://vitux.com/how-to-install-cmake-on-ubuntu/) is an detailed explenation how to install it on Ubuntu3.20. Note that this can take some time in order to install into the python environment.
-
-## Pytorch3D
-
-In order to install pytorch3D we need to use conda, the full installation guid is [here](https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md)
-
-```bash
-conda install -c pytorch3d pytorch3d
-```
-
-```
-
-```
-
-## Exectuing Skripts
+## Skripts
 
 In order to execture a skript e.g. running the training or pre-processing run the following command, note that
 you need to be in the environment and have the local project installed

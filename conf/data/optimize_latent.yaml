@@ -4,11 +4,11 @@ _target_: lib.data.deepsdf_datamodule.DeepSDFLatentOptimizationDataModule
 # paths
 obj_id: ???
 # training
-batch_size: 4
-num_workers: 4
-pin_memory: False
-drop_last: True
+batch_size: 1
+num_workers: 7
+pin_memory: True
 persistent_workers: True
+drop_last: False
 shuffle: False
 # dataset 
 train_dataset:

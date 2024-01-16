@@ -31,8 +31,3 @@ data:
       - _target_: torchvision.transforms.ToTensor
 
 tags: ["siamese", "eval"]
-
-logger:
-  wandb:
-    tags: ${tags}
-    group: "siamese"

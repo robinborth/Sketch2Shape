@@ -34,6 +34,7 @@ def image_grid(
     Returns:
         None
     """
+    plt.clf()
     if (rows is None) != (cols is None):
         raise ValueError("Specify either both rows and cols or neither.")
 
@@ -63,6 +64,7 @@ def transform_to_plot(data, batch=False):
 
 
 def plot_single_image(data):
+    plt.clf()
     data = transform_to_plot(data)
     plt.figure(figsize=(2, 2))
     plt.imshow(data)

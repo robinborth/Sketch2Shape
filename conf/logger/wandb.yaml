@@ -12,6 +12,6 @@ wandb:
   log_model: False # upload lightning ckpts
   prefix: "" # a string to put at the beginning of metric keys
   entity: "research-korth" # set to name of your wandb team
-  group: ""
+  group: ${task_name}
   tags: ${tags}
   job_type: ""

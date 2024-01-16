@@ -149,7 +149,33 @@ class NormalLatentOptimizerDataset(Dataset):
 
 
 class SketchLatentOptimizerDataset(Dataset):
-    pass
+    def __init__(
+        self,
+        data_dir: str = "/data",
+        obj_id: str = "obj_id",
+        azims: list[int] = [],
+        elevs: list[int] = [],
+        dist: float = 4.0,
+    ):
+        self.metainfo = MetaInfo(data_dir=data_dir)
+        self.data = []
+        label = 0
+        for azim in azims:
+            for elev in elevs:
+                data = {}
+                camera = Camera(azim=azim, elev=-elev, dist=dist)
+                points, rays, mask = camera.unit_sphere_intersection_rays()
+                data["points"], data["rays"], data["mask"] = points, rays, mask
+                data["camera_position"] = camera.camera_position()
+                data["sketch"] = self.metainfo.load_sketch(obj_id, f"{label:05}")
+                label += 1
+                self.data.append(data)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx]
 
 
 ############################################################
@@ -158,4 +184,30 @@ class SketchLatentOptimizerDataset(Dataset):
 
 
 class LatentTraversalDataset(Dataset):
-    pass
+    def __init__(
+        self,
+        data_dir: str = "/data",
+        obj_id: str = "obj_id",
+        azims: list[int] = [],
+        elevs: list[int] = [],
+        dist: float = 4.0,
+    ):
+        self.metainfo = MetaInfo(data_dir=data_dir)
+        self.data = []
+        label = 0
+        for azim in azims:
+            for elev in elevs:
+                data = {}
+                camera = Camera(azim=azim, elev=-elev, dist=dist)
+                points, rays, mask = camera.unit_sphere_intersection_rays()
+                data["points"], data["rays"], data["mask"] = points, rays, mask
+                data["camera_position"] = camera.camera_position()
+                data["sketch"] = self.metainfo.load_sketch(obj_id, f"{label:05}")
+                label += 1
+                self.data.append(data)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx]

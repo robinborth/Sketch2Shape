@@ -4,7 +4,7 @@ _target_: lib.data.siamese_datamodule.SiameseDataModule
 # paths
 data_dir: ${paths.data_dir}/${data.dataset_name}
 # training
-batch_size: 32
+batch_size: 36
 num_workers: 7
 pin_memory: True
 drop_last: True
@@ -22,4 +22,8 @@ transforms:
   _target_: torchvision.transforms.Compose
   transforms:
     - _target_: torchvision.transforms.ToTensor
+    - _target_: torchvision.transforms.Normalize
+      mean: 0.5 
+      std: 0.5
+
 

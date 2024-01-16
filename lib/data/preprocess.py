@@ -71,8 +71,8 @@ class PreprocessSiamese:
         normals = (normals * 255).astype(np.uint8)
         return normals
 
-    def obj_ids_iter(self, skip: bool = True):
-        if not skip:
+    def obj_ids_iter(self):
+        if not self.skip:
             yield from self.metainfo.obj_ids
         for obj_id in self.metainfo.obj_ids:
             normals_dir = self.metainfo.normals_dir_path(obj_id=obj_id)

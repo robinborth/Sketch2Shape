@@ -37,6 +37,10 @@
             "request": "launch",
             "program": "scripts/eval_siamese.py",
             "console": "integratedTerminal",
+            "args": [
+                "ckpt_path=/Users/robinborth/Code/sketch2shape/temp/siamese.ckpt",
+                "+data=shapenet_chair_16"
+            ],
             "justMyCode": true,
         },
         {
@@ -66,6 +70,10 @@
             "type": "python",
             "request": "launch",
             "program": "scripts/preprocess_data.py",
+            "args": [
+                "data=shapenet_chair_16",
+                "data.preprocess_siamese.skip=False"
+            ],
             "console": "integratedTerminal",
             "justMyCode": false,
         },

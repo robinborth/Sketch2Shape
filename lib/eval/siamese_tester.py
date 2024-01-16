@@ -35,10 +35,11 @@ class SiameseTester(LightningModule):
         self.index_mode = index_mode
         self.query_mode = query_mode
 
-        self.cosine_similarity_at_1_object = MeanMetric()
+        self.cosine_similarity = MeanMetric()
+        self.recall_at_1_object = MeanMetric()
         self.recall_at_5_object = MeanMetric()
         self.recall_at_1_percent = MeanMetric()
-        self.heatmap_at_1_object = CatMetric()
+        self.heatmap = CatMetric()
 
     def load_model(self, ckpt_path: str) -> nn.Module:
         if ckpt_path == "resnet18":
@@ -56,7 +57,7 @@ class SiameseTester(LightningModule):
 
     @property
     def index(self):
-        return np.stack(self._index)
+        return np.concatenate(self._index)
 
     @property
     def labels(self):
@@ -104,103 +105,93 @@ class SiameseTester(LightningModule):
         self._image_ids.extend(batch["image_id"].detach().cpu().numpy())
 
     def calculate_recall(self, recall_type, idx, gt_labels):
-        out = {}
         _, _, n, _type = recall_type.split("_")
-        k = self.k_for_total_percent(percent=n)
-        if _type == "object":
-            k = self.k_for_num_objects(num_objects=n)
+        k = self.k_for_num_objects(num_objects=int(n))
+        if _type == "percent":
+            percent = int(n) * 0.01
+            k = self.k_for_total_percent(percent=percent)
         labels = self.labels[idx[:, :k]]
         retrievals_matrix = labels == gt_labels
-        out[recall_type] = retrievals_matrix.sum(axis=1) / self.num_views_per_object
-        out[f"recall_at_{n}_{_type}"] = k
-        return out
+        return retrievals_matrix.sum(axis=1) / self.num_views_per_object
 
     def search(self, query_emb: np.ndarray, k: int = 1):
         similarity = query_emb @ self.index.T
-        idx = np.argsort(similarity)[:, :k]
+        idx = np.argsort(similarity)[:, ::-1][:, :k]
         return similarity.take(idx), idx
 
-    def predict_step(self, batch, batch_idx) -> Any:
-        # get the similarity
+    def test_step(self, batch, batch_idx):
+        # extract from the batch
         gt_labels = batch["label"].cpu().numpy().reshape(-1, 1)
+        # gt_image_ids = batch["image_id"].cpu().numpy()
+
+        # get the similarity
         query_emb = self.forward(batch[self.query_mode])
         k_at_1_object = self.k_for_num_objects(num_objects=1)
+        self.log("k_at_1_object", k_at_1_object)
         similarity, idx = self.search(query_emb, k=self.max_k)
-        # get the output
-        out = {}
-        out.update(self.calculate_recall("recall_at_1_object", idx, gt_labels))
-        out.update(self.calculate_recall("recall_at_5_object", idx, gt_labels))
-        out.update(self.calculate_recall("recall_at_1_percent", idx, gt_labels))
-        out["cosine_similarity_at_1_object"] = similarity[:, :k_at_1_object]
-        out["labels_at_1_object"] = self.labels[idx[:, :k_at_1_object]]
-        out["image_ids_at_1_object"] = self.image_ids[idx[:, :k_at_1_object]]
-        out["labels"] = batch["label"].cpu().numpy()
-        out["image_ids"] = batch["image_id"].cpu().numpy()
-        out["heatmap_at_1_object"] = np.take_along_axis(
-            arr=out["recall_at_1_object"],
-            indices=np.argsort(out["image_ids"]),
-            axis=0,
-        )
-        return out
 
-    def test_step(self, batch, batch_idx):
-        out = self.predict_step(batch, batch_idx=batch_idx)
+        # get the top labels and image_ids
+        # labels = self.labels[idx[:, :k_at_1_object]]
+        # image_ids = self.image_ids[idx[:, :k_at_1_object]]
 
-        self.recall_heatmap.update(out["recall_heatmap"])
+        # calculate the metrics
         for metric_name in [
-            "cosine_similarity_at_1_object",
             "recall_at_1_object",
             "recall_at_5_object",
             "recall_at_1_percent",
         ]:
-            _, _, n, _type = metric_name.split("_")
             metric = getattr(self, metric_name)
-            metric.update(out[metric_name])
-            k = out[f"k_at_{n}_{_type}"]
-            self.log(f"{metric_name}_k_{k}")
+            recall = self.calculate_recall(metric_name, idx, gt_labels)
+            metric.update(recall)
+            self.log(metric_name, metric)
 
-        if batch_idx % 8 == 0:
-            metainfo = self.model.metainfo
-            dataset = self.trainer.test_dataloaders.dataset
-            image_id = 21
-            if batch_idx % 16 == 0:
-                image_id = random.randint(0, 31)
-            idx = torch.where(batch["image_id"] == image_id)[0][0]
+        self.cosine_similarity.update(similarity[:, :k_at_1_object])
+        self.log("cosine_similarity", self.cosine_similarity)
 
-            gt_label = batch["label"][idx].item()
-            gt_image_id = batch["image_id"][idx].item()
-            labels_at_1_object = out["labels_at_1_object"][idx]
-            image_ids_at_1_object = out["image_ids_at_1_object"][idx]
+        # recall_at_1_object = self.calculate_recall("recall_at_1_object", idx, gt_labels)
+        # TODO we want to have the recall per view
+        # heatmap = np.take_along_axis(
+        #     arr=recall_at_1_object,
+        #     indices=np.argsort(image_ids),
+        #     axis=0,
+        # )
+        # self.heatmap.update(heatmap)
 
-            index_images = {}
-            obj_id = metainfo.label_to_obj_id(gt_label)
-            image_id = str(gt_image_id).zfill(5)
-            sketch = dataset._fetch("sketches", obj_id, image_id)
-            plt.clf()
-            plot_single_image(sketch)
-            index_images["sketch"] = wandb.Image(plt)
+        # if batch_idx % 8 == 0:
+        #     image_id = 21
+        #     if batch_idx % 16 == 0:
+        #         image_id = random.randint(0, 31)
+        #     idx = torch.where(gt_image_ids == image_id)[0][0]
 
-            images = []
-            for label, image_id in zip(labels_at_1_object, image_ids_at_1_object):
-                is_false = gt_label != label
-                obj_id = metainfo.label_to_obj_id(label)
-                image_id = str(image_id).zfill(5)
-                image = dataset._fetch("images", obj_id, image_id)
-                if is_false:
-                    image[image > 0.95] = 0
-                images.append(image)
-            image_data = transform_to_plot(images, batch=True)
-            plt.clf()
-            image_grid(image_data, 4, 8)
-            index_images["rendered_images"] = wandb.Image(plt)
-            self.logger.log_metrics(index_images)  # type: ignore
+        #     gt_label = batch["label"][idx].item()
+        #     gt_image_id = batch["image_id"][idx].item()
+        #     labels_at_1_object = out["labels_at_1_object"][idx]
+        #     image_ids_at_1_object = out["image_ids_at_1_object"][idx]
 
-    def on_test_end(self) -> None:
-        recall_heatmap = self.recall_heatmap.compute()
-        recall_heatmap = recall_heatmap.view(-1, 1, 32).mean(dim=0)
-        recall_heatmap = recall_heatmap.detach().cpu().numpy()
-        plt.clf()
-        c = plt.imshow(recall_heatmap, cmap="viridis", interpolation="nearest")
-        plt.colorbar(c)
-        image = wandb.Image(c)
-        self.logger.log_metrics({"recall_heatmap": image})  # type: ignore
+        #     index_images = {}
+        #     obj_id = self.metainfo.label_to_obj_id(gt_label)
+        #     sketch = self.metainfo.load_sketch(obj_id, image_id=f"{gt_image_id:05}")
+        #     plot_single_image(sketch)
+        #     index_images["sketch"] = wandb.Image(plt)
+
+        #     images = []
+        #     for label, image_id in zip(labels_at_1_object, image_ids_at_1_object):
+        #         is_false = gt_label != label
+        #         obj_id = metainfo.label_to_obj_id(label)
+        #         image_id = str(image_id).zfill(5)
+        #         image = dataset._fetch("images", obj_id, image_id)
+        #         if is_false:
+        #             image[image > 0.95] = 0
+        #         images.append(image)
+        #     image_data = transform_to_plot(images, batch=True)
+        #     image_grid(image_data, 4, 8)
+        #     index_images["rendered_images"] = wandb.Image(plt)
+        #     self.logger.log_metrics(index_images)  # type: ignore
+
+    # def on_test_end(self) -> None:
+    #     heatmap = self.heatmap.compute()
+    #     heatmap = heatmap.view(-1, 1, 32).mean(dim=0).detach().cpu().numpy()
+    #     plt.clf()
+    #     c = plt.imshow(heatmap, cmap="viridis", interpolation="nearest")
+    #     plt.colorbar(c)
+    #     self.logger.log_metrics({"heatmap": wandb.Image(c)})  # type: ignore

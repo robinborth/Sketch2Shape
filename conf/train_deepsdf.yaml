@@ -1,9 +1,7 @@
 # @package _global_
 
 defaults:
-  - _self_
   - data:
-    - shapenet_chair_1
     - train_deepsdf 
   - model: deepsdf
   - callbacks: default
@@ -11,31 +9,13 @@ defaults:
   - trainer: default
   - hydra: default
   - paths: default
-
-  # optional local config for machine/user specific settings
-  # it's optional since it doesn't need to exist and is excluded from version control
   - optional local: default
-
-  # experiment configs allow for version control of specific hyperparameters
-  # e.g. best hyperparameters for given model and datamodule
   - experiement: null
-
-  # debugging config (enable through command line, e.g. `python train.py debug=default)
   - debug: null
+  - _self_
 
-# task name, determines output directory path
-task_name: train_deepsdf
-
-# tags to help you identify your experiments
-# you can overwrite this in experiment configs
-# overwrite from command line with `python train.py tags="[first_tag, second_tag]"`
-tags: ["dev", "deepsdf"]
-
-# set False to skip model training
-train: True
-
-# simply provide checkpoint path to resume training
-ckpt_path: null
-
-# seed for random number generators in pytorch, numpy and python.random
 seed: 123
+task_name: train_deepsdf
+tags: ["train_deepsdf"]
+train: True
+ckpt_path: null

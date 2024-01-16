@@ -1,19 +1,22 @@
 # @package _global_
 
 defaults:
-  - _self_
-  - data:
-    - shapenet_chair_16
+  - data: 
     - eval_siamese
   - model: siamese 
   - callbacks: default
-  - logger: null 
+  - logger: null
   - trainer: default
   - hydra: default
   - paths: default
   - optional local: default
+  - _self_
 
 task_name: eval_siamese
 tags: ["eval_siamese"]
-ckpt_path: resnet18
+ckpt_path: ??? 
 seed: 123
+
+trainer:
+  max_epochs: 1
+  enable_checkpointing: False
