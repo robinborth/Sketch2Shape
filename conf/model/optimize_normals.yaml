@@ -1,0 +1,18 @@
+# @package model
+
+model:
+  _target_: lib.render.renderer.DeepSDFNormalRender
+  ckpt_path: ??? 
+  prior_idx: -1
+  reg_loss: True
+  reg_weight: 1e-05
+  normal_weight: 1.0
+  optimizer:
+    _target_: torch.optim.Adam
+    _partial_: true
+    lr: 1e-02
+  scheduler:
+    _partial_: True
+    _target_: torch.optim.lr_scheduler.StepLR
+    step_size: 100
+    gamma: 0.5

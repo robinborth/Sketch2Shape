@@ -122,17 +122,12 @@ class SiameseTester(LightningModule):
     def test_step(self, batch, batch_idx):
         # extract from the batch
         gt_labels = batch["label"].cpu().numpy().reshape(-1, 1)
-        # gt_image_ids = batch["image_id"].cpu().numpy()
 
         # get the similarity
         query_emb = self.forward(batch[self.query_mode])
         k_at_1_object = self.k_for_num_objects(num_objects=1)
         self.log("k_at_1_object", k_at_1_object)
         similarity, idx = self.search(query_emb, k=self.max_k)
-
-        # get the top labels and image_ids
-        # labels = self.labels[idx[:, :k_at_1_object]]
-        # image_ids = self.image_ids[idx[:, :k_at_1_object]]
 
         # calculate the metrics
         for metric_name in [
@@ -148,7 +143,12 @@ class SiameseTester(LightningModule):
         self.cosine_similarity.update(similarity[:, :k_at_1_object])
         self.log("cosine_similarity", self.cosine_similarity)
 
-        # recall_at_1_object = self.calculate_recall("recall_at_1_object", idx, gt_labels)
+        # get the top labels and image_ids
+        # gt_image_ids = batch["image_id"].cpu().numpy()
+        # labels = self.labels[idx[:, :k_at_1_object]]
+        # image_ids = self.image_ids[idx[:, :k_at_1_object]]
+        # recall_at_1_object=self.calculate_recall("recall_at_1_object", idx, gt_labels)
+
         # TODO we want to have the recall per view
         # heatmap = np.take_along_axis(
         #     arr=recall_at_1_object,

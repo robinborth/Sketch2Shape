@@ -1,11 +1,15 @@
 # @package _global_
 
 defaults:
-  - siamese
- 
-tags: ["siamese", "scale_loss"]
+  - data:
+    - shapenet_chair_16
+    - train_siamese
+    - eval_siamese
+  - override /logger: wandb
+
+tags: ["train_siamese", "dropout"]
+
 model:
   optimizer:
     lr: 5e-05
   scale_loss: false
- 

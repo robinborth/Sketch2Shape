@@ -1,34 +1,29 @@
 # @package model
 _target_: lib.models.siamese.Siamese
-
 decoder:
   _target_: lib.models.decoder.ResNet18
   embedding_size: 128
   pretrained: True
-
 miner:
   _target_: pytorch_metric_learning.miners.TripletMarginMiner
   margin: 0.2
   type_of_triplets: semihard
-
 loss:
   _target_: pytorch_metric_learning.losses.TripletMarginLoss
   margin: 0.2
   swap: False
   smooth_loss: False
   triplets_per_anchor: all
-
-optimizer:
-  _target_: torch.optim.Adam
-  _partial_: true
-  lr: 0.001
-  weight_decay: 0.0
-
 scheduler:
   _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
   _partial_: true
   mode: min
   factor: 0.5
-  patience: 1
-
-mine_full_batch: false
+  patience: 10
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 0.001
+  weight_decay: 0.0
+mine_full_batch: true
+scale_loss: true

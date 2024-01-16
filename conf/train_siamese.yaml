@@ -23,6 +23,10 @@ eval: True
 ckpt_path: null
 
 trainer:
-  accelerator: gpu
-  max_epochs: 10
-  num_sanity_val_steps: 0
+  max_epochs: 100
+  val_check_interval: 120 
+
+callbacks:
+  early_stopping:
+    monitor: val/loss
+    patience: 40
