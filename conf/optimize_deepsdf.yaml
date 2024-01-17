@@ -18,6 +18,8 @@ tags: ["optimize_deepsdf"]
 train: True 
 test: True
 save_mesh: True
+split: val
+ckpt_path: ???
 
 trainer:
   num_sanity_val_steps: 0

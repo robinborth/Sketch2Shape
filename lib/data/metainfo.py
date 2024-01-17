@@ -70,7 +70,10 @@ class MetaInfo:
 
     def obj_id_to_label(self, obj_id: str) -> int:
         df = self._metainfo
-        return int(df.loc[df["obj_id"] == obj_id].iloc[0]["label"])
+        filtered = df.loc[df["obj_id"] == obj_id]
+        if not len(filtered):
+            return -1
+        return int(filtered.iloc[0]["label"])
 
     #################################################################
     # Mesh: Loading and Storing Utils
@@ -157,12 +160,12 @@ class MetaInfo:
         return self.data_dir / "shapes" / obj_id / "normals"
 
     def save_normal(self, normals: np.ndarray, obj_id: str, image_id: str):
-        path = self.normals_dir_path(obj_id) / f"{image_id}.jpg"
+        path = self.normals_dir_path(obj_id) / f"{image_id}.png"
         path.parent.mkdir(parents=True, exist_ok=True)
         Image.fromarray(normals).save(path)
 
     def load_normal(self, obj_id: str, image_id: str) -> Path:
-        path = self.normals_dir_path(obj_id) / f"{image_id}.jpg"
+        path = self.normals_dir_path(obj_id) / f"{image_id}.png"
         return Image.open(path)
 
     #################################################################
@@ -173,10 +176,10 @@ class MetaInfo:
         return self.data_dir / "shapes" / obj_id / "sketches"
 
     def save_sketch(self, normals: np.ndarray, obj_id: str, image_id: str):
-        path = self.sketches_dir_path(obj_id) / f"{image_id}.jpg"
+        path = self.sketches_dir_path(obj_id) / f"{image_id}.png"
         path.parent.mkdir(parents=True, exist_ok=True)
         Image.fromarray(normals).save(path)
 
     def load_sketch(self, obj_id: str, image_id: str) -> Path:
-        path = self.sketches_dir_path(obj_id) / f"{image_id}.jpg"
+        path = self.sketches_dir_path(obj_id) / f"{image_id}.png"
         return Image.open(path)

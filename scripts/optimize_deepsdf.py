@@ -25,7 +25,7 @@ def optimize(cfg: DictConfig) -> None:
     L.seed_everything(cfg.seed)
 
     log.info(f"==> initializing datamodule <{cfg.data._target_}>")
-    metainfo = MetaInfo(data_dir=cfg.data.data_dir, split="train")
+    metainfo = MetaInfo(data_dir=cfg.data.data_dir, split=cfg.split)
     for obj_id in metainfo.obj_ids:
         log.info(f"==> optimize {obj_id=} ...")
         datamodule: LightningDataModule = hydra.utils.instantiate(

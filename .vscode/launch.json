@@ -92,7 +92,9 @@
             "program": "scripts/optimize_deepsdf.py",
             "args": [
                 "+data=shapenet_chair_16",
-                "train=False"
+                "train=False",
+                "split=train",
+                "ckpt_path=home/borth/sketch2shape/temp/deepsdf.ckpt"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

@@ -18,6 +18,7 @@ tags: ["optimize_normals"]
 train: True 
 test: True
 save_mesh: True
+ckpt_path: ???
 
 trainer:
   num_sanity_val_steps: 0

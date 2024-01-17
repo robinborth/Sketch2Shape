@@ -21,7 +21,7 @@ model:
     gamma: 0.99
 
 trainer:
-  max_epochs: 10000
+  max_epochs: 1000
 
 data:
   batch_size: 4

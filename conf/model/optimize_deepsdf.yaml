@@ -1,21 +1,20 @@
 # @package model
 
-model:
-  _target_: lib.models.deepsdf.DeepSDFLatentOptimizer
-  ckpt_path: ??? 
-  prior_idx: -1
-  reg_loss: True
-  reg_weight: 1e-05
-  loss:
-    _target_: torch.nn.L1Loss
-    _partial_: true
-    reduction: mean
-  optimizer:
-    _target_: torch.optim.Adam
-    _partial_: true
-    lr: 1e-02
-  scheduler:
-    _partial_: True
-    _target_: torch.optim.lr_scheduler.StepLR
-    step_size: 100
-    gamma: 0.5
+_target_: lib.models.deepsdf.DeepSDFLatentOptimizer
+ckpt_path: ${ckpt_path} 
+prior_idx: -1
+reg_loss: True
+reg_weight: 1e-05
+loss:
+  _target_: torch.nn.L1Loss
+  _partial_: true
+  reduction: mean
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 1e-02
+scheduler:
+  _partial_: True
+  _target_: torch.optim.lr_scheduler.StepLR
+  step_size: 100
+  gamma: 0.5
