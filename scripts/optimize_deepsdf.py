@@ -69,7 +69,7 @@ def optimize(cfg: DictConfig) -> None:
             log.info("==> start training ...")
             trainer.fit(model=model, datamodule=datamodule)
 
-        if cfg.test:
+        if cfg.eval:
             log.info("==> start evalution ...")
             metric = trainer.test(model=model, datamodule=datamodule)[0]
             metric["obj_id"] = obj_id  # type: ignore

@@ -1,9 +1,14 @@
 # @package _global_
 
 defaults:
-  - siamese
- 
-tags: ["siamese", "sample_m"]
+  - data:
+    - shapenet_chair_16
+    - train_siamese
+    - eval_siamese
+  - override /logger: wandb
+
+tags: ["train_siamese", "sample_m"]
+
 data:
   sampler:
-    m: ???
+    m: 8

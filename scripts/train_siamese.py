@@ -66,13 +66,14 @@ def train(cfg: DictConfig) -> None:
         log.info(f"Best ckpt path: {ckpt_path}")
 
         log.info(f"==> initializing datamodule <{cfg.eval_data._target_}>")
-        datamodule = hydra.utils.instantiate(cfg.data, train=False)
+        datamodule = hydra.utils.instantiate(cfg.eval_data)
         datamodule.setup("all")
 
         log.info(f"==> load model <{cfg.model._target_}>")
-        tester = SiameseTester(cfg.ckpt_path, data_dir=cfg.data.data_dir)
+        tester = SiameseTester(ckpt_path, data_dir=cfg.data.data_dir)
 
         log.info(f"==> index datasets <{cfg.trainer._target_}>")
+        cfg.trainer.max_epochs = 1
         trainer = hydra.utils.instantiate(cfg.trainer, logger=logger)
         trainer.validate(
             tester,

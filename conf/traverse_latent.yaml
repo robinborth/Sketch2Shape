@@ -14,7 +14,6 @@ defaults:
 seed: 123
 task_name: traverse_latent
 tags: ["traverse_latent"]
-test: True
 save_mesh: True
 ckpt_path: ???
 traversal_steps: 20

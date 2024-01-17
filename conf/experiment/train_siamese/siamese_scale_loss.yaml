@@ -7,7 +7,7 @@ defaults:
     - eval_siamese
   - override /logger: wandb
 
-tags: ["train_siamese", "dropout"]
+tags: ["train_siamese", "scale_loss"]
 
 model:
   optimizer:

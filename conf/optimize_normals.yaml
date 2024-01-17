@@ -16,7 +16,7 @@ seed: 123
 task_name: optimize_normals
 tags: ["optimize_normals"]
 train: True 
-test: True
+eval: True
 save_mesh: True
 ckpt_path: ???
 

@@ -18,9 +18,9 @@ class Siamese(LightningModule):
         super().__init__()
         self.save_hyperparameters(logger=False)
 
-        self.decoder = decoder
-        self.miner = miner
-        self.loss = loss
+        self.decoder = decoder()
+        self.miner = miner()
+        self.loss = loss()
 
     def forward(self, batch):
         batch_size = batch["sketch"].shape[0]

@@ -16,7 +16,7 @@ seed: 123
 task_name: optimize_deepsdf
 tags: ["optimize_deepsdf"]
 train: True 
-test: True
+eval: True
 save_mesh: True
 split: val
 ckpt_path: ???

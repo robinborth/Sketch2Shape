@@ -23,8 +23,8 @@ eval: True
 ckpt_path: null
 
 trainer:
-  max_epochs: 100
-  val_check_interval: 120 
+  max_epochs: 10
+  val_check_interval: 10
 
 callbacks:
   early_stopping:

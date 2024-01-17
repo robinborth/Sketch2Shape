@@ -1,9 +1,14 @@
 # @package _global_
 
 defaults:
-  - siamese
- 
-tags: ["siamese", "type_of_triplets"]
+  - data:
+    - shapenet_chair_16
+    - train_siamese
+    - eval_siamese
+  - override /logger: wandb
+
+tags: ["train_siamese", "type_of_triplets"]
+
 model:
   miner:
     type_of_triplets: all 

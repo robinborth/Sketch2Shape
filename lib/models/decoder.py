@@ -90,7 +90,7 @@ class ResNet18(nn.Module):
         super().__init__()
         self.embedding_size = embedding_size
         if pretrained:
-            self.resnet18 = resnet18(ResNet18_Weights.IMAGENET1K_V1)
+            self.resnet18 = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
         else:
             self.resnet18 = resnet18()
         self.resnet18.fc = torch.nn.Linear(in_features=512, out_features=embedding_size)
