@@ -54,9 +54,8 @@ def optimize(cfg: DictConfig) -> None:
 
     if cfg.save_mesh and (meshes := model.meshes):
         log.info("==> save meshes ...")
-        for m in meshes:
-            t, mesh = m["t"], m["mesh"]
-            path = Path(cfg.paths.mesh_dir, f"{t}.obj")
+        for step, mesh in enumerate(meshes):
+            path = Path(cfg.paths.mesh_dir, f"step={step:03}.obj")
             path.parent.mkdir(parents=True, exist_ok=True)
             o3d.io.write_triangle_mesh(
                 path.as_posix(),

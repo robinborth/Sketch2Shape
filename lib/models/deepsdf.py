@@ -322,7 +322,7 @@ class DeepSDFLatentTraversal(DeepSDFLatentOptimizerBase):
         # override the latent for inference
         self.latent = t * latent_start + (1 - t) * latent_end
         mesh = self.to_mesh(self.hparams["resolution"], self.hparams["chunk_size"])
-        self.meshes.append({"t": t, "mesh": mesh})
+        self.meshes.append(mesh)
 
         # restore the mean latent
         self.latent = latent
