@@ -20,7 +20,6 @@ log = create_logger("train_deepsdf")
 def train(cfg: DictConfig) -> None:
     log.info("==> loading config ...")
     L.seed_everything(cfg.seed)
-    # torch.set_float32_matmul_precision("medium")  # TODO why?
 
     log.info(f"==> initializing datamodule <{cfg.data._target_}>")
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)

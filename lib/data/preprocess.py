@@ -137,6 +137,7 @@ class PreprocessSDF:
         return self.cloud_points[mask], self.cloud_normals[mask]
 
     def _get_sdfs(self, query: np.ndarray):
+        # TODO add more points with a more k=5 if not then we throw the point away
         sdfs, idx = self.tree.query(query, k=1)
         nearest_point = self.cloud_points[idx.squeeze()]
         nearest_normal = self.cloud_normals[idx.squeeze()]

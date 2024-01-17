@@ -8,7 +8,7 @@ batch_size: 128
 num_workers: 7
 pin_memory: True
 drop_last: True
-shuffle: True
+shuffle: False
 persistent_workers: True
 # dataset 
 sampler:
@@ -22,7 +22,6 @@ transforms:
   _target_: torchvision.transforms.Compose
   transforms:
     - _target_: torchvision.transforms.ToTensor
-    - _target_: torchvision.transforms.RandomHorizontalFlip
     - _target_: torchvision.transforms.Normalize
       mean: 0.5 
       std: 0.5

@@ -304,7 +304,6 @@ class DeepSDFLatentTraversal(DeepSDFLatentOptimizerBase):
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
-        self.model.lat_vecs = None
 
     def validation_step(self, batch, batch_idx):
         t = batch["step"]  # t = [0, 1]
@@ -318,5 +317,5 @@ class DeepSDFLatentTraversal(DeepSDFLatentOptimizerBase):
             latent_end = self.lat_vecs[idx_end]
 
         self.latent = t * latent_start + (1 - t) * latent_end
-        mesh = self.to_mesh(self.hparams["resolution"], self.hparams["chunk_size"])
+        self.mesh = self.to_mesh(self.hparams["resolution"], self.hparams["chunk_size"])
         # TODO save the mesh or do something with it

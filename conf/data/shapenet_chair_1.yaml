@@ -40,7 +40,7 @@ preprocess_siamese:
   data_dir: ${data.data_dir}
   skip: True
   # camera settings
-  azims: [0, 20, 40, 60, 80, 100, 120, 140, 160, 180]
+  azims: [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340]
   elevs: [-75, -60, -45, -30, -15, 0 , 15, 30]
   dist: ${data.camera_dist} 
   width: ${data.camera_width} 
