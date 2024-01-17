@@ -18,11 +18,11 @@ class DeepSDFDatasetBase(Dataset):
         self,
         data_dir: str = "data/",
         split: Optional[str] = None,
-        subsample: int = 16384,
+        chunk_size: int = 16384,
         half: bool = False,
     ) -> None:
         self.metainfo = MetaInfo(data_dir=data_dir, split=split)
-        self.subsample = subsample
+        self.chunk_size = chunk_size
         self.half = half
         self.load()
 
@@ -47,9 +47,9 @@ class DeepSDFDiskDataset(DeepSDFDatasetBase):
         if self.half:
             points = points.astype(np.float16)
             sdfs = sdfs.astype(np.float16)
-        if self.subsample is None:
+        if self.chunk_size is None:
             return points, sdfs
-        random_mask = np.random.choice(points.shape[0], self.subsample)
+        random_mask = np.random.choice(points.shape[0], self.chunk_size)
         return points[random_mask], sdfs[random_mask]
 
 
@@ -67,9 +67,9 @@ class DeepSDFMemoryDataset(DeepSDFDatasetBase):
 
     def fetch(self, idx: int):
         points, sdfs = self.points[idx], self.sdfs[idx]
-        if self.subsample is None:
+        if self.chunk_size is None:
             return points, sdfs
-        random_mask = np.random.choice(points.shape[0], self.subsample)
+        random_mask = np.random.choice(points.shape[0], self.chunk_size)
         return points[random_mask], sdfs[random_mask]
 
 
@@ -100,11 +100,11 @@ class DeepSDFLatentOptimizerDataset(Dataset):
         self,
         data_dir: str = "/data",
         obj_id: str = "obj_id",
-        subsample: int = 16384,
+        chunk_size: int = 16384,
         half: bool = False,
     ):
         self.metainfo = MetaInfo(data_dir=data_dir)
-        self.subsample = subsample
+        self.chunk_size = chunk_size
         self.points, self.sdfs = self.metainfo.load_sdf_samples(obj_id=obj_id)
         if half:
             self.points = self.points.astype(np.float16)
@@ -114,7 +114,7 @@ class DeepSDFLatentOptimizerDataset(Dataset):
         return 1
 
     def __getitem__(self, idx: int):
-        random_mask = np.random.choice(self.points.shape[0], self.subsample)
+        random_mask = np.random.choice(self.points.shape[0], self.chunk_size)
         return {"points": self.points[random_mask], "sdf": self.sdfs[random_mask]}
 
 
@@ -149,41 +149,6 @@ class NormalLatentOptimizerDataset(Dataset):
 
 
 class SketchLatentOptimizerDataset(Dataset):
-    def __init__(
-        self,
-        data_dir: str = "/data",
-        obj_id: str = "obj_id",
-        azims: list[int] = [],
-        elevs: list[int] = [],
-        dist: float = 4.0,
-    ):
-        self.metainfo = MetaInfo(data_dir=data_dir)
-        self.data = []
-        label = 0
-        for azim in azims:
-            for elev in elevs:
-                data = {}
-                camera = Camera(azim=azim, elev=-elev, dist=dist)
-                points, rays, mask = camera.unit_sphere_intersection_rays()
-                data["points"], data["rays"], data["mask"] = points, rays, mask
-                data["camera_position"] = camera.camera_position()
-                data["sketch"] = self.metainfo.load_sketch(obj_id, f"{label:05}")
-                label += 1
-                self.data.append(data)
-
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, idx):
-        return self.data[idx]
-
-
-############################################################
-# Latent Traversal Datasets
-############################################################
-
-
-class LatentTraversalDataset(Dataset):
     def __init__(
         self,
         data_dir: str = "/data",

@@ -192,7 +192,6 @@ class DeepSDFLatentOptimizerBase(LightningModule):
         else:
             latent = self.model.lat_vecs.weight.mean(0)
         self.register_buffer("latent", latent)
-        self.model.lat_vecs = None
         self.mesh: o3d.geometry.TriangleMesh = None
 
     def forward(self, points: torch.Tensor, mask=None):
@@ -304,18 +303,26 @@ class DeepSDFLatentTraversal(DeepSDFLatentOptimizerBase):
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
+        self.meshes: list[dict] = []
 
     def validation_step(self, batch, batch_idx):
-        t = batch["step"]  # t = [0, 1]
+        latent = self.latent.clone()
+        t = batch[0]  # t = [0, 1]
 
         latent_start = self.latent  # mean latent
         if (idx_start := self.hparams["prior_idx_start"]) >= 0:
-            latent_start = self.lat_vecs[idx_start]
+            idx_start = torch.tensor(idx_start).to(self.latent.device)
+            latent_start = self.model.lat_vecs(idx_start)
 
         latent_end = self.latent  # mean latent
         if (idx_end := self.hparams["prior_idx_end"]) >= 0:
-            latent_end = self.lat_vecs[idx_end]
+            idx_end = torch.tensor(idx_end).to(self.latent.device)
+            latent_end = self.model.lat_vecs(idx_end)
 
+        # override the latent for inference
         self.latent = t * latent_start + (1 - t) * latent_end
-        self.mesh = self.to_mesh(self.hparams["resolution"], self.hparams["chunk_size"])
-        # TODO save the mesh or do something with it
+        mesh = self.to_mesh(self.hparams["resolution"], self.hparams["chunk_size"])
+        self.meshes.append({"t": t, "mesh": mesh})
+
+        # restore the mean latent
+        self.latent = latent

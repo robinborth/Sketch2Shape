@@ -91,10 +91,23 @@
             "request": "launch",
             "program": "scripts/optimize_deepsdf.py",
             "args": [
-                "+data=shapenet_chair_16",
+                "+data=shapenet_chair_1",
                 "train=False",
                 "split=train",
-                "ckpt_path=home/borth/sketch2shape/temp/deepsdf.ckpt"
+                "ckpt_path=/home/borth/sketch2shape/temp/deepsdf.ckpt",
+                "logger=wandb"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
+            "name": "Debug: Traverse Latent",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/traverse_latent.py",
+            "args": [
+                "data=shapenet_chair_16",
+                "ckpt_path=/home/borth/sketch2shape/temp/deepsdf.ckpt",
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

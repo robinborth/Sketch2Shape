@@ -4,6 +4,8 @@ from typing import List
 import hydra
 import lightning as L
 import open3d as o3d
+import pandas as pd
+import wandb
 from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig
@@ -21,29 +23,28 @@ log = create_logger("optimize_deepsdf")
 
 @hydra.main(version_base=None, config_path="../conf", config_name="optimize_deepsdf")
 def optimize(cfg: DictConfig) -> None:
+    metrics = []
+
     log.info("==> loading config ...")
+    assert cfg.data.batch_size == 1  # make sure that the batch_size is 1
     L.seed_everything(cfg.seed)
 
     log.info(f"==> initializing datamodule <{cfg.data._target_}>")
     metainfo = MetaInfo(data_dir=cfg.data.data_dir, split=cfg.split)
     for obj_id in metainfo.obj_ids:
         log.info(f"==> optimize {obj_id=} ...")
-        datamodule: LightningDataModule = hydra.utils.instantiate(
-            cfg.data,
-            obj_id=obj_id,
-        )
+        cfg.data.obj_id = obj_id
+        datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
 
         log.info(f"==> initializing model <{cfg.model._target_}>")
-        prior_idx = metainfo.obj_id_to_label(obj_id=obj_id)
-        model: LightningModule = hydra.utils.instantiate(cfg.model, prior_idx=prior_idx)
+        cfg.model.prior_idx = metainfo.obj_id_to_label(obj_id=obj_id)
+        model: LightningModule = hydra.utils.instantiate(cfg.model)
 
         log.info("==> initializing callbacks ...")
         callbacks: List[Callback] = instantiate_callbacks(cfg.get("callbacks"))
 
         log.info("==> initializing logger ...")
         logger: WandbLogger = instantiate_loggers(cfg.get("logger"))
-        if logger is not None:
-            logger.watch(model, log="all")
 
         log.info(f"==> initializing trainer <{cfg.trainer._target_}>")
         trainer: Trainer = hydra.utils.instantiate(
@@ -70,7 +71,9 @@ def optimize(cfg: DictConfig) -> None:
 
         if cfg.test:
             log.info("==> start evalution ...")
-            trainer.test(model=model, datamodule=datamodule)
+            metric = trainer.test(model=model, datamodule=datamodule)[0]
+            metric["obj_id"] = obj_id  # type: ignore
+            metrics.append(metric)
 
         if cfg.save_mesh and (mesh := model.mesh):
             log.info("==> save mesh ...")
@@ -81,6 +84,16 @@ def optimize(cfg: DictConfig) -> None:
                 mesh=mesh,
                 write_triangle_uvs=False,
             )
+
+        # finish the wandb run in order to track all the optimizations seperate
+        wandb.finish()
+
+    log.info("==> save metrics ...")
+    df = pd.DataFrame(metrics)
+    mean_metric = df.loc[:, df.columns != "obj_id"].mean()
+    mean_metric["obj_id"] = "mean_metric"
+    df = pd.concat([df, mean_metric.to_frame().T], ignore_index=True)
+    df.to_csv(cfg.paths.metrics_path, index=False)
 
 
 if __name__ == "__main__":

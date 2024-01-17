@@ -27,5 +27,5 @@ trainer:
 data:
   train_dataset:
     _target_: lib.data.deepsdf_dataset.DeepSDFLatentOptimizerDataset
-    subsample: 16384
+    chunk_size: 16384
     half: False

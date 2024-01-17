@@ -4,7 +4,7 @@ _target_: lib.data.deepsdf_datamodule.DeepSDFDataModule
 # paths
 data_dir: ${paths.data_dir}/${data.dataset_name}
 # training
-subsample: 65536
+chunk_size: 65536
 half: False
 batch_size: 4
 num_workers: 4

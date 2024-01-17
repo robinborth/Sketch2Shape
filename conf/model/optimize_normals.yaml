@@ -6,6 +6,8 @@ prior_idx: -1
 reg_loss: True
 reg_weight: 1e-05
 normal_weight: 1.0
+resolution: 128
+chunk_size: 65536
 optimizer:
   _target_: torch.optim.Adam
   _partial_: true

@@ -1,0 +1,27 @@
+# @package _global_
+
+defaults:
+  - data: ???
+  - model: traverse_latent 
+  - trainer: default
+  - logger: null
+  - hydra: default
+  - paths: default
+  - debug: null
+  - optional local: default
+  - _self_
+
+seed: 123
+task_name: traverse_latent
+tags: ["traverse_latent"]
+test: True
+save_mesh: True
+ckpt_path: ???
+traversal_steps: 4
+
+trainer:
+  num_sanity_val_steps: 0
+
+model:
+  prior_idx_start: -1
+  prior_idx_end: 0
