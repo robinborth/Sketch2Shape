@@ -85,6 +85,11 @@
             "type": "python",
             "request": "launch",
             "program": "scripts/optimize_normals.py",
+            "args": [
+                "+data=shapenet_chair_16",
+                "ckpt_path=/home/borth/sketch2shape/temp/deepsdf.ckpt",
+                "logger=wandb"
+            ],
             "console": "integratedTerminal",
             "justMyCode": false,
         },
@@ -94,9 +99,7 @@
             "request": "launch",
             "program": "scripts/optimize_deepsdf.py",
             "args": [
-                "+data=shapenet_chair_1",
-                "train=False",
-                "split=train",
+                "+data=shapenet_chair_16",
                 "ckpt_path=/home/borth/sketch2shape/temp/deepsdf.ckpt",
                 "logger=wandb"
             ],

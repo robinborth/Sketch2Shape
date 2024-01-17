@@ -37,7 +37,6 @@ def optimize(cfg: DictConfig) -> None:
         datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
 
         log.info(f"==> initializing model <{cfg.model._target_}>")
-        cfg.model.prior_idx = metainfo.obj_id_to_label(obj_id=obj_id)
         model: LightningModule = hydra.utils.instantiate(cfg.model)
 
         log.info("==> initializing callbacks ...")

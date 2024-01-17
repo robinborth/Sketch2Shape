@@ -3,7 +3,7 @@
 defaults:
   - data:
     - optimize_latent
-  - model: normals_render 
+  - model: optimize_normals 
   - trainer: default
   - logger: null
   - hydra: default
@@ -18,7 +18,9 @@ tags: ["optimize_normals"]
 train: True 
 eval: True
 save_mesh: True
+split: val
 ckpt_path: ???
+
 
 trainer:
   num_sanity_val_steps: 0
