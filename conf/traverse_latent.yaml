@@ -17,7 +17,7 @@ tags: ["traverse_latent"]
 test: True
 save_mesh: True
 ckpt_path: ???
-traversal_steps: 4
+traversal_steps: 20
 
 trainer:
   num_sanity_val_steps: 0
