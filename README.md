@@ -1,6 +1,6 @@
 # Sketch2Shape
 
-A project to utilize differentialbe rendering to optimize the latent code from DeepSDF. The loss signal is computed with a Siamese Neuronal Network trained on the ShapeNetV2 dataset. In order to download ShapeNet you need to register and get approved from the official website [here](https://shapenet.org/).
+A project to utilize differentialbe rendering to optimize the latent code from DeepSDF. The loss signal is computed with a Siamese Neuronal Network trained on the ShapeNetV2 dataset. You can download the ShapeNetV2 dataset on Huggingface [here](https://huggingface.co/datasets/ShapeNet/ShapeNetCore) (requires to get approved)).
 
 ## Requirenments
 
@@ -77,11 +77,11 @@ This will create the full dataset for the SNN and the DeepSDF module. It will lo
     /shapenet_chair_16
         /shapes
             /1d6f4020cab4ec1962d6a66a1a314d66
-                    \normals
+                    /normals
                         00000.png
                         00001.png
                         ...
-                    \sketches
+                    /sketches
                         00000.png
                         00001.png
                         ...
@@ -110,7 +110,7 @@ In order to train a DeepSDF module you can execute the following:
 python scripts/train_deepsdf.py +data=shapenet_chair_16
 ```
 
-In order to run specific experiments you can utilize the configuration system and write your own experiments. Please check out `/conf/experiment/train_deepsdf/shapenet_chair_16.yaml` how this could look like. You can then run an experiment like that:
+In order to run specific experiments you can utilize the configuration system and write your own experiments. Please check out `./conf/experiment/train_deepsdf/shapenet_chair_16.yaml` how this could look like. You can then run an experiment like that:
 
 ```bash
 python scripts/train_deepsdf.py +experiment/train_deepsdf=shapenet_chair_16
@@ -146,7 +146,7 @@ val/chamfer,obj_id
 
 ### Latent Traversal
 
-In order to visualize the DeepSDF latent space you can traverse between latent codes from the trainnig set or the mean latent code gathered during training. The most basic setting is to interpolate from the mean to the target latent code you can do. 
+In order to visualize the DeepSDF latent space you can traverse between latent codes from the training set or the mean latent code gathered during training. The most basic setting is to interpolate from the mean to the target latent code you can do. 
 
 ```bash
 python scripts/traverse_latent.py data=shapenet_chair_16 ckpt_path=/path/to/deepsdf.ckpt model.prior_idx_end=0
