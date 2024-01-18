@@ -27,7 +27,7 @@ class DeepSDFDatasetBase(Dataset):
         self.load()
 
     def load(self) -> None:
-        raise NotImplementedError()
+        pass
 
     def fetch(self, idx: int) -> np.ndarray:
         raise NotImplementedError()

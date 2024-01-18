@@ -9,7 +9,7 @@ class DeepSDFDataModule(LightningDataModule):
         self,
         # settings
         data_dir: str = "data/",
-        subsample: int = 16384,
+        chunk_size: int = 16384,
         half: bool = False,
         # training
         batch_size: int = 32,
@@ -29,7 +29,7 @@ class DeepSDFDataModule(LightningDataModule):
         self.train_dataset = self.hparams["dataset"](
             data_dir=self.hparams["data_dir"],
             split="train",
-            subsample=self.hparams["subsample"],
+            chunk_size=self.hparams["chunk_size"],
             half=self.hparams["half"],
         )
 

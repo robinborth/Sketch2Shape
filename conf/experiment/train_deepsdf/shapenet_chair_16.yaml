@@ -26,7 +26,7 @@ trainer:
 data:
   batch_size: 4
   num_workers: 7
-  subsample: 16384
+  chunk_size: 16384
   half: False
   
 callbacks:
