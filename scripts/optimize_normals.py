@@ -11,6 +11,7 @@ from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig
 
 from lib.data.metainfo import MetaInfo
+from lib.render.utils import create_video
 from lib.utils import (
     create_logger,
     instantiate_callbacks,
@@ -86,6 +87,14 @@ def optimize(cfg: DictConfig) -> None:
 
         # finish the wandb run in order to track all the optimizations seperate
         wandb.finish()
+
+        if cfg.create_video:
+            video_fname = cfg.save_video_path + "/" + cfg.save_video_name
+            create_video(
+                run_folder=cfg.paths.output_dir,
+                video_fname=video_fname,
+                framerate=cfg.framerate,
+            )
 
     log.info("==> save metrics ...")
     df = pd.DataFrame(metrics)
