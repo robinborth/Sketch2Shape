@@ -10,8 +10,8 @@ clamp_val: 0.1
 reg_loss: True
 reg_weight: 1e-4
 skip_connection: [4]
-dropout: 0.0
-weight_norm: False
+dropout: 0.2
+weight_norm: True
 
 loss:
   _target_: torch.nn.L1Loss
