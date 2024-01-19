@@ -1,6 +1,6 @@
 # Sketch2Shape
 
-A project to utilize differentialbe rendering to optimize the latent code from DeepSDF. The loss signal is computed with a Siamese Neuronal Network trained on the ShapeNetV2 dataset. You can download the ShapeNetV2 dataset on Huggingface [here](https://huggingface.co/datasets/ShapeNet/ShapeNetCore) (requires to get approved)).
+A project to utilize differentialbe rendering to optimize the latent code from DeepSDF. The loss signal is computed with a Siamese Neuronal Network trained on the ShapeNetV2 dataset. You can download the ShapeNetV2 dataset on Huggingface [here](https://huggingface.co/datasets/ShapeNet/ShapeNetCore) (requires to get approved).
 
 ## Requirenments
 
@@ -59,7 +59,7 @@ d2af105ee87bc66dae981a300c94a911,23,test
 If you have downloaded the ShapeNetV2 dataset you can simply utilize the `copy_shapnet.py` in order to create that kind of folder structure.
 
 ```bash
-python scripts/copy_shapenet.py data=shapenet_chair_16 +source=/shared/data/ShapeNetCore/03001627 
+python scripts/copy_shapenet.py data=shapenet_chair_16 +source=/path/to/ShapeNetCore/03001627 
 ```
 
 ### 2) Data Preprocessing
