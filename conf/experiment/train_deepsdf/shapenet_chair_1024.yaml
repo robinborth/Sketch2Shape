@@ -2,8 +2,8 @@
 
 defaults:
   - override /data:
-    - shapenet_chair_1024
-    - train_deepsdf
+      - shapenet_chair_1024
+      - train_deepsdf
   - override /logger: wandb
 
 tags: ["train_deepsdf", "shapenet_chair_1024"]
@@ -29,7 +29,7 @@ data:
   num_workers: 7
   chunk_size: 16384
   half: True
-  
+
 callbacks:
   early_stopping:
     patience: 10000

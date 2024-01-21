@@ -2,8 +2,8 @@
 
 defaults:
   - data:
-    - optimize_latent
-  - model: optimize_normals 
+      - optimize_latent
+  - model: optimize_normals
   - trainer: default
   - logger: default
   - hydra: default
@@ -15,17 +15,21 @@ defaults:
 seed: 123
 task_name: optimize_normals
 tags: ["optimize_normals"]
-train: True 
+train: True
 eval: True
 save_mesh: True
 split: val
 ckpt_path: ???
 
+create_video: True
+# some name to identify video
+video_name: test.mp4
+framerate: 30
 
 trainer:
   num_sanity_val_steps: 0
-  max_epochs: 20
-  accumulate_grad_batches: 4
+  max_epochs: 5
+  accumulate_grad_batches: 8
 
 data:
   train_dataset:

@@ -88,7 +88,7 @@
             "program": "scripts/optimize_normals.py",
             "args": [
                 "+data=shapenet_chair_1024",
-                "ckpt_path=/home/borth/sketch2shape/temp/deepsdf.ckpt",
+                "ckpt_path=/shared/logs/deepsdf.ckpt",
                 "logger=wandb"
             ],
             "console": "integratedTerminal",
@@ -101,7 +101,7 @@
             "program": "scripts/optimize_deepsdf.py",
             "args": [
                 "+data=shapenet_chair_1024",
-                "ckpt_path=/home/borth/sketch2shape/temp/deepsdf.ckpt",
+                "ckpt_path=/shared/logs/deepsdf.ckpt",
                 "split=train",
                 "obj_ids=[7139284dff5142d4593ebeeedbff73b]"
                 // "logger=wandb"
@@ -116,7 +116,7 @@
             "program": "scripts/traverse_latent.py",
             "args": [
                 "data=shapenet_chair_16",
-                "ckpt_path=/home/borth/sketch2shape/temp/deepsdf.ckpt",
+                "ckpt_path=/shared/logs/deepsdf.ckpt",
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

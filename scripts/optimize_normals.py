@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import List
 
@@ -11,6 +12,7 @@ from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 
 from lib.data.metainfo import MetaInfo
+from lib.render.utils import create_video
 from lib.utils import create_logger, instantiate_callbacks, log_hyperparameters
 
 log = create_logger("optimize_normals")
@@ -81,6 +83,16 @@ def optimize(cfg: DictConfig) -> None:
 
         # finish the wandb run in order to track all the optimizations seperate
         wandb.finish()
+
+        if cfg.create_video:
+            if not os.path.exists(cfg.paths.video_dir):
+                os.mkdir(cfg.paths.video_dir)
+            video_fname = cfg.paths.video_dir + "/" + cfg.video_name
+            create_video(
+                run_folder=cfg.paths.output_dir,
+                video_fname=video_fname,
+                framerate=cfg.framerate,
+            )
 
     log.info("==> save metrics ...")
     df = pd.DataFrame(metrics)
