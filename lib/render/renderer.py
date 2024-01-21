@@ -44,16 +44,20 @@ class DeepSDFRenderBase(DeepSDFLatentOptimizerBase):
             dist=self.hparams["default_dist"],
         )
         points, rays, mask = camera.unit_sphere_intersection_rays()
-        self.register_buffer("default_points", torch.Tensor(points))
-        self.register_buffer("default_rays", torch.Tensor(rays))
-        self.register_buffer("default_mask", torch.Tensor(mask))
+        self.register_buffer("default_points", torch.tensor(points))
+        self.register_buffer("default_rays", torch.tensor(rays))
+        self.register_buffer("default_mask", torch.tensor(mask, dtype=torch.bool))
 
     # slows down the training process by quite a bit, use for debugging and visualization ONLY
     # on_after_backward as it respects the gradient accumulation
     def on_after_backward(self):
         # calculate the normals map
+        # TODO should be ddone by lightning automatically...
+        self.default_points = self.default_points.to(self.device)
+        self.default_rays = self.default_rays.to(self.device)
+        self.default_mask = self.default_mask.to(self.device)
         with torch.no_grad():
-            points, surface_mask = self.sphere_tracing_min_sdf(
+            points, surface_mask = self.sphere_tracing(
                 points=self.default_points,
                 mask=self.default_mask,
                 rays=self.default_rays,
@@ -63,6 +67,13 @@ class DeepSDFRenderBase(DeepSDFLatentOptimizerBase):
         self.log_image("default_image", image)
 
         self._save_default_view()
+
+    # FOR DEBUGGING PURPOSES
+    def on_before_optimizer_step(self, optimizer):
+        # Compute the 2-norm for each layer
+        # If using mixed precision, the gradients are already unscaled here
+        norm = self.latent.grad.norm(p=2)
+        self.log("optimize/grad_norm", norm)
 
     def log_image(self, key: str, image: torch.Tensor):
         image = image.detach().cpu().numpy()
@@ -187,55 +198,7 @@ class DeepSDFRenderBase(DeepSDFLatentOptimizerBase):
         surface_mask = sdf < surface_eps
         return points, surface_mask
 
-    # TODO remove, as its only used for silhoutte loss
-    # sphere tracing + store point closest to surface (important if no surface is it)
-    def sphere_tracing_min_sdf(
-        self,
-        points: torch.Tensor,
-        rays: torch.Tensor,
-        mask: torch.Tensor,
-    ):
-        clamp_sdf = self.hparams["clamp_sdf"]
-        step_scale = self.hparams["step_scale"]
-        surface_eps = self.hparams["surface_eps"]
-
-        points = points.clone()
-        mask = mask.clone()
-
-        total_points = (points.shape[0],)
-        depth = torch.zeros(total_points, device=self.device)
-        sdf = torch.ones(total_points, device=self.device)
-
-        min_points = points.clone()
-        min_sdf = sdf.clone()
-
-        # sphere tracing
-        for _ in range(self.hparams["n_render_steps"]):
-            with torch.no_grad():
-                sdf_out = self.forward(points=points, mask=mask).to(points)
-
-            sdf_out = torch.clamp(sdf_out, -clamp_sdf, clamp_sdf)
-            depth[mask] += sdf_out * step_scale
-            sdf[mask] = sdf_out * step_scale
-
-            surface_idx = torch.abs(sdf) < surface_eps
-            # TODO there are holes in the rendering
-            # void_idx = points.norm(dim=-1) > 1
-            void_idx = depth > 2.0
-            mask[surface_idx | void_idx] = False
-
-            points[mask] = points[mask] + sdf[mask, None] * rays[mask]
-
-            min_mask = torch.abs(sdf) < torch.abs(min_sdf)
-            min_sdf[min_mask] = sdf[min_mask]
-            min_points[min_mask] = points[min_mask]
-
-            if not mask.sum():
-                break
-
-        surface_mask = sdf < surface_eps
-        return min_points, surface_mask
-
+    # TODO IN PROGRESS
     # sphere tracing and save closest points from every single ray (no mask)
     def sphere_tracing_min_sdf_all(
         self,
@@ -281,46 +244,55 @@ class DeepSDFNormalRender(DeepSDFRenderBase):
     ) -> None:
         super().__init__(**kwargs)
 
-    # def training_step(self, batch, batch_idx):
-    #     gt_image = batch["gt_image"].squeeze(0)
-    #     gt_surface_mask = batch["gt_surface_mask"].reshape(-1)
-    #     gt_normals = self.image_to_normal(gt_image)
-    #     unit_sphere_mask = batch["mask"].squeeze(0)
+    def training_step(self, batch, batch_idx):
+        gt_image = batch["gt_image"].squeeze(0)
+        gt_surface_mask = batch["gt_surface_mask"].reshape(-1)
+        gt_normals = self.image_to_normal(gt_image)
+        unit_sphere_mask = batch["mask"].squeeze(0)
 
-    #     # calculate the normals map
-    #     points, surface_mask = self.sphere_tracing_min_sdf(
-    #         points=batch["points"].squeeze(0),
-    #         mask=unit_sphere_mask,
-    #         rays=batch["rays"].squeeze(0),
-    #     )
-    #     normals = self.render_normals(points=points, mask=surface_mask)
-    #     image = self.normal_to_image(normals, surface_mask)
-    #     mask = gt_surface_mask & surface_mask
+        # calculate the normals map
+        points, surface_mask = self.sphere_tracing(
+            points=batch["points"].squeeze(0),
+            rays=batch["rays"].squeeze(0),
+            mask=unit_sphere_mask,
+        )
+        normals = self.render_normals(points=points, mask=surface_mask)
+        image = self.normal_to_image(normals, surface_mask)
+        mask = gt_surface_mask & surface_mask
 
-    #     # calculate the loss for the object and usefull information to wandb
-    #     normal_loss = l1_loss(gt_normals[mask], normals[mask])
+        # calculate the loss for the object and usefull information to wandb
+        normal_loss = l1_loss(gt_normals[mask], normals[mask])
 
-    #     self.log("optimize/normal_loss", normal_loss)
+        self.log("optimize/normal_loss", normal_loss)
 
-    #     latent_norm = torch.linalg.norm(self.latent, dim=-1)
-    #     self.log("optimize/latent_norm", latent_norm)
-    #     # add regularization loss
-    #     if self.hparams["reg_loss"]:
-    #         reg_loss = latent_norm * self.hparams["reg_weight"]
-    #         self.log("optimize/reg_loss", reg_loss)
+        latent_norm = torch.linalg.norm(self.latent, dim=-1)
+        self.log("optimize/latent_norm", latent_norm)
+        # add regularization loss
+        if self.hparams["reg_loss"]:
+            reg_loss = latent_norm * self.hparams["reg_weight"]
+            self.log("optimize/reg_loss", reg_loss)
 
-    #     loss = reg_loss + normal_loss
-    #     self.log("optimize/loss", loss)
+        loss = reg_loss + normal_loss
+        self.log("optimize/loss", loss)
 
-    #     self.log(
-    #         "optimize/mem_allocated", torch.cuda.memory_allocated() / 1024**2
-    #     )  # convert to MIB
+        self.log(
+            "optimize/mem_allocated", torch.cuda.memory_allocated() / 1024**2
+        )  # convert to MIB
 
-    #     # visualize the different images
-    #     self.log_image("gt_image", gt_image)
-    #     self.log_image("image", image)
+        # visualize the different images
+        self.log_image("gt_image", gt_image)
+        self.log_image("image", image)
 
-    #     return loss
+        return loss
+
+
+# TODO IN PROGRESS - calculate a normal everywhere in space
+class DeepSDFNormalEverywhereRender(DeepSDFRenderBase):
+    def __init__(
+        self,
+        **kwargs,
+    ) -> None:
+        super().__init__(**kwargs)
 
     def training_step(self, batch, batch_idx):
         gt_image = batch["gt_image"].squeeze(0)
@@ -365,13 +337,6 @@ class DeepSDFNormalRender(DeepSDFRenderBase):
 
         return loss
 
-    # FOR DEBUGGING PURPOSES
-    def on_before_optimizer_step(self, optimizer):
-        # Compute the 2-norm for each layer
-        # If using mixed precision, the gradients are already unscaled here
-        norm = self.latent.grad.norm(p=2)
-        self.log("optimize/grad_norm", norm)
-
 
 class DeepSDFSketchRender(DeepSDFRenderBase):
     def __init__(
@@ -397,10 +362,10 @@ class DeepSDFSketchRender(DeepSDFRenderBase):
         obj_reflection = batch["obj_reflection"]
 
         # calculate the normals map
-        points, surface_mask = self.sphere_tracing_min_sdf(
+        points, surface_mask = self.sphere_tracing(
             points=batch["points"].squeeze(),
-            mask=unit_sphere_mask,
             rays=batch["rays"].squeeze(),
+            mask=unit_sphere_mask,
         )
         normals = self.render_object(
             points=points,
