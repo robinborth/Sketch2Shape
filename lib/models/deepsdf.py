@@ -7,7 +7,10 @@ from skimage.measure import marching_cubes
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from lib.eval.chamfer_distance import compute_chamfer_distance
+from lib.eval.chamfer_distance import ChamferDistanceMetric
+from lib.eval.clip_score import CLIPScoreMetric
+from lib.eval.earth_movers_distance import EarthMoversDistanceMetric
+from lib.eval.frechet_inception_distance import FrechetInceptionDistanceMetric
 
 ############################################################
 # DeepSDF Training
@@ -171,8 +174,8 @@ class DeepSDFLatentOptimizerBase(LightningModule):
         reg_weight: float = 1e-05,
         optimizer=None,
         scheduler=None,
-        resolution: int = 128,
-        chunk_size: int = 65536,
+        mesh_resolution: int = 128,
+        mesh_chunk_size: int = 65536,
     ) -> None:
         super().__init__()
         self.save_hyperparameters(logger=False)
@@ -194,6 +197,10 @@ class DeepSDFLatentOptimizerBase(LightningModule):
         self.register_buffer("latent", latent)
         self.mesh: o3d.geometry.TriangleMesh = None
 
+        #  metrics
+        self.chamfer_distance = ChamferDistanceMetric()
+        # TODO add the other metrics here
+
     def forward(self, points: torch.Tensor, mask=None):
         return self.model(points=points, latent=self.latent, mask=mask)
 
@@ -203,7 +210,7 @@ class DeepSDFLatentOptimizerBase(LightningModule):
     def test_step(self, batch, batch_idx):
         gt_surface_samples = batch["surface_samples"].detach().cpu().numpy().squeeze()
         mesh = self.to_mesh(self.hparams["resolution"], self.hparams["chunk_size"])
-        chamfer = compute_chamfer_distance(mesh, gt_surface_samples)
+        chamfer = self.chamfer_distance(mesh, gt_surface_samples)
         self.log("val/chamfer", chamfer)
 
     def configure_optimizers(self):
