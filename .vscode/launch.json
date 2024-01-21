@@ -18,8 +18,9 @@
             "request": "launch",
             "program": "scripts/train_siamese.py",
             "args": [
-                "+data=shapenet_chair_1024",
-                // "+experiment/train_siamese=shapenet_chair_16"
+                // "+data=shapenet_chair_1024",
+                "+experiment/train_siamese=shapenet_chair_1024",
+                "logger=wandb"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
