@@ -4,7 +4,7 @@ defaults:
   - data: ???
   - model: traverse_latent 
   - trainer: default
-  - logger: null
+  - logger: default
   - hydra: default
   - paths: default
   - debug: null

@@ -5,7 +5,7 @@ defaults:
       - optimize_latent
   - model: optimize_normals
   - trainer: default
-  - logger: null
+  - logger: default
   - hydra: default
   - paths: default
   - debug: null

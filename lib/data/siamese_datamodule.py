@@ -23,7 +23,8 @@ class SiameseDataModule(LightningDataModule):
         # dataset
         sampler: Optional[Sampler] = None,
         dataset: Optional[SiameseDataset] = None,
-        transforms: Optional[Callable] = None,
+        sketch_transforms: Optional[Callable] = None,
+        image_transforms: Optional[Callable] = None,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -37,21 +38,24 @@ class SiameseDataModule(LightningDataModule):
             self.train_dataset = self.hparams["dataset"](
                 data_dir=data_dir,
                 split="train",
-                transforms=self.hparams["transforms"],
+                sketch_transforms=self.hparams["sketch_transforms"],
+                image_transforms=self.hparams["image_transforms"],
             )
         if stage in ["validate", "fit", "all"]:
             self.val_metainfo = MetaInfo(data_dir=data_dir, split="val")
             self.val_dataset = self.hparams["dataset"](
                 data_dir=data_dir,
                 split="val",
-                transforms=self.hparams["transforms"],
+                sketch_transforms=self.hparams["sketch_transforms"],
+                image_transforms=self.hparams["image_transforms"],
             )
         if stage in ["test", "all"]:
             self.test_metainfo = MetaInfo(data_dir=data_dir, split="test")
             self.test_dataset = self.hparams["dataset"](
                 data_dir=data_dir,
                 split="test",
-                transforms=self.hparams["transforms"],
+                sketch_transforms=self.hparams["sketch_transforms"],
+                image_transforms=self.hparams["image_transforms"],
             )
 
     def build_sampler(self, metainfo: MetaInfo):

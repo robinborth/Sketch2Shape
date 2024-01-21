@@ -6,7 +6,7 @@ defaults:
     - eval_siamese
   - model: siamese 
   - callbacks: default
-  - logger: null 
+  - logger: default 
   - trainer: default
   - hydra: default
   - paths: default
@@ -24,7 +24,7 @@ ckpt_path: null
 
 trainer:
   max_epochs: 10
-  val_check_interval: 10
+  val_check_interval: 0.25
 
 callbacks:
   early_stopping:

@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import List
 
 import hydra
 import lightning as L
@@ -7,16 +6,11 @@ import open3d as o3d
 import pandas as pd
 import wandb
 from lightning import Callback, LightningDataModule, LightningModule, Trainer
-from lightning.pytorch.loggers import WandbLogger
+from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 
 from lib.data.metainfo import MetaInfo
-from lib.utils import (
-    create_logger,
-    instantiate_callbacks,
-    instantiate_loggers,
-    log_hyperparameters,
-)
+from lib.utils import create_logger, instantiate_callbacks, log_hyperparameters
 
 log = create_logger("optimize_deepsdf")
 
@@ -59,10 +53,10 @@ def optimize(cfg: DictConfig) -> None:
         model: LightningModule = hydra.utils.instantiate(cfg.model)
 
         log.info("==> initializing callbacks ...")
-        callbacks: List[Callback] = instantiate_callbacks(cfg.get("callbacks"))
+        callbacks: list[Callback] = instantiate_callbacks(cfg.get("callbacks"))
 
         log.info("==> initializing logger ...")
-        logger: WandbLogger = instantiate_loggers(cfg.get("logger"))
+        logger: Logger = hydra.utils.instantiate(cfg.logger)
 
         log.info(f"==> initializing trainer <{cfg.trainer._target_}>")
         trainer: Trainer = hydra.utils.instantiate(

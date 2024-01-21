@@ -165,3 +165,4 @@ data/*
 logs/*
 temp
 conf/local/*
+checkpoints/*

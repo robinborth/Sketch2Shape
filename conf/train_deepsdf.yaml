@@ -5,7 +5,7 @@ defaults:
     - train_deepsdf 
   - model: deepsdf
   - callbacks: default
-  - logger: null 
+  - logger: default 
   - trainer: default
   - hydra: default
   - paths: default

@@ -26,19 +26,7 @@ def instantiate_callbacks(callbacks_cfg: DictConfig) -> List[Callback]:
     return callbacks
 
 
-def instantiate_loggers(loggers_cfg: DictConfig):
-    if loggers_cfg is None:
-        log.info("No loggers specified.")
-        return None
-
-    for logger in loggers_cfg.values():
-        if "_target_" in logger.keys():
-            return instantiate(logger)
-
-    return None
-
-
-def load_config(config_name: str, overrides: list = None) -> DictConfig:
+def load_config(config_name: str, overrides: list = []) -> DictConfig:
     """Loads the hydra config via code.
 
     Args:

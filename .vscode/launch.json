@@ -18,7 +18,9 @@
             "request": "launch",
             "program": "scripts/train_siamese.py",
             "args": [
-                "+experiment/train_siamese=shapenet_chair_16"
+                "+data=shapenet_chair_1024",
+                "compile=True"
+                // "+experiment/train_siamese=shapenet_chair_16"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
