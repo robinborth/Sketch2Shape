@@ -44,9 +44,9 @@ class DeepSDFRenderBase(DeepSDFLatentOptimizerBase):
             dist=self.hparams["default_dist"],
         )
         points, rays, mask = camera.unit_sphere_intersection_rays()
-        self.register_buffer("default_points", points)
-        self.register_buffer("default_rays", rays)
-        self.register_buffer("default_mask", mask)
+        self.register_buffer("default_points", torch.Tensor(points))
+        self.register_buffer("default_rays", torch.Tensor(rays))
+        self.register_buffer("default_mask", torch.Tensor(mask))
 
     # slows down the training process by quite a bit, use for debugging and visualization ONLY
     # on_after_backward as it respects the gradient accumulation
