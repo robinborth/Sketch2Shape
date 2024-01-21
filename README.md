@@ -144,6 +144,46 @@ val/chamfer,obj_id
 0.00023020,mean_metric
 ```
 
+### Configs: Optimize DeepSDF 
+
+There are different kind of settings how you can optimize one latent code from the DeepSDF model. The simplest way (and most robust way) is to use SDF values to optimize the latent code. Theree are different kind of settings one can use.
+
+#### 1) Training Split (no optimization)
+This can be usefull if you only want to create meshes from the pretrained latent code from the trainig split and the DeepSDF model. You can use:
+
+```bash
+python scripts/optimize_deepsdf.py +data=... ckpt_path=... train=False split=train prior_idx=True
+```
+
+#### 2) Training Split (optimization)
+This can be usefull if you want to look how good you can optimize the latent code starting from the mean latent code to the pretrained latent codes. This should be the upperbound in terms of reconstruction possibilities.
+
+```bash
+python scripts/optimize_deepsdf.py +data=... ckpt_path=... train=True split=train prior_idx=False
+```
+
+#### 3) Validation Split (optimization)
+If you want to validate how good the model can optimize the latent code from unseen shapes you can do the following. This is also the setting where one want's to tune hparams to optimzie the DeepSDF module.
+
+```bash
+python scripts/optimize_deepsdf.py +data=... ckpt_path=... train=Train split=val
+```
+
+#### 4) Debug Shapes (optimization)
+If you want to simply optimize one or a few latent codes you can specify obj_ids in order to optimize for them. Please make sure that the obj_ids are only in the same split, e.g. you can select them from the `metainfo.csv` file and look at the splits. If you want to debug one specific obj_id from the validation set you can then simply call the following. NOTE: that the obj_ids needs to be a list:
+
+```bash
+python scripts/optimize_deepsdf.py +data=... ckpt_path=...  obj_ids=["7139284dff5142d4593ebeeedbff73b"]
+```
+
+#### 5) Disable Mesh Creation
+If you are not interested in the creation of the meshes after optimization you can simply disable it with:
+
+```bash
+python scripts/optimize_deepsdf.py +data=... ckpt_path=... save_mesh=False
+```
+
+
 ### Latent Traversal
 
 In order to visualize the DeepSDF latent space you can traverse between latent codes from the training set or the mean latent code gathered during training. The most basic setting is to interpolate from the mean to the target latent code you can do. 
