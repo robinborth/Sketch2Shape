@@ -1,5 +1,3 @@
-from typing import List
-
 import hydra
 import lightning as L
 from lightning import LightningDataModule, Trainer
@@ -7,7 +5,7 @@ from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 
 from lib.eval.siamese_tester import SiameseTester
-from lib.utils import create_logger, instantiate_loggers
+from lib.utils import create_logger
 
 log = create_logger("eval_siamese")
 
@@ -19,7 +17,7 @@ def evaluate(cfg: DictConfig) -> None:
     assert cfg.ckpt_path
 
     log.info("==> initializing logger ...")
-    logger: List[Logger] = instantiate_loggers(cfg.get("logger"))
+    logger: Logger = hydra.utils.instantiate(cfg.logger)
 
     log.info(f"==> initializing datamodule <{cfg.eval_data._target_}>")
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.eval_data)

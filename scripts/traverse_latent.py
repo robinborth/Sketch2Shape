@@ -1,24 +1,15 @@
 from pathlib import Path
-from typing import List
 
 import hydra
 import lightning as L
 import numpy as np
 import open3d as o3d
-import pandas as pd
-import wandb
-from lightning import Callback, LightningDataModule, LightningModule, Trainer
-from lightning.pytorch.loggers import WandbLogger
+from lightning import LightningModule, Trainer
+from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
-from lib.data.metainfo import MetaInfo
-from lib.utils import (
-    create_logger,
-    instantiate_callbacks,
-    instantiate_loggers,
-    log_hyperparameters,
-)
+from lib.utils import create_logger, log_hyperparameters
 
 log = create_logger("traverse_latent")
 
@@ -32,7 +23,7 @@ def optimize(cfg: DictConfig) -> None:
     model: LightningModule = hydra.utils.instantiate(cfg.model)
 
     log.info("==> initializing logger ...")
-    logger: WandbLogger = instantiate_loggers(cfg.get("logger"))
+    logger: Logger = hydra.utils.instantiate(cfg.logger)
 
     log.info(f"==> initializing trainer <{cfg.trainer._target_}>")
     trainer: Trainer = hydra.utils.instantiate(cfg.trainer, logger=logger)

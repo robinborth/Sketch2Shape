@@ -1,0 +1,4 @@
+# https://lightning.ai/docs/pytorch/stable/extensions/generated/lightning.pytorch.loggers.CSVLogger.html
+
+_target_: lightning.pytorch.loggers.CSVLogger
+save_dir: "${paths.output_dir}"

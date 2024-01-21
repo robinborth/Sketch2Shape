@@ -5,7 +5,7 @@ defaults:
     - eval_siamese
   - model: siamese 
   - callbacks: default
-  - logger: null
+  - logger: default
   - trainer: default
   - hydra: default
   - paths: default

@@ -7,12 +7,7 @@ from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 
 from lib.eval.siamese_tester import SiameseTester
-from lib.utils import (
-    create_logger,
-    instantiate_callbacks,
-    instantiate_loggers,
-    log_hyperparameters,
-)
+from lib.utils import create_logger, instantiate_callbacks, log_hyperparameters
 
 log = create_logger("train_siamese")
 
@@ -23,7 +18,7 @@ def train(cfg: DictConfig) -> None:
     L.seed_everything(cfg.seed)
 
     log.info("==> initializing logger ...")
-    logger: Logger = instantiate_loggers(cfg.get("logger"))
+    logger: Logger = hydra.utils.instantiate(cfg.logger)
 
     log.info(f"==> initializing datamodule <{cfg.data._target_}>")
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
