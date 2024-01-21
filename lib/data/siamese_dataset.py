@@ -10,9 +10,11 @@ class SiameseDataset(Dataset):
         self,
         data_dir: str = "data/",
         split: Optional[str] = None,
-        transforms: Optional[Callable] = None,
+        sketch_transforms: Optional[Callable] = None,
+        image_transforms: Optional[Callable] = None,
     ):
-        self.transforms = transforms
+        self.sketch_transforms = sketch_transforms
+        self.image_transforms = image_transforms
         self.metainfo = MetaInfo(data_dir=data_dir, split=split)
         self.metainfo.load_sketch_image_pairs()
 
@@ -27,13 +29,13 @@ class SiameseDataset(Dataset):
 
         sketch = self.metainfo.load_sketch(obj_id, image_id)
         image = self.metainfo.load_normal(obj_id, image_id)
-        if self.transforms is not None:
-            sketch = self.transforms(sketch)
-            image = self.transforms(image)
+        if self.sketch_transforms is not None:
+            sketch = self.sketch_transforms(sketch)
+        if self.image_transforms is not None:
+            image = self.image_transforms(image)
 
         return {
             "sketch": sketch,
             "image": image,
             "label": label,
-            "image_id": int(image_id),
         }
