@@ -4,6 +4,7 @@ from typing import Optional
 import matplotlib.pyplot as plt
 import numpy as np
 from torch.utils.data import Dataset
+from torchvision.transforms import ToTensor
 
 from lib.data.metainfo import MetaInfo
 from lib.render.camera import Camera
@@ -128,6 +129,7 @@ class NormalLatentOptimizerDataset(Dataset):
         dist: float = 4.0,
     ):
         self.metainfo = MetaInfo(data_dir=data_dir)
+        self.transforms = ToTensor()
         self.data = []
         label = 0
         for azim in azims:
@@ -137,7 +139,9 @@ class NormalLatentOptimizerDataset(Dataset):
                 points, rays, mask = camera.unit_sphere_intersection_rays()
                 data["points"], data["rays"], data["mask"] = points, rays, mask
                 data["camera_position"] = camera.camera_position()
-                data["normal"] = self.metainfo.load_normal(obj_id, f"{label:05}")
+                normal = self.metainfo.load_normal(obj_id, f"{label:05}")
+                data["gt_image"] = self.transforms(normal).permute(1, 2, 0)
+                data["gt_surface_mask"] = data["gt_image"].sum(axis=-1) < 2.95
                 label += 1
                 self.data.append(data)
 

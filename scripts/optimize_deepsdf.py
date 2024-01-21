@@ -29,14 +29,33 @@ def optimize(cfg: DictConfig) -> None:
     assert cfg.data.batch_size == 1  # make sure that the batch_size is 1
     L.seed_everything(cfg.seed)
 
-    log.info(f"==> initializing datamodule <{cfg.data._target_}>")
     metainfo = MetaInfo(data_dir=cfg.data.data_dir, split=cfg.split)
-    for obj_id in metainfo.obj_ids:
+    if obj_ids := cfg.get("obj_ids"):  # specific obj_ids are selected
+        log.info(f"==> selecting specified obj_ids ({len(obj_ids)}) ...>")
+    if obj_ids is None:  # if there are specific obj_ids we use all from a split
+        obj_ids = metainfo.obj_ids
+        log.info(f"==> selecting obj_ids ({cfg.split}) ...>")
+
+    if cfg.split != "train" and cfg.prior_idx:
+        log.info("WARNING! Only select prior_idx for split=train ...>")
+        log.info("==> Set prior_idx=False ...>")
+        cfg.prior_idx = False
+
+    if not cfg.eval and cfg.save_mesh:
+        log.info("WARNING! The mesh is only created in the eval loop ...>")
+        log.info("==> Set eval=True ...>")
+        cfg.eval = True
+
+    for obj_id in obj_ids:
         log.info(f"==> optimize {obj_id=} ...")
         cfg.data.obj_id = obj_id
+
+        log.info(f"==> initializing datamodule <{cfg.data._target_}>")
         datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
 
         log.info(f"==> initializing model <{cfg.model._target_}>")
+        if cfg.prior_idx:  # set the prior_idx for the trained shapes
+            cfg.model.prior_idx = metainfo.obj_id_to_label(obj_id=obj_id)
         model: LightningModule = hydra.utils.instantiate(cfg.model)
 
         log.info("==> initializing callbacks ...")
@@ -89,10 +108,11 @@ def optimize(cfg: DictConfig) -> None:
 
     log.info("==> save metrics ...")
     df = pd.DataFrame(metrics)
-    mean_metric = df.loc[:, df.columns != "obj_id"].mean()
-    mean_metric["obj_id"] = "mean_metric"
-    df = pd.concat([df, mean_metric.to_frame().T], ignore_index=True)
     df.to_csv(cfg.paths.metrics_path, index=False)
+
+    log.info("==> save mean metrics ...")
+    mean_metric = df.loc[:, df.columns != "obj_id"].mean()
+    mean_metric.to_csv(cfg.paths.mean_metrics_path)
 
 
 if __name__ == "__main__":

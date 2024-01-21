@@ -15,17 +15,33 @@ defaults:
 seed: 123
 task_name: optimize_deepsdf
 tags: ["optimize_deepsdf"]
-train: True 
+split: val  # train, val, test
+obj_ids: ???  # overrids the split setting, make sure that obj_ids are only from the same split.
+train: True
+prior_idx: True  # only if split == train
 eval: True
-save_mesh: True
-split: val
+save_mesh: True  # only if eval == True
 ckpt_path: ???
 
 trainer:
   num_sanity_val_steps: 0
+  max_epochs: 2000 
 
 data:
   train_dataset:
     _target_: lib.data.deepsdf_dataset.DeepSDFLatentOptimizerDataset
     chunk_size: 16384
-    half: False
+    half: True
+
+
+model:
+  scheduler:
+    _partial_: True
+    _target_: torch.optim.lr_scheduler.StepLR
+    step_size: 100
+    gamma: 0.9
+
+  
+callbacks:
+  early_stopping:
+    patience: 200

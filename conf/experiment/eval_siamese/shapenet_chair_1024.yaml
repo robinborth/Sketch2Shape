@@ -1,0 +1,16 @@
+# @package _global_
+
+defaults:
+  - override /data:
+    - shapenet_chair_1024
+    - train_siamese
+    - eval_siamese
+  - override /logger: wandb
+
+tags: ["eval_siamese", "shapenet_chair_1024"]
+
+trainer:
+  max_epochs: 1
+
+eval_data:
+  batch_sizse: 144 
