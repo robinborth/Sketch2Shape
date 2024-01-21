@@ -2,7 +2,6 @@ import glob
 import os
 
 import numpy as np
-import torch
 
 
 def get_translation(t):
@@ -47,43 +46,14 @@ def get_rotation_z(theta: float):
     )
 
 
-# for Blinn-Phong model
-class ReflectionProperty:
-    def __init__(
-        self,
-        ambient: list = [0.3, 0.3, 0.3],
-        diffuse: list = [0.3, 0.3, 0.3],
-        specular: list = [0.0, 0.0, 0.0],
-        shininess: int = 0,
-    ):
-        self.ambient = torch.tensor(ambient)
-        self.diffuse = torch.tensor(diffuse)
-        self.specular = torch.tensor(specular)
-        self.shininess = torch.tensor(shininess)
-
-
-class LightSource:
-    def __init__(
-        self,
-        position: list = [0, 2, -2],
-        ambient: list = [1, 1, 1],
-        diffuse: list = [1, 1, 1],
-        specular: list = [1, 1, 1],
-    ):
-        self.position = torch.tensor(position)
-        # default values
-        self.ambient = torch.tensor(ambient)
-        self.diffuse = torch.tensor(diffuse)
-        self.specular = torch.tensor(specular)
-
-
 def create_video(
     run_folder: str,
     video_fname: str,
     framerate: int = 30,
 ):
     image_folder = run_folder + "/wandb/latest-run/files/media/images"
-    mask = "default_image_*.png"
+    mask = "video_frame_*.png"
+
     # workaround since I was not able to get ffmpeg run
     for fname in glob.glob(image_folder + "/" + mask):
         paths = fname.split("/")
@@ -95,6 +65,16 @@ def create_video(
         new_fname = "/".join(paths)
         os.rename(fname, new_fname)
 
-    os.system(
-        f"ffmpeg -framerate {framerate} -pattern_type glob -i '{image_folder}/{mask}' -pix_fmt yuv420p {video_fname}"
-    )
+    args: list[str] = [
+        "ffmpeg",
+        "-framerate",
+        str(framerate),
+        "-pattern_type",
+        "glob",
+        "-i",
+        f"{image_folder}/{mask}",
+        "-pix_fmt",
+        "yuv420p",
+        video_fname,
+    ]
+    os.system(" ".join(args))

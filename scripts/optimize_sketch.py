@@ -4,10 +4,10 @@ from optimize_latent import optimize_latent
 
 from lib.utils import create_logger
 
-log = create_logger("optimize_deepsdf")
+log = create_logger("optimize_sketch")
 
 
-@hydra.main(version_base=None, config_path="../conf", config_name="optimize_deepsdf")
+@hydra.main(version_base=None, config_path="../conf", config_name="optimize_sketch")
 def optimize(cfg: DictConfig) -> None:
     optimize_latent(cfg=cfg, log=log)
 

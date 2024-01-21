@@ -22,6 +22,7 @@ prior_idx: True  # only if split == train
 eval: True
 save_mesh: True  # only if eval == True
 ckpt_path: ???
+create_video: False
 
 trainer:
   num_sanity_val_steps: 0

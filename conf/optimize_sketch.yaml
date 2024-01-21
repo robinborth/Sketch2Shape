@@ -3,7 +3,7 @@
 defaults:
   - data:
       - optimize_latent
-  - model: optimize_normals
+  - model: optimize_sketch
   - trainer: default
   - logger: default
   - hydra: default
@@ -13,8 +13,8 @@ defaults:
   - _self_
 
 seed: 123
-task_name: optimize_normals
-tags: ["optimize_normals"]
+task_name: optimize_sketch
+tags: ["optimize_sketch"]
 train: True
 eval: True
 save_mesh: True
@@ -32,6 +32,6 @@ trainer:
 
 data:
   train_dataset:
-    _target_: lib.data.deepsdf_dataset.NormalLatentOptimizerDataset
+    _target_: lib.data.deepsdf_dataset.SketchLatentOptimizerDataset
     azims: ${data.preprocess_siamese.azims}
     elevs: ${data.preprocess_siamese.elevs}

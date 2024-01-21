@@ -1,10 +1,8 @@
-from typing import Any, Dict, List
+from typing import List
 
 from hydra import compose, initialize
 from hydra.utils import instantiate
 from lightning import Callback
-from lightning.pytorch.loggers import Logger
-from lightning_utilities.core.rank_zero import rank_zero_only
 from omegaconf import DictConfig, OmegaConf
 
 from lib.logger import create_logger
@@ -43,13 +41,9 @@ def load_config(config_name: str, overrides: list = []) -> DictConfig:
 def log_hyperparameters(object_dict) -> None:
     hparams = {}
 
-    cfg = OmegaConf.to_container(object_dict["cfg"])
+    cfg: dict = OmegaConf.to_container(object_dict["cfg"])  # type: ignore
     model = object_dict["model"]
     trainer = object_dict["trainer"]
-
-    if not trainer.logger:
-        log.warning("Logger not found! Skipping hyperparameter logging...")
-        return
 
     hparams["model"] = cfg["model"]
 

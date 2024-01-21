@@ -1,12 +1,13 @@
 # @package model
 
-_target_: lib.models.deepsdf.DeepSDFLatentOptimizer
+_target_: lib.models.optimize_deepsdf.DeepSDFLatentOptimizer
 ckpt_path: ${ckpt_path} 
 prior_idx: -1
 reg_loss: True
 reg_weight: 1e-05
-resolution: 128
-chunk_size: 65536
+image_resolution: 256
+mesh_resolution: 128
+mesh_chunk_size: 65536
 loss:
   _target_: torch.nn.L1Loss
   _partial_: true
