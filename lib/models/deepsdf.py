@@ -174,8 +174,8 @@ class DeepSDFLatentOptimizerBase(LightningModule):
         reg_weight: float = 1e-05,
         optimizer=None,
         scheduler=None,
-        mesh_resolution: int = 128,
-        mesh_chunk_size: int = 65536,
+        resolution: int = 128,
+        chunk_size: int = 65536,
     ) -> None:
         super().__init__()
         self.save_hyperparameters(logger=False)
