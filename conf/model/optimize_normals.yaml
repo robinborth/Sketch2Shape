@@ -4,7 +4,7 @@ _target_: lib.render.renderer.DeepSDFNormalRender
 ckpt_path: ${ckpt_path}
 prior_idx: -1
 reg_loss: True
-reg_weight: 1e-05
+reg_weight: 1e-01
 # normal_weight: 1.0
 resolution: 128
 chunk_size: 65536

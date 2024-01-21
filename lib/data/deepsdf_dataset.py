@@ -135,7 +135,7 @@ class NormalLatentOptimizerDataset(Dataset):
         for azim in azims:
             for elev in elevs:
                 data = {}
-                camera = Camera(azim=azim, elev=-elev, dist=dist)
+                camera = Camera(azim=azim, elev=elev, dist=dist)
                 points, rays, mask = camera.unit_sphere_intersection_rays()
                 data["points"], data["rays"], data["mask"] = points, rays, mask
                 data["camera_position"] = camera.camera_position()

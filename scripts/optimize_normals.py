@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import List
 
@@ -89,7 +90,9 @@ def optimize(cfg: DictConfig) -> None:
         wandb.finish()
 
         if cfg.create_video:
-            video_fname = cfg.save_video_path + "/" + cfg.save_video_name
+            if not os.path.exists(cfg.paths.video_dir):
+                os.mkdir(cfg.paths.video_dir)
+            video_fname = cfg.paths.video_dir + "/" + cfg.video_name
             create_video(
                 run_folder=cfg.paths.output_dir,
                 video_fname=video_fname,
