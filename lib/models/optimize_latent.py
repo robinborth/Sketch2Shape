@@ -42,6 +42,7 @@ class LatentOptimizer(LightningModule):
         # logger settings
         log_images: bool = True,
         # default video settings
+        video_capture_rate: int = 16,
         video_azim: float = 0.0,
         video_elev: float = 0.0,
         video_dist: int = 4,
@@ -68,6 +69,15 @@ class LatentOptimizer(LightningModule):
         self.chamfer_distance = ChamferDistanceMetric()
         # TODO add the other metrics here
 
+        # video settings
+        camera = Camera(
+            azim=self.hparams["video_azim"],
+            elev=-self.hparams["video_azim"],
+            dist=self.hparams["video_dist"],
+        )
+        points, rays, mask = camera.unit_sphere_intersection_rays()
+        self.video_points, self.video_rays, self.video_mask = points, rays, mask
+
     def forward(self, points: torch.Tensor, mask=None):
         return self.model(points=points, latent=self.latent, mask=mask)
 
@@ -76,6 +86,10 @@ class LatentOptimizer(LightningModule):
 
     def on_train_epoch_start(self):
         self.model.eval()
+
+    def on_train_batch_end(self, outputs, batch, batch_idx):
+        if batch_idx % self.hparams["video_capture_rate"] == 0:
+            self.capture_video_frame()
 
     def test_step(self, batch, batch_idx):
         gt_surface_samples = batch["surface_samples"].detach().cpu().numpy().squeeze()
@@ -141,17 +155,12 @@ class LatentOptimizer(LightningModule):
     ############################################################
 
     def capture_video_frame(self):
-        camera = Camera(
-            azim=self.hparams["default_azim"],
-            elev=-self.hparams["default_elev"],
-            dist=self.hparams["default_dist"],
-        )
-        points, rays, mask = camera.unit_sphere_intersection_rays()
+        points = torch.tensor(self.video_points).to(self.device)
+        mask = torch.tensor(self.video_mask, dtype=torch.bool).to(self.device)
+        rays = torch.tensor(self.video_rays).to(self.device)
         with torch.no_grad():
             points, surface_mask = self.sphere_tracing(
-                points=points.to(self.device),
-                mask=mask.to(self.device),  # dtype=torch.bool
-                rays=rays.to(self.device),
+                points=points, mask=mask, rays=rays
             )
             normals = self.render_normals(points=points, mask=surface_mask)
         image = self.normal_to_image(normals, surface_mask)

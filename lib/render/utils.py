@@ -1,5 +1,5 @@
-import glob
 import os
+from pathlib import Path
 
 import numpy as np
 
@@ -46,35 +46,20 @@ def get_rotation_z(theta: float):
     )
 
 
-def create_video(
-    run_folder: str,
-    video_fname: str,
-    framerate: int = 30,
-):
-    image_folder = run_folder + "/wandb/latest-run/files/media/images"
-    mask = "video_frame_*.png"
+def create_video(video_dir: Path, obj_id: str, framerate: int = 30):
+    image_folder = video_dir.parent / "wandb/latest-run/files/media/images"
 
-    # workaround since I was not able to get ffmpeg run
-    for fname in glob.glob(image_folder + "/" + mask):
-        paths = fname.split("/")
-        last = paths[-1]
-        last_split = last.split("_")
-        last_split[2] = last_split[2].zfill(6)
-        last = "_".join(last_split)
-        paths[-1] = last
-        new_fname = "/".join(paths)
-        os.rename(fname, new_fname)
+    # rename so that ffmpeg can extract the correct order
+    for video_frame_path in image_folder.glob("video_frame_*.png"):
+        step = video_frame_path.name.split("_")[2].zfill(6)
+        new_video_frame_path = video_frame_path.parent / f"video_frame_{step}.png"
+        video_frame_path.rename(new_video_frame_path)
 
+    image_folder_glob = (image_folder / "video_frame_*.png").as_posix()
+    video_path = video_dir / f"{obj_id}.mp4"
     args: list[str] = [
-        "ffmpeg",
-        "-framerate",
-        str(framerate),
-        "-pattern_type",
-        "glob",
-        "-i",
-        f"{image_folder}/{mask}",
-        "-pix_fmt",
-        "yuv420p",
-        video_fname,
+        f"ffmpeg -framerate {framerate}",
+        f'-pattern_type glob -i "{image_folder_glob}"',
+        f"-pix_fmt yuv420p {video_path}",
     ]
     os.system(" ".join(args))

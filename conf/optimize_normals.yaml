@@ -15,19 +15,18 @@ defaults:
 seed: 123
 task_name: optimize_normals
 tags: ["optimize_normals"]
+split: val
+obj_ids: ???
 train: True
+prior_idx: False
 eval: True
 save_mesh: True
-split: val
-ckpt_path: ???
-
 create_video: True
-video_name: optimize_video.mp4
-framerate: 30
+ckpt_path: ???
 
 trainer:
   num_sanity_val_steps: 0
-  max_epochs: 5
+  max_epochs: 1
   accumulate_grad_batches: 8
 
 data:

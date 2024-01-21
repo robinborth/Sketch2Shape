@@ -1,6 +1,6 @@
 import torch
 
-from lib.models.latent_optimizer import LatentOptimizer
+from lib.models.optimize_latent import LatentOptimizer
 from lib.models.siamese import Siamese
 
 

@@ -18,6 +18,7 @@ work_dir: ${hydra:runtime.cwd}
 # the path of the mesh reconstructions of the latent optimizations
 mesh_dir: ${paths.output_dir}/mesh
 
+# the path where the video will be saved
 video_dir: ${paths.output_dir}/video
 
 # the path of the metrics in the latent optimization

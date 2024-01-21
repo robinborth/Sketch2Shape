@@ -1,7 +1,7 @@
 import torch
 from torch.nn.functional import l1_loss
 
-from lib.models.latent_optimizer import LatentOptimizer
+from lib.models.optimize_latent import LatentOptimizer
 
 
 class DeepSDFNormalRender(LatentOptimizer):

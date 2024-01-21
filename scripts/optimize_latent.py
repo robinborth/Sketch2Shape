@@ -1,4 +1,3 @@
-import os
 from logging import Logger
 from pathlib import Path
 
@@ -9,6 +8,7 @@ import pandas as pd
 import wandb
 from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger as LightningLogger
+from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig
 
 from lib.data.metainfo import MetaInfo
@@ -97,17 +97,11 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
                 write_triangle_uvs=False,
             )
 
-        if cfg.create_video:
-            # TODO also create vido for the other optimization files
+        if cfg.create_video and isinstance(logger, WandbLogger):
             log.info("==> creating video ...")
-            if not os.path.exists(cfg.paths.video_dir):
-                os.mkdir(cfg.paths.video_dir)
-            video_fname = cfg.paths.video_dir + "/" + cfg.video_name
-            create_video(
-                run_folder=cfg.paths.output_dir,
-                video_fname=video_fname,
-                framerate=cfg.framerate,
-            )
+            path = Path(cfg.paths.video_dir)
+            path.mkdir(parents=True, exist_ok=True)
+            create_video(video_dir=path, obj_id=obj_id)
 
         # finish the wandb run in order to track all the optimizations seperate
         wandb.finish()
