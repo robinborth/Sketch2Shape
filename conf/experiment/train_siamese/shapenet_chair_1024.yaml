@@ -10,8 +10,8 @@ defaults:
 tags: ["train_siamese", "shapenet_chair_1024"]
 
 trainer:
-  max_epochs: 1
-  val_check_interval: 10
+  max_epochs: 20
+  val_check_interval: 0.25
   
 callbacks:
   early_stopping:

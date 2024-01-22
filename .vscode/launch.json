@@ -19,9 +19,12 @@
             "program": "scripts/train_siamese.py",
             "args": [
                 "+data=shapenet_chair_1024",
-                "trainer.val_check_interval=5",
-                "+trainer.num_sanity_val_steps=0"
-                // "+experiment/train_siamese=shapenet_chair_1024",
+                "+trainer.num_sanity_val_steps=0",
+                "trainer.val_check_interval=1",
+                "+trainer.limit_val_batches=1",
+                "+trainer.limit_train_batches=1",
+                // "trainer.val_check_interval=100",
+                // "trainer.accelerator=cpu"
                 // "logger=wandb"
             ],
             "console": "integratedTerminal",
@@ -45,8 +48,7 @@
             "program": "scripts/eval_siamese.py",
             "console": "integratedTerminal",
             "args": [
-                "ckpt_path=/Users/robinborth/Code/sketch2shape/temp/siamese.ckpt",
-                "+data=shapenet_chair_16"
+                "+experiment/eval_siamese=shapenet_chair_1024"
             ],
             "justMyCode": true,
         },

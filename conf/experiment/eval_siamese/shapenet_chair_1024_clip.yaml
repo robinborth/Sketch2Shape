@@ -7,6 +7,6 @@ defaults:
     - eval_siamese
   - override /logger: wandb
 
-ckpt_path: /home/borth/sketch2shape/checkpoints/siamese.ckpt 
-tags: ["eval_siamese", "shapenet_chair_1024", "siamese_ckpt"]
+ckpt_path: clip 
+tags: ["eval_siamese", "shapenet_chair_1024", "clip"]
 
