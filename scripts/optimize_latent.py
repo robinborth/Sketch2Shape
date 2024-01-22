@@ -97,14 +97,14 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
                 write_triangle_uvs=False,
             )
 
+        # finish the wandb run in order to track all the optimizations seperate
+        wandb.finish()
+
         if cfg.create_video and isinstance(logger, WandbLogger):
             log.info("==> creating video ...")
             path = Path(cfg.paths.video_dir)
             path.mkdir(parents=True, exist_ok=True)
             create_video(video_dir=path, obj_id=obj_id)
-
-        # finish the wandb run in order to track all the optimizations seperate
-        wandb.finish()
 
     log.info("==> save metrics ...")
     df = pd.DataFrame(metrics)
