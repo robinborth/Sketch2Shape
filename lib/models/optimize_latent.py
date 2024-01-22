@@ -44,7 +44,7 @@ class LatentOptimizer(LightningModule):
         # default video settings
         video_capture_rate: int = 16,
         video_azim: float = 0.0,
-        video_elev: float = 0.0,
+        video_elev: float = 45.0,
         video_dist: int = 4,
         # evaluation settings
         # TODO
@@ -53,7 +53,9 @@ class LatentOptimizer(LightningModule):
         self.save_hyperparameters(logger=False)
 
         # init model
-        self.model = DeepSDF.load_from_checkpoint(self.hparams["ckpt_path"])
+        self.model = DeepSDF.load_from_checkpoint(
+            self.hparams["ckpt_path"], strict=False
+        )
         self.model.freeze()
 
         # init latent either by using a pretrained one ore the mean of the pretrained
@@ -72,7 +74,7 @@ class LatentOptimizer(LightningModule):
         # video settings
         camera = Camera(
             azim=self.hparams["video_azim"],
-            elev=-self.hparams["video_azim"],
+            elev=-self.hparams["video_elev"],
             dist=self.hparams["video_dist"],
         )
         points, rays, mask = camera.unit_sphere_intersection_rays()
