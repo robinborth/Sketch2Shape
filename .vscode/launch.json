@@ -92,7 +92,9 @@
             "args": [
                 "+data=shapenet_chair_1024",
                 "ckpt_path=/shared/logs/deepsdf.ckpt",
-                "logger=wandb"
+                "logger=wandb",
+                "+model.step_scale=1"
+                // "prior_idx=True",
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

@@ -4,10 +4,11 @@ _target_: lib.models.optimize_normals.DeepSDFNormalRender
 ckpt_path: ${ckpt_path}
 prior_idx: -1
 reg_loss: True
-reg_weight: 1e-05
-image_resolution: 256 
+reg_weight: 5e-02
+image_resolution: 256
 mesh_resolution: 128
 mesh_chunk_size: 65536
+step_scale: 1
 optimizer:
   _target_: torch.optim.Adam
   _partial_: true
@@ -15,5 +16,5 @@ optimizer:
 scheduler:
   _partial_: True
   _target_: torch.optim.lr_scheduler.StepLR
-  step_size: 100
-  gamma: 0.5
+  step_size: 200000
+  gamma: 0.9

@@ -27,10 +27,11 @@ ckpt_path: ???
 trainer:
   num_sanity_val_steps: 0
   max_epochs: 1
-  accumulate_grad_batches: 8
+  accumulate_grad_batches: 16
 
 data:
   train_dataset:
     _target_: lib.data.deepsdf_dataset.NormalLatentOptimizerDataset
     azims: ${data.preprocess_siamese.azims}
     elevs: ${data.preprocess_siamese.elevs}
+  shuffle: True

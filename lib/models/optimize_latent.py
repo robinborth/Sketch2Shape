@@ -42,7 +42,7 @@ class LatentOptimizer(LightningModule):
         # logger settings
         log_images: bool = True,
         # default video settings
-        video_capture_rate: int = 16,
+        video_capture_rate: int = 4,
         video_azim: float = 0.0,
         video_elev: float = 45.0,
         video_dist: int = 4,
@@ -240,6 +240,9 @@ class LatentOptimizer(LightningModule):
         depth = torch.zeros(total_points).to(device)
         sdf = torch.ones(total_points).to(device)
 
+        # TODO speed improvement:
+        # [ ] track previous points and sdfs: if sign switch, interpolate
+
         # sphere tracing
         for _ in range(self.hparams["n_render_steps"]):
             with torch.no_grad():
@@ -247,11 +250,13 @@ class LatentOptimizer(LightningModule):
 
             sdf_out = torch.clamp(sdf_out, -clamp_sdf, clamp_sdf)
             depth[mask] += sdf_out * step_scale
-            sdf[mask] = sdf_out * step_scale
+            if _ > 50:
+                sdf[mask] = sdf_out * step_scale * 0.5
+            else:
+                sdf[mask] = sdf_out * step_scale
 
             surface_idx = torch.abs(sdf) < surface_eps
-            # TODO there are holes in the rendering
-            # void_idx = points.norm(dim=-1) > 1
+
             void_idx = depth > 2.0
             mask[surface_idx | void_idx] = False
 

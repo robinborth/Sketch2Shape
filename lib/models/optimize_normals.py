@@ -40,7 +40,10 @@ class DeepSDFNormalRender(LatentOptimizer):
             reg_loss = latent_norm * self.hparams["reg_weight"]
             self.log("optimize/reg_loss", reg_loss)
 
-        loss = reg_loss + normal_loss
+        if self.hparams["reg_loss"]:
+            loss = reg_loss + normal_loss
+        else:
+            loss = normal_loss
         self.log("optimize/loss", loss)
 
         self.log(
