@@ -31,7 +31,7 @@ class LatentOptimizer(LightningModule):
         # rendering settings
         n_render_steps: int = 100,
         clamp_sdf: float = 0.1,
-        step_scale: float = 1.5,
+        step_scale: float = 1.0,
         surface_eps: float = 1e-03,
         sphere_eps: float = 3e-02,
         normal_eps: float = 5e-03,
@@ -42,7 +42,7 @@ class LatentOptimizer(LightningModule):
         # logger settings
         log_images: bool = True,
         # default video settings
-        video_capture_rate: int = 4,
+        video_capture_rate: int = 30,
         video_azim: float = 0.0,
         video_elev: float = 45.0,
         video_dist: int = 4,
