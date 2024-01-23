@@ -1,7 +1,0 @@
-# @package _global_
-
-defaults:
-  - eval 
- 
-ckpt_path: resnet18 
-tags: ["siamese", "eval", "resnet18"]

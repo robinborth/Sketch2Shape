@@ -14,7 +14,7 @@ persistent_workers: True
 sampler:
   _target_: pytorch_metric_learning.samplers.MPerClassSampler
   _partial_: True
-  m: 8
+  m: 4
 dataset: 
   _target_: lib.data.siamese_dataset.SiameseDataset
   _partial_: True
