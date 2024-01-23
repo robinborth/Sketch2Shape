@@ -90,11 +90,9 @@
             "request": "launch",
             "program": "scripts/optimize_normals.py",
             "args": [
-                "+data=shapenet_chair_1024",
+                "+data=shapenet_chair_16",
                 "ckpt_path=/shared/logs/deepsdf.ckpt",
                 "logger=wandb",
-                "+model.step_scale=1"
-                // "prior_idx=True",
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

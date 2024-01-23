@@ -166,4 +166,3 @@ logs/*
 temp
 conf/local/*
 checkpoints/*
-experiment.sh
