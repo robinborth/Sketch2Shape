@@ -11,9 +11,9 @@ class DeepSDFNormalRender(LatentOptimizer):
     ) -> None:
         super().__init__(**kwargs)
         self.model.lat_vecs = None
-        self.model.decoder.load_state_dict(
-            torch.load("/shared/logs/deprecated/decoder.pt")
-        )
+        # self.model.decoder.load_state_dict(
+        #     torch.load("/shared/logs/deprecated/decoder.pt")
+        # )
 
     def training_step(self, batch, batch_idx):
         gt_image = batch["gt_image"].squeeze(0)
