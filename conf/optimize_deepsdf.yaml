@@ -26,7 +26,7 @@ ckpt_path: ???
 
 trainer:
   num_sanity_val_steps: 0
-  max_epochs: 2000 
+  max_epochs: 1000 
 
 data:
   train_dataset:

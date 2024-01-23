@@ -1,0 +1,12 @@
+# @package _global_
+
+defaults:
+  - override /data: shapenet_chair_1024
+  - override /logger: wandb
+
+ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
+tags: ["traverse_latent", "shapenet_chair_1024", "version_1"]
+
+model:
+  prior_idx_start: 0
+  prior_idx_end: 1

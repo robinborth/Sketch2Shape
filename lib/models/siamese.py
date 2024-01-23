@@ -14,6 +14,8 @@ class Siamese(LightningModule):
         scheduler: torch.optim.lr_scheduler,
         mine_full_batch: bool = False,
         scale_loss: bool = False,
+        reg_loss: bool = True,
+        reg_weight: float = 1e-4,
     ) -> None:
         super().__init__()
         self.save_hyperparameters(logger=False)
@@ -36,7 +38,7 @@ class Siamese(LightningModule):
             embeddings = torch.concatenate([output["sketch_emb"], output["image_emb"]])
             labels = torch.concatenate([batch["label"], batch["label"]])
             miner_output = self.miner(embeddings=embeddings, labels=labels)
-            loss = self.loss(
+            triplet_loss = self.loss(
                 embeddings=embeddings,
                 labels=labels,
                 indices_tuple=miner_output,
@@ -48,7 +50,7 @@ class Siamese(LightningModule):
                 labels=labels,
                 ref_emb=output["image_emb"],
             )
-            loss = self.loss(
+            triplet_loss = self.loss(
                 embeddings=output["sketch_emb"],
                 labels=labels,
                 indices_tuple=miner_output,
@@ -60,30 +62,44 @@ class Siamese(LightningModule):
         output["miner_ratio"] = output["miner_count"] / output["miner_max_count"]
 
         if self.hparams["scale_loss"]:
-            loss *= output["miner_ratio"]
+            triplet_loss *= output["miner_ratio"]
+        output["triplet_loss"] = triplet_loss
 
-        return output, loss
+        reg_loss = torch.tensor(0).to(triplet_loss)
+        if self.hparams["reg_loss"]:
+            embedding = torch.concatenate([output["sketch_emb"], output["image_emb"]])
+            reg_loss = torch.linalg.norm(embedding, dim=-1).mean()
+            reg_loss *= self.hparams["reg_weight"]
+        output["reg_loss"] = reg_loss
+
+        output["loss"] = output["reg_loss"] + output["triplet_loss"]
+
+        return output
 
     def training_step(self, batch, batch_idx):
-        output, loss = self.model_step(batch)
-        self.log("train/loss", loss, prog_bar=True)
+        output = self.model_step(batch)
+        self.log("train/triplet_loss", output["triplet_loss"], prog_bar=True)
+        self.log("train/reg_loss", output["triplet_loss"], prog_bar=True)
+        self.log("train/loss", output["loss"], prog_bar=True)
         self.log("train/miner_ratio", output["miner_ratio"], prog_bar=True)
         self.log("train/miner_count", output["miner_count"])
         self.log("train/miner_max_count", output["miner_max_count"]),
-        return loss
+        return output["loss"]
 
     def validation_step(self, batch, batch_idx):
-        output, loss = self.model_step(batch)
-        self.log("val/loss", loss, prog_bar=True)
+        output = self.model_step(batch)
+        self.log("val/triplet_loss", output["triplet_loss"], prog_bar=True)
+        self.log("val/reg_loss", output["triplet_loss"], prog_bar=True)
+        self.log("val/loss", output["loss"], prog_bar=True)
         self.log("val/miner_count", output["miner_count"])
         self.log("val/miner_max_count", output["miner_max_count"]),
         self.log("val/miner_ratio", output["miner_ratio"], prog_bar=True)
-        return loss
+        return output["loss"]
 
     def test_step(self, batch, batch_idx):
-        _, loss = self.model_step(batch)
-        self.log("test/loss", loss, prog_bar=True)
-        return loss
+        output = self.model_step(batch)
+        self.log("test/loss", output["loss"], prog_bar=True)
+        return output["loss"]
 
     def configure_optimizers(self):
         optimizer = self.hparams["optimizer"](params=self.parameters())

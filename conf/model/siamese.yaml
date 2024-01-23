@@ -4,7 +4,7 @@ decoder:
   _target_: lib.models.decoder.ResNet18
   _partial_: true
   embedding_size: 128
-  pretrained: True
+  pretrained: True 
 miner:
   _target_: pytorch_metric_learning.miners.TripletMarginMiner
   _partial_: true
@@ -30,3 +30,5 @@ optimizer:
   weight_decay: 0.0
 mine_full_batch: true
 scale_loss: true
+reg_loss: true
+reg_weight: 1e-3

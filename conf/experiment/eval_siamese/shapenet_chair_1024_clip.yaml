@@ -10,3 +10,12 @@ defaults:
 ckpt_path: clip 
 tags: ["eval_siamese", "shapenet_chair_1024", "clip"]
 
+eval_data:
+  sketch_transforms:
+    _target_: torchvision.transforms.Compose
+    transforms:
+      - _target_: torchvision.transforms.ToTensor
+  image_transforms:
+    _target_: torchvision.transforms.Compose
+    transforms:
+      - _target_: torchvision.transforms.ToTensor

@@ -7,6 +7,6 @@ defaults:
     - eval_siamese
   - override /logger: wandb
 
-ckpt_path: resnet_18 
-tags: ["eval_siamese", "shapenet_chair_1024", "resnet_18"]
+ckpt_path: resnet18 
+tags: ["eval_siamese", "shapenet_chair_1024", "resnet18"]
 
