@@ -1,0 +1,33 @@
+# @package _global_
+
+defaults:
+  - override /data:
+    - shapenet_chair_1024
+    - optimize_latent
+  - override /logger: wandb
+
+ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
+siamese_ckpt_path: /home/borth/sketch2shape/checkpoints/siamese.ckpt  
+tags: ["optimize_sketch", "shapenet_chair_1024", "val_optimization"]
+split: val 
+prior_idx: False 
+train: True
+create_video: True
+obj_ids:
+  - 1e40fef11894c4b9ce4f274577283b16
+  - 5b1744a03be753cf3ccbceb68fb352fd
+  - 5da5cc7b5a6a9d6f433334f7dfc6c30a
+  - 6ad7e3a8e6f3ed1dd068cfb43a81fc7
+  - 6d6e634ff34bd350c511e6b9b3b344f3
+  - 7eabd19312bde1dc9335750905007562
+
+trainer:
+  max_epochs: 15
+  accumulate_grad_batches: 16
+
+model:
+  siamese_weight: 1
+  video_capture_rate: 8
+  reg_weight: 1e-3
+  optimizer:
+    lr: 1e-2

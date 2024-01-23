@@ -167,15 +167,22 @@ class SketchLatentOptimizerDataset(Dataset):
     ):
         self.metainfo = MetaInfo(data_dir=data_dir)
         self.data = []
+        self.transforms = ToTensor()
         label = 0
         for azim in azims:
             for elev in elevs:
+                # HACK to skip views from elev=75
+                if label % 8 == 0:
+                    label += 1
+                    continue
                 data = {}
                 camera = Camera(azim=azim, elev=-elev, dist=dist)
                 points, rays, mask = camera.unit_sphere_intersection_rays()
                 data["points"], data["rays"], data["mask"] = points, rays, mask
                 data["camera_position"] = camera.camera_position()
-                data["sketch"] = self.metainfo.load_sketch(obj_id, f"{label:05}")
+                sketch = self.metainfo.load_sketch(obj_id, f"{label:05}")
+                # sketch = self.metainfo.load_sketch(obj_id, "00019")
+                data["sketch"] = self.transforms(sketch).permute(1, 2, 0)
                 label += 1
                 self.data.append(data)
 

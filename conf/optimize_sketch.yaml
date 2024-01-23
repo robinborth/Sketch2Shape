@@ -23,15 +23,16 @@ eval: True
 save_mesh: True
 create_video: True
 ckpt_path: ???
-
+siamese_ckpt_path: ???
 
 trainer:
   num_sanity_val_steps: 0
   max_epochs: 1
-  accumulate_grad_batches: 8
+  accumulate_grad_batches: 4
 
 data:
   train_dataset:
     _target_: lib.data.deepsdf_dataset.SketchLatentOptimizerDataset
     azims: ${data.preprocess_siamese.azims}
     elevs: ${data.preprocess_siamese.elevs}
+  shuffle: True

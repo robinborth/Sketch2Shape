@@ -1,4 +1,5 @@
 import torch
+from torch.nn.functional import l1_loss
 
 from lib.models.optimize_latent import LatentOptimizer
 from lib.models.siamese import Siamese
@@ -8,6 +9,7 @@ class DeepSDFSketchRender(LatentOptimizer):
     def __init__(
         self,
         siamese_ckpt_path: str,
+        siamese_weight: float = 1.0,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -19,13 +21,9 @@ class DeepSDFSketchRender(LatentOptimizer):
         self.siamese.eval()
 
         # get the gt image and normals
-        gt_image = batch["gt_image"].squeeze()
-        # TODO what is this line?
-        # gt_normals = self.image_to_normal(gt_image)
+        sketch_image = batch["sketch"].squeeze(0)
+        sketch = self.image_to_normal(sketch_image)
         unit_sphere_mask = batch["mask"].squeeze()
-        camera_pos = batch["camera_pos"].squeeze()
-        lightsource = batch["lightsource"]
-        obj_reflection = batch["obj_reflection"]
 
         # calculate the normals map
         points, surface_mask = self.sphere_tracing(
@@ -33,38 +31,35 @@ class DeepSDFSketchRender(LatentOptimizer):
             rays=batch["rays"].squeeze(),
             mask=unit_sphere_mask,
         )
-        normals = self.render_object(
-            points=points,
-            mask=surface_mask,
-            camera_pos=camera_pos,
-            lightsource=lightsource,
-            obj_reflection=obj_reflection,
-        )
-        # TODO rename normal_to_image
-        image = self.normal_to_image(normals, surface_mask)
-        # calculate the loss for the object and usefull information to wandb
+        rendered_normals = self.render_normals(points=points, mask=surface_mask)
+        rendered_normals_image = self.normal_to_image(rendered_normals, surface_mask)
 
-        gt_emb = self.siamese.decoder(gt_image.reshape(-1, 3, 256, 256))
-        image_emb = self.siamese.decoder(image.reshape(-1, 3, 256, 256))
-        image_loss = -torch.nn.functional.cosine_similarity(gt_emb, image_emb, dim=-1)
-        self.log("optimize/image_loss", image_loss)
+        # calculate the embeddings
+        sketch_input = sketch.reshape(-1, 3, 256, 256)
+        sketch_emb = self.siamese.decoder(sketch_input)
+        rendered_normals_input = rendered_normals.reshape(-1, 3, 256, 256)
+        rendered_normals_emb = self.siamese.decoder(rendered_normals_input)
 
-        # visualize the latent norm
+        siamese_loss = l1_loss(sketch_emb, rendered_normals_emb)
+        siamese_loss *= self.hparams["siamese_weight"]
+        self.log("optimize/siamese_loss", siamese_loss)
+
         latent_norm = torch.linalg.norm(self.latent, dim=-1)
         self.log("optimize/latent_norm", latent_norm)
 
-        # add regularization loss
-        reg_loss = torch.tensor(0).to(image_loss)
+        reg_loss = torch.tensor(0).to(siamese_loss)
         if self.hparams["reg_loss"]:
             reg_loss = latent_norm * self.hparams["reg_weight"]
             self.log("optimize/reg_loss", reg_loss)
 
-        # log the full loss
-        loss = reg_loss + image_loss
+        loss = reg_loss + siamese_loss
         self.log("optimize/loss", loss)
 
+        mem_allocated = torch.cuda.memory_allocated() / 1024**2  # convert to MIB
+        self.log("optimize/mem_allocated", mem_allocated)
+
         # visualize the different images
-        self.log_image("gt_image", gt_image)
-        self.log_image("image", image)
+        self.log_image("sketch_image", sketch_image)
+        self.log_image("rendered_normals_image", rendered_normals_image)
 
         return loss

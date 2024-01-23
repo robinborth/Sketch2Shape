@@ -100,6 +100,17 @@
             "justMyCode": false,
         },
         {
+            "name": "Debug: Optimize Sketch",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/optimize_sketch.py",
+            "args": [
+                "+experiment/optimize_sketch=val_optimization"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
             "name": "Debug: Optimize DeepSDF",
             "type": "python",
             "request": "launch",

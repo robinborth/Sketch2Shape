@@ -28,10 +28,14 @@ experiments:
 	# python scripts/traverse_latent.py +experiment/traverse_latent=version_1
 	# python scripts/traverse_latent.py +experiment/traverse_latent=version_2
 
-	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=train_optimization
-	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=val_optimization
+	# python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=train_optimization
+	# python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=val_optimization
 
 	# python scripts/eval_siamese.py +experiment/eval_siamese=shapenet_chair_1024_resnet18
 	# python scripts/eval_siamese.py +experiment/eval_siamese=shapenet_chair_1024_clip
 
 	# python scripts/train_siamese.py +experiment/train_siamese=shapenet_chair_1024
+
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=val_optimization_v1
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=val_optimization_v2
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=val_optimization_v3
