@@ -1,7 +1,0 @@
-# @package _global_
-
-defaults:
-  - eval 
- 
-ckpt_path: clip
-tags: ["siamese", "eval", "clip"]

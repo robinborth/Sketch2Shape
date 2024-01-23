@@ -6,7 +6,7 @@ prior_idx: -1
 reg_loss: True
 reg_weight: 1e-05
 image_resolution: 256 
-mesh_resolution: 128
+mesh_resolution: 256
 mesh_chunk_size: 65536
 optimizer:
   _target_: torch.optim.Adam

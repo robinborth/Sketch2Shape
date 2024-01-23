@@ -24,23 +24,14 @@ clean:
 # Experiments
 ########################################################################
 
-train_deepsdf:
-	python scripts/train_deepsdf.py +experiment=deepsdf_overfit_1 logger=wandb
-	python scripts/train_deepsdf.py +experiment=deepsdf_overfit_4 logger=wandb
-	python scripts/train_deepsdf.py +experiment=deepsdf_overfit_16 logger=wandb
+experiments:
+	# python scripts/traverse_latent.py +experiment/traverse_latent=version_1
+	# python scripts/traverse_latent.py +experiment/traverse_latent=version_2
 
-train_siamese:
-	# python scripts/train_siamese.py +experiment=siamese
-	# python scripts/eval_siamese.py +experiment=eval_resnet
-	# python scripts/eval_siamese.py +experiment=eval_clip
-	# python scripts/train_siamese.py +experiment=siamese_scale_loss 
-	# python scripts/train_siamese.py +experiment=siamese_sample_m data.sampler.m=4
-	# python scripts/train_siamese.py +experiment=siamese_sample_m data.sampler.m=8
-	python scripts/train_siamese.py +experiment=siamese_mine_full_batch
-	python scripts/train_siamese.py +experiment=siamese_pretrained
-	python scripts/train_siamese.py +experiment=siamese_type_of_triplets
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=train_optimization
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=val_optimization
 
-eval_siamese:
-	python scripts/eval_siamese.py +experiment=eval_resnet18
-	python scripts/eval_siamese.py +experiment=eval_clip
+	python scripts/eval_siamese.py +experiment/eval_siamese=shapenet_chair_1024_resnet18
+	python scripts/eval_siamese.py +experiment/eval_siamese=shapenet_chair_1024_clip
 
+	python scripts/train_siamese.py +experiment/train_siamese=shapenet_chair_1024
