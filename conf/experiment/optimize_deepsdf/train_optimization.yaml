@@ -10,7 +10,7 @@ ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt
 tags: ["optimize_deepsdf", "shapenet_chair_1024", "train_optimization"]
 split: train
 prior_idx: True 
-train: True 
+train: True
 create_video: True
 obj_ids:
   - 1d6f4020cab4ec1962d6a66a1a314d66
