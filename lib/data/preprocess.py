@@ -136,14 +136,33 @@ class PreprocessSDF:
         mask = np.random.choice(self.cloud_points.shape[0], num_samples)
         return self.cloud_points[mask], self.cloud_normals[mask]
 
-    def _get_sdfs(self, query: np.ndarray):
-        # TODO add more points with a more k=5 if not then we throw the point away
-        sdfs, idx = self.tree.query(query, k=1)
-        nearest_point = self.cloud_points[idx.squeeze()]
-        nearest_normal = self.cloud_normals[idx.squeeze()]
-        inside_mask = np.sum((query - nearest_point) * nearest_normal, axis=-1) < 0
+    def get_sdfs(self, query: np.ndarray, k: int = 5):
+        # use the distances from query to mesh, because this is more accurate then
+        # query to surface points, and then filter the bad ones out
+        query_point = o3d.core.Tensor(query, dtype=o3d.core.Dtype.Float32)
+        ans = self.scene.compute_closest_points(query_point)
+        nearest_points = ans["points"].numpy()  # (P, 3)
+        sdfs = np.linalg.norm(nearest_points - query, axis=-1)  # (P,)
+
+        # retrieving 5 instead of 1 does not make such a big difference, e.g. for
+        # 60000 points from 1.78s -> 1.93s, but we need it in order to filter bad points
+        # note that we make a query with the nearest points on the surface
+        _, idx = self.tree.query(nearest_points, k=k)  # (P, K)
+
+        top_k_nearest_point = self.cloud_points[idx]  # (P, K, 3)
+        top_k_nearest_normal = self.cloud_normals[idx]  # (P, K, 3)
+
+        # get the normal direction of the closest points to the query
+        query_vec = query[:, None, :] - top_k_nearest_point
+        raw_inside_mask = np.sum(query_vec * top_k_nearest_normal, axis=-1) < 0
+
+        # only consider inside or outside if no mismatch between top-k nearest points
+        inside_mask = raw_inside_mask.sum(-1) == k  # (P,)
+        outside_mask = raw_inside_mask.sum(-1) == 0  # (P,)
+        mask = inside_mask | outside_mask  # (P,)
+
         sdfs[inside_mask] = -sdfs[inside_mask]
-        return sdfs.squeeze()
+        return sdfs.squeeze(), mask  # (N,)
 
     def _sample_surface(self, num_samples: int):
         points, _ = self._get_cloud_samples(num_samples)
@@ -166,23 +185,24 @@ class PreprocessSDF:
 
         points, normals = self._get_cloud_samples(num_query_samples)
         points = points + normals * delta[..., None]
-        sdfs = self._get_sdfs(query=points)
+        sdfs, mask = self.get_sdfs(query=points)
 
         valid_mask = sdfs < 0 if inside_surface else sdfs > 0
         valid_mask &= np.linalg.norm(points, axis=-1) <= 1.0
+        valid_mask &= mask
 
         points, sdfs = points[valid_mask], sdfs[valid_mask]
-
+        return points, sdfs
         # ensures that you have the required points and sdfs with recursion
-        if sdfs.shape[0] < num_samples:
-            print("WARNING: buffer_multiplier to low. TODO change to logger!")
-            points, sdfs = self._sample_near_surface(
-                num_samples=num_samples,
-                inside_surface=inside_surface,
-                buffer_multiplier=buffer_multiplier * 2,
-                delta_mean=delta_mean,
-                delta_var=delta_var,
-            )
+        # if sdfs.shape[0] < num_samples:
+        #     print("WARNING: buffer_multiplier to low. TODO change to logger!")
+        #     points, sdfs = self._sample_near_surface(
+        #         num_samples=num_samples,
+        #         inside_surface=inside_surface,
+        #         buffer_multiplier=buffer_multiplier * 2,
+        #         delta_mean=delta_mean,
+        #         delta_var=delta_var,
+        #     )
 
         final_mask = np.random.choice(points.shape[0], num_samples)
         return points[final_mask], sdfs[final_mask]
@@ -205,7 +225,7 @@ class PreprocessSDF:
         radius = np.random.beta(alpha, beta, points.shape[0])
         points = points * radius[..., None]
 
-        sdfs = self._get_sdfs(points)
+        sdfs = self.get_sdfs(points)
         outside_mask = sdfs > 0
         points, sdfs = points[outside_mask], sdfs[outside_mask]
 
@@ -259,21 +279,32 @@ class PreprocessSDF:
             if not surface_samples_path.exists() or not sdf_samples_path.exists():
                 yield obj_id
 
-    def preprocess(self, obj_id: str):
+    def load(self, obj_id: str):
         # update state of the sdf
-        mesh = self.metainfo.load_normalized_mesh(obj_id)
-        points, normals, masks = render_normals(
-            mesh=mesh,
-            azims=self.azims,
-            elevs=self.elevs,
-        )
-        self.cloud_points, self.cloud_normals = points[masks], normals[masks]
+        self.mesh = self.metainfo.load_normalized_mesh(obj_id)
+
+        mesh = o3d.t.geometry.TriangleMesh.from_legacy(self.mesh)
+        self.scene = o3d.t.geometry.RaycastingScene()
+        self.scene.add_triangles(mesh)
+
+        # sample normals and points from the surface and create a KDTree this is used
+        # to remove sdf values after find the closest point, because the mesh is not
+        # watertight.
+        pcl = self.mesh.sample_points_uniformly(self.cloud_samples)
+        self.cloud_points = np.asarray(pcl.points)
+        normals = np.asarray(pcl.normals)
+        self.cloud_normals = normals / np.linalg.norm(normals, axis=-1)[..., None]
         self.tree = KDTree(self.cloud_points, leaf_size=2)
+
+    def preprocess(self, obj_id: str):
+        # extra function in order to load it outisde preprocess
+        self.load(obj_id=obj_id)
 
         # sample points with sdf values
         unit_points, unit_sdfs = self.sample_unit_ball()
         inside_points, inside_sdfs = self.sample_inside_surface()
         outside_points, outside_sdfs = self.sample_outside_surface()
+
         # combine the samples together
         points = np.concatenate([unit_points, inside_points, outside_points])
         sdfs = np.concatenate([unit_sdfs, inside_sdfs, outside_sdfs])
@@ -281,4 +312,5 @@ class PreprocessSDF:
 
         # sample points on the surface for evaluation
         surface_samples, _ = self.sample_surface()
+
         return sdf_samples, surface_samples
