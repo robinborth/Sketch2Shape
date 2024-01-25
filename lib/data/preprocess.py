@@ -16,6 +16,7 @@ class PreprocessMesh:
     data_dir: str = "/data"
     skip: bool = True
     resolution: int = 20000
+    smoothing: bool = True
     laplacian_num_iters: int = 2
 
     def __post_init__(self):
@@ -40,9 +41,13 @@ class PreprocessMesh:
         faces = np.asarray(mesh.triangles)
         # watertight and smooth, note that it's not watertight
         vw, fw = pcu.make_mesh_watertight(verts, faces, resolution)
-        vw = pcu.laplacian_smooth_mesh(
-            vw, fw, num_iters=laplacian_num_iters, use_cotan_weights=True
-        )
+        if self.smoothing:
+            vw = pcu.laplacian_smooth_mesh(
+                vw,
+                fw,
+                num_iters=laplacian_num_iters,
+                use_cotan_weights=True,
+            )
         # translate back to open3d mesh
         verts = o3d.utility.Vector3dVector(vw)
         faces = o3d.utility.Vector3iVector(fw)
@@ -145,11 +150,11 @@ class PreprocessSDF:
     surface_samples: int = 50000
     # sample near points
     near_samples_1: int = 100000
-    near_scale_1: float = 5e-02
+    near_scale_1: float = 5e-03
     near_buffer_1: float = 1.1
     # sample outside points
     near_samples_2: int = 100000
-    near_scale_2: float = 5e-03
+    near_scale_2: float = 5e-02
     near_buffer_2: float = 1.1
     # sample unit sphere points
     unit_samples: int = 100000

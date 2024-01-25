@@ -18,8 +18,8 @@ preprocess_mesh:
   _target_: lib.data.preprocess.PreprocessMesh
   data_dir: ${data.data_dir}
   skip: True
-  resolution: 20000
-  laplacian_num_iters: 2
+  resolution: 30000
+  laplacian_num_iters: 1
 
 ########################################################################
 # Preprocessing Siamese
@@ -57,12 +57,12 @@ preprocess_sdf:
   surface_samples: 50000
   # sample near points
   near_samples_1: 100000
-  near_scale_1: 5e-02
+  near_scale_1: 5e-03
   near_buffer_1: 1.1
   # sample near points
   near_samples_2: 100000
-  near_scale_2: 5e-03
+  near_scale_2: 5e-02
   near_buffer_2: 1.1
   # sample unit sphere points
-  unit_samples: 100000
+  unit_samples: 50000
   unit_buffer: 2.0
