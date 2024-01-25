@@ -14,6 +14,7 @@ class DeepSDFNormalRender(LatentOptimizer):
         # self.model.decoder.load_state_dict(
         #     torch.load("/shared/logs/deprecated/decoder.pt")
         # )
+        self.timer: List[float] = list()
 
     def training_step(self, batch, batch_idx):
         gt_image = batch["gt_image"].squeeze(0)
@@ -58,6 +59,13 @@ class DeepSDFNormalRender(LatentOptimizer):
         self.log_image("image", image)
 
         return loss
+
+    def on_train_epoch_end(self):
+        import numpy as np
+
+        np.save(
+            "/home/korth/sketch2shape/temp/opt_render/before.npy", np.array(self.timer)
+        )
 
 
 # TODO IN PROGRESS - calculate a normal everywhere in space

@@ -33,7 +33,7 @@ class LatentOptimizer(LightningModule):
         clamp_sdf: float = 0.1,
         step_scale: float = 1.0,
         surface_eps: float = 1e-03,
-        sphere_eps: float = 3e-02,
+        sphere_eps: float = 1e-01,  # similar to settings from camera class
         normal_eps: float = 5e-03,
         ambient: float = 0.5,
         diffuse: float = 0.3,
@@ -228,7 +228,8 @@ class LatentOptimizer(LightningModule):
         rays: torch.Tensor,
         mask: torch.Tensor,
     ):
-        device = self.model.device
+        import time
+
         clamp_sdf = self.hparams["clamp_sdf"]
         step_scale = self.hparams["step_scale"]
         surface_eps = self.hparams["surface_eps"]
@@ -237,12 +238,14 @@ class LatentOptimizer(LightningModule):
         mask = mask.clone()
 
         total_points = (points.shape[0],)
-        depth = torch.zeros(total_points).to(device)
-        sdf = torch.ones(total_points).to(device)
+        depth = torch.zeros(total_points, device=self.device)
+        sdf = torch.ones(total_points, device=self.device)
+        void_idx = torch.zeros(total_points, device=self.device, dtype=bool)
 
         # TODO speed improvement:
         # [ ] track previous points and sdfs: if sign switch, interpolate
 
+        start_time = time.perf_counter()
         # sphere tracing
         for _ in range(self.hparams["n_render_steps"]):
             with torch.no_grad():
@@ -257,13 +260,25 @@ class LatentOptimizer(LightningModule):
 
             surface_idx = torch.abs(sdf) < surface_eps
 
+            # v1
             void_idx = depth > 2.0
+            # v2
+            void_idx = points.norm(dim=-1) > (1 + self.hparams["sphere_eps"])
+            # v3
+            void_idx[mask] = points[mask].norm(dim=-1) > (
+                1 + self.hparams["sphere_eps"]
+            )
+
             mask[surface_idx | void_idx] = False
 
             points[mask] = points[mask] + sdf[mask, None] * rays[mask]
 
             if not mask.sum():
                 break
+
+        end_time = time.perf_counter()
+
+        self.timer.append(end_time - start_time)
 
         surface_mask = sdf < surface_eps
         return points, surface_mask
