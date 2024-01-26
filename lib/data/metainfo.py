@@ -82,20 +82,9 @@ class MetaInfo:
     def mesh_path(self, obj_id: str) -> Path:
         return self.data_dir / "shapes" / obj_id / "mesh.obj"
 
-    def load_mesh(
-        self, obj_id: str, normalize: bool = False
-    ) -> o3d.geometry.TriangleMesh:
+    def load_mesh(self, obj_id: str) -> o3d.geometry.TriangleMesh:
         path = self.mesh_path(obj_id)
-        mesh = o3d.io.read_triangle_mesh(str(path))
-        if not normalize:
-            return mesh
-
-        points = np.asarray(mesh.vertices)
-        translate = (np.min(points, axis=0) + np.max(points, axis=0)) / 2.0
-        points -= translate
-        points /= np.linalg.norm(points, axis=-1).max()
-        mesh.vertices = o3d.utility.Vector3dVector(points)
-        return mesh
+        return o3d.io.read_triangle_mesh(str(path))
 
     def save_mesh(self, source_path: Path, obj_id: str) -> None:
         path = self.mesh_path(obj_id)

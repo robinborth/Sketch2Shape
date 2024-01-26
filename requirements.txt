@@ -4,6 +4,7 @@ torch
 torchvision
 pytorch-metric-learning
 open3d
+point-cloud-utils
 opencv-python
 scikit-image
 transformers
