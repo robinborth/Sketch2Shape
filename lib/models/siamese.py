@@ -48,15 +48,20 @@ class Siamese(LightningModule):
         d_an = torch.norm(emb[a_idx] - emb[n_idx], dim=-1)  # l2_dist
         self.log(f"{split}/distance_anchor_negative", d_an.mean(), prog_bar=True)
         triplet_loss = torch.relu(d_ap - d_an + m)  # max(0, d_ap - d_an + m)
-        triplet_loss = triplet_loss[triplet_loss > 0].mean()  # no zero avg
+        triplet_mask = triplet_loss > 0
+        triplet_loss = triplet_loss[triplet_mask].mean()  # no zero avg
+        # triplet_loss = triplet_loss.mean()  # full avg
         self.log(f"{split}/triplet_loss", triplet_loss, prog_bar=True)
+
+        triplet_count = triplet_mask.sum().float()
+        self.log(f"{split}/triplet_count", triplet_count, prog_bar=True)
 
         # calculate the reg loss based on the embeeddings
         reg_loss = torch.tensor(0).to(triplet_loss)
         if self.hparams["reg_loss"]:
             reg_loss = torch.norm(emb, dim=-1).mean()  # l2_reg on embedding
             reg_loss *= self.hparams["reg_weight"]
-            self.log(f"{split}/reg_loss", triplet_loss, prog_bar=True)
+            self.log(f"{split}/reg_loss", reg_loss, prog_bar=True)
 
         # compute the final loss
         loss = reg_loss + triplet_loss

@@ -2,8 +2,8 @@
 _target_: lib.models.siamese.Siamese
 embedding_size: 128
 pretrained: True 
-reg_loss: True
-reg_weight: 1e-03 
+reg_loss: True 
+reg_weight: 1e-01
 margin: 1.0 
 scheduler:
   _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
