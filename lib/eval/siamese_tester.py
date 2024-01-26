@@ -10,8 +10,8 @@ from lightning import LightningModule
 from torchmetrics.aggregation import CatMetric, MeanMetric
 
 from lib.data.metainfo import MetaInfo
-from lib.models.decoder import EvalCLIP, EvalResNet18
 from lib.models.siamese import Siamese
+from lib.models.siamese_eval import EvalCLIP, EvalResNet18
 from lib.visualize.image import image_grid, plot_single_image, transform_to_plot
 
 

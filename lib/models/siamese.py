@@ -1,49 +1,62 @@
-import pytorch_metric_learning
 import torch
 from lightning import LightningModule
+from torchvision.models import resnet18
+from torchvision.models.resnet import ResNet18_Weights
 
 
 class Siamese(LightningModule):
     def __init__(
         self,
-        decoder: torch.nn.Module,
-        miner: torch.nn.Module,
-        regularizer: torch.nn.Module,
-        loss: torch.nn.Module,
-        optimizer: torch.optim.Optimizer,
-        scheduler: torch.optim.lr_scheduler,
-        use_regularizer: bool = True,
-        use_miner: bool = True,
+        margin: float = 0.2,
+        embedding_size: int = 128,
+        pretrained: bool = True,
+        reg_loss: bool = True,
+        reg_weight: float = 1e-03,
+        optimizer=None,
+        scheduler=None,
     ) -> None:
         super().__init__()
         self.save_hyperparameters(logger=False)
-        self.decoder = decoder()
-        self.miner = miner()
-        self.regularizer = regularizer()
-        self.loss = loss()
+
+        # load the resnet18 backbone
+        weights = ResNet18_Weights.IMAGENET1K_V1 if pretrained else None
+        self.decoder = resnet18(weights=weights)
+        self.decoder.fc = torch.nn.Linear(in_features=512, out_features=embedding_size)
 
     def forward(self, batch):
         return self.decoder(batch)
 
+    def get_all_triplets_indices(self, labels):
+        labels1 = labels.unsqueeze(1)
+        labels2 = labels.unsqueeze(0)
+        matches = (labels1 == labels2).byte()
+        diffs = matches ^ 1
+        matches.fill_diagonal_(0)
+        triplets = matches.unsqueeze(2) * diffs.unsqueeze(1)
+        return torch.where(triplets)
+
     def model_step(self, batch, split: str = "train"):
-        labels = batch["label"]
-        embeddings = self.forward(batch["image"])  # (B, D)
+        emb = self.forward(batch["image"])  # (B, D)
 
-        # stats about the mining
-        miner_output = self.miner(embeddings=embeddings, labels=labels)
-        self.log("train/miner_count", len(miner_output[0]))
-        if not self.hparams["use_miner"]:
-            miner_output = None
+        # calculate the anchor, positive, negative indx
+        a_idx, p_idx, n_idx = self.get_all_triplets_indices(batch["label"])
 
-        # get the triplet loss
-        triplet_loss = self.loss(embeddings, labels=labels, indices_tuple=miner_output)
-        self.log("train/triplet_loss", triplet_loss, prog_bar=True)
+        # calculate the triplet loss
+        m = self.hparams["margin"]
+        d_ap = torch.norm(emb[a_idx] - emb[p_idx], dim=-1)  # l2_dist
+        self.log(f"{split}/distance_anchor_positive", d_ap.mean(), prog_bar=True)
+        d_an = torch.norm(emb[a_idx] - emb[n_idx], dim=-1)  # l2_dist
+        self.log(f"{split}/distance_anchor_negative", d_an.mean(), prog_bar=True)
+        triplet_loss = torch.relu(d_ap - d_an + m)  # max(0, d_ap - d_an + m)
+        triplet_loss = triplet_loss[triplet_loss > 0].mean()  # no zero avg
+        self.log(f"{split}/triplet_loss", triplet_loss, prog_bar=True)
 
-        # get the regularize loss
+        # calculate the reg loss based on the embeeddings
         reg_loss = torch.tensor(0).to(triplet_loss)
-        if self.hparams["use_regularizer"]:
-            reg_loss = self.regularizer(embeddings)
-            self.log(f"{split}/reg_loss", reg_loss, prog_bar=True)
+        if self.hparams["reg_loss"]:
+            reg_loss = torch.norm(emb, dim=-1).mean()  # l2_reg on embedding
+            reg_loss *= self.hparams["reg_weight"]
+            self.log(f"{split}/reg_loss", triplet_loss, prog_bar=True)
 
         # compute the final loss
         loss = reg_loss + triplet_loss

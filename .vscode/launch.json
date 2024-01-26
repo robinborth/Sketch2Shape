@@ -18,14 +18,7 @@
             "request": "launch",
             "program": "scripts/train_siamese.py",
             "args": [
-                "+data=shapenet_chair_4096",
-                "+trainer.num_sanity_val_steps=0",
-                "trainer.val_check_interval=1",
-                "+trainer.limit_val_batches=1",
-                "+trainer.limit_train_batches=1",
-                // "trainer.val_check_interval=100",
-                // "trainer.accelerator=cpu"
-                // "logger=wandb"
+                "+experiment/train_siamese=shapenet_chair_4096",
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
