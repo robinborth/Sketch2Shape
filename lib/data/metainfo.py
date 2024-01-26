@@ -2,7 +2,6 @@ import shutil
 from pathlib import Path
 from typing import Optional, Tuple
 
-import cv2
 import numpy as np
 import open3d as o3d
 import pandas as pd
@@ -26,6 +25,45 @@ class MetaInfo:
         except Exception as e:
             logger.error("Not able to load dataset_splits file.")
 
+        self.image_type_2_type_idx = {"sketch": 0, "normal": 1}
+        self.type_idx_2_image_type = {
+            v: k for k, v in self.image_type_2_type_idx.items()
+        }
+
+    #################################################################
+    # SNN pairs loader utils
+    #################################################################
+
+    def load_snn(self):
+        data = []
+        for _, row in self._metainfo.iterrows():
+            obj_id, label = row["obj_id"], row["label"]
+            images_path = self.data_dir / "shapes" / obj_id / "sketches"
+            assert images_path.exists()
+            for file_name in sorted(images_path.iterdir()):
+                image_id = file_name.stem
+                for image_type in self.image_type_2_type_idx.keys():
+                    data.append(
+                        dict(
+                            obj_id=obj_id,
+                            image_id=image_id,
+                            label=label,
+                            image_type=image_type,
+                        )
+                    )
+        self._snn_data = pd.DataFrame(data)
+
+    @property
+    def snn_count(self):
+        return len(self._snn_data)
+
+    @property
+    def snn_labels(self):
+        return np.array(self._snn_data["label"])
+
+    def get_snn(self, index: int):
+        return self._snn_data.iloc[index].to_dict()
+
     #################################################################
     # SNN pairs loader utils
     #################################################################
@@ -45,6 +83,10 @@ class MetaInfo:
     def pair_count(self):
         return len(self._sketch_image_pairs)
 
+    @property
+    def pair_labels(self):
+        return np.array(self._sketch_image_pairs["label"])
+
     def get_pair(self, index: int):
         return self._sketch_image_pairs.iloc[index].to_dict()
 
@@ -59,10 +101,6 @@ class MetaInfo:
     @property
     def obj_id_count(self):
         return len(self.obj_ids)
-
-    @property
-    def labels(self):
-        return np.array(self._sketch_image_pairs["label"])
 
     def label_to_obj_id(self, label: int) -> str:
         df = self._metainfo

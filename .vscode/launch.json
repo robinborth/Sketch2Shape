@@ -18,7 +18,7 @@
             "request": "launch",
             "program": "scripts/train_siamese.py",
             "args": [
-                "+data=shapenet_chair_1024",
+                "+data=shapenet_chair_4096",
                 "+trainer.num_sanity_val_steps=0",
                 "trainer.val_check_interval=1",
                 "+trainer.limit_val_batches=1",

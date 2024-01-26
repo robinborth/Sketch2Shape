@@ -1,6 +1,6 @@
 # @package eval_data
 
-_target_: lib.data.siamese_datamodule.SiameseDataModule
+_target_: lib.data.siamese_datamodule.SiameseEvalDataModule
 # paths
 data_dir: ${paths.data_dir}/${data.dataset_name}
 # training
@@ -16,7 +16,7 @@ sampler:
   _partial_: True
   m: ${eval_data.batch_size} 
 dataset: 
-  _target_: lib.data.siamese_dataset.SiameseDataset
+  _target_: lib.data.siamese_dataset.SiameseEvalDataset
   _partial_: True
 sketch_transforms:
   _target_: torchvision.transforms.Compose
