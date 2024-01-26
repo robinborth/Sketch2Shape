@@ -18,7 +18,8 @@ python scripts/optimize_normals.py \
  model.optimizer.lr=5e-3 \
  trainer.accumulate_grad_batches=4 \
  model.reg_weight=1e-1 \
+ logger=wandb \
+ +model.n_render_steps=50
 #  +model.video_capture_rate=8 \
 #  +model.video_azim=30 \
 #  +model.video_elev=15 \
-#  logger=wandb \
