@@ -1,0 +1,35 @@
+# @package _global_
+
+defaults:
+  - override /data:
+      - shapenet_chair_4096
+      - train_deepsdf
+  - override /logger: wandb
+
+tags: ["train_deepsdf", "shapenet_chair_4096"]
+
+model:
+  decoder_scheduler:
+    _partial_: True
+    _target_: torch.optim.lr_scheduler.StepLR
+    step_size: 100
+    gamma: 0.9
+  latents_scheduler:
+    _partial_: True
+    _target_: torch.optim.lr_scheduler.StepLR
+    step_size: 100
+    gamma: 0.9
+
+trainer:
+  max_epochs: 2000
+  precision: 16-mixed
+
+data:
+  batch_size: 32
+  num_workers: 7
+  chunk_size: 16384
+  half: True
+
+callbacks:
+  early_stopping:
+    patience: 2000
