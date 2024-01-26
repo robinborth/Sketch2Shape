@@ -11,7 +11,7 @@ num_workers: 4
 pin_memory: False
 drop_last: True
 persistent_workers: True
-shuffle: False
+shuffle: True 
 # dataset 
 dataset:
   _target_: lib.data.deepsdf_dataset.DeepSDFMemoryDataset
