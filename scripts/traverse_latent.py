@@ -4,11 +4,13 @@ import hydra
 import lightning as L
 import numpy as np
 import open3d as o3d
+import wandb
 from lightning import LightningModule, Trainer
-from lightning.pytorch.loggers import Logger
+from lightning.pytorch.loggers import Logger, WandbLogger
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
+from lib.render.utils import create_video
 from lib.utils import create_logger, log_hyperparameters
 
 log = create_logger("traverse_latent")
@@ -43,7 +45,7 @@ def optimize(cfg: DictConfig) -> None:
     dataloader = DataLoader(steps, batch_size=1)  # type: ignore
     trainer.validate(model=model, dataloaders=dataloader)
 
-    if cfg.save_mesh and (meshes := model.meshes):
+    if cfg.create_mesh and (meshes := model.meshes):
         log.info("==> save meshes ...")
         for step, mesh in enumerate(meshes):
             path = Path(cfg.paths.mesh_dir, f"step={step:03}.obj")
@@ -53,6 +55,15 @@ def optimize(cfg: DictConfig) -> None:
                 mesh=mesh,
                 write_triangle_uvs=False,
             )
+
+    # finish the wandb run in order to track all the optimizations seperate
+        wandb.finish()
+
+    if cfg.create_video and isinstance(logger, WandbLogger):
+        log.info("==> creating video ...")
+        path = Path(cfg.paths.video_dir)
+        path.mkdir(parents=True, exist_ok=True)
+        create_video(video_dir=path, obj_id="traverse_latent")
 
 
 if __name__ == "__main__":

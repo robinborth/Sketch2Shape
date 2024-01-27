@@ -11,7 +11,7 @@ mesh_resolution: 256
 mesh_chunk_size: 65536
 video_capture_rate: 8
 video_azim: 30
-video_elev: 15
+video_elev: -15
 optimizer:
   _target_: torch.optim.Adam
   _partial_: true

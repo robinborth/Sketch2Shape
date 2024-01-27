@@ -43,8 +43,8 @@ class LatentOptimizer(LightningModule):
         log_images: bool = True,
         # default video settings
         video_capture_rate: int = 30,
-        video_azim: float = 0.0,
-        video_elev: float = 45.0,
+        video_azim: float = 30,
+        video_elev: float = -15,
         video_dist: int = 4,
         # evaluation settings
         # TODO
@@ -74,7 +74,7 @@ class LatentOptimizer(LightningModule):
         # video settings
         camera = Camera(
             azim=self.hparams["video_azim"],
-            elev=-self.hparams["video_elev"],
+            elev=self.hparams["video_elev"],
             dist=self.hparams["video_dist"],
         )
         points, rays, mask = camera.unit_sphere_intersection_rays()

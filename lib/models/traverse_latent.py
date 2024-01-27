@@ -8,6 +8,8 @@ class DeepSDFLatentTraversal(LatentOptimizer):
         self,
         prior_idx_start: int = -1,
         prior_idx_end: int = -1,
+        create_mesh: bool = True,
+        create_video: bool = True,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -28,9 +30,14 @@ class DeepSDFLatentTraversal(LatentOptimizer):
             latent_end = self.model.lat_vecs(idx_end)
 
         # override the latent for inference
-        self.latent = t * latent_start + (1 - t) * latent_end
-        mesh = self.to_mesh()
-        self.meshes.append(mesh)
+        self.latent = (1 - t) * latent_start + t * latent_end
+
+        if self.hparams["create_mesh"]:
+            mesh = self.to_mesh()
+            self.meshes.append(mesh)
+
+        if self.hparams["create_video"]:
+            self.capture_video_frame()
 
         # restore the mean latent
         self.latent = latent

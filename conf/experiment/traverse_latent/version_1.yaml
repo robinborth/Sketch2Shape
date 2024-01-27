@@ -6,6 +6,9 @@ defaults:
 
 ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
 tags: ["traverse_latent", "shapenet_chair_1024", "version_1"]
+create_mesh: False
+create_video: True
+traversal_steps: 100
 
 model:
   prior_idx_start: 0
