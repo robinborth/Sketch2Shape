@@ -2,12 +2,12 @@
 
 defaults:
   - override /data:
-    - shapenet_chair_1024
+    - shapenet_chair_4096
     - optimize_latent
   - override /logger: wandb
 
 ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
-tags: ["optimize_normals", "shapenet_chair_1024", "val_optimization"]
+tags: ["optimize_normals", "shapenet_chair_4096", "val_optimization"]
 split: val 
 prior_idx: mean 
 train: True
