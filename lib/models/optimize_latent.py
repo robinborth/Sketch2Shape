@@ -20,7 +20,7 @@ class LatentOptimizer(LightningModule):
         self,
         # latent optimization settings
         ckpt_path: str = "best.ckpt",
-        prior_idx: int = -1,
+        prior_idx: int = -1,  # random(-2), mean(-1), train(idx)
         reg_loss: bool = True,
         reg_weight: float = 1e-05,
         optimizer=None,
@@ -53,17 +53,11 @@ class LatentOptimizer(LightningModule):
         self.save_hyperparameters(logger=False)
 
         # init model
-        self.model = DeepSDF.load_from_checkpoint(
-            self.hparams["ckpt_path"], strict=False
-        )
+        self.model = DeepSDF.load_from_checkpoint(ckpt_path, strict=False)
         self.model.freeze()
 
-        # init latent either by using a pretrained one ore the mean of the pretrained
-        if self.hparams["prior_idx"] >= 0:
-            idx = torch.tensor([self.hparams["prior_idx"]])
-            latent = self.model.lat_vecs(idx.to(self.model.device)).squeeze()
-        else:
-            latent = self.model.lat_vecs.weight.mean(0)
+        # init latent either by pretrained, mean or random
+        latent = self.model.get_latent(prior_idx)
         self.register_buffer("latent", latent)
         self.mesh: o3d.geometry.TriangleMesh = None
 

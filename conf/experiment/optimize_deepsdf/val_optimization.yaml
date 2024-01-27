@@ -9,7 +9,7 @@ defaults:
 ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
 tags: ["optimize_deepsdf", "shapenet_chair_1024", "val_optimization"]
 split: val 
-prior_idx: False 
+prior_idx: mean 
 train: True
 create_video: True
 obj_ids:

@@ -39,3 +39,11 @@ experiments:
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=val_optimization_v1
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=val_optimization_v2
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=val_optimization_v3
+
+traverse_latent:
+	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_1
+	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_2
+	python scripts/traverse_latent.py +experiment/traverse_latent=random_1
+	python scripts/traverse_latent.py +experiment/traverse_latent=random_2
+	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_1
+	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_2

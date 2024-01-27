@@ -5,8 +5,11 @@ defaults:
   - override /logger: wandb
 
 ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
-tags: ["traverse_latent", "shapenet_chair_1024", "version_2"]
+tags: ["traverse_latent", "shapenet_chair_1024", "mean_train_1"]
+create_mesh: False
+create_video: True
+traversal_steps: 50 
 
 model:
-  prior_idx_start: 2
-  prior_idx_end: 3
+  prior_idx_start: -1
+  prior_idx_end: 100 

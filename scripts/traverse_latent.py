@@ -57,7 +57,7 @@ def optimize(cfg: DictConfig) -> None:
             )
 
     # finish the wandb run in order to track all the optimizations seperate
-        wandb.finish()
+    wandb.finish()
 
     if cfg.create_video and isinstance(logger, WandbLogger):
         log.info("==> creating video ...")
