@@ -15,30 +15,28 @@ format:
 	mypy lib
 	flake8 lib
 
-clean:
-	rm -rf outputs/
-	rm -rf wandb/
-
-
 ########################################################################
 # Experiments
 ########################################################################
 
-experiments:
-	# python scripts/traverse_latent.py +experiment/traverse_latent=version_1
-	# python scripts/traverse_latent.py +experiment/traverse_latent=version_2
+train_siamese:
+	python scripts/train_siamese.py +experiment/train_siamese=shapenet_chair_4096
 
-	# python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=train_optimization
-	# python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=val_optimization
+eval_siamese:
+	python scripts/eval_siamese.py +experiment/eval_siamese=resnet18
+	python scripts/eval_siamese.py +experiment/eval_siamese=clip
+	python scripts/eval_siamese.py +experiment/eval_siamese=siamese
 
-	# python scripts/eval_siamese.py +experiment/eval_siamese=shapenet_chair_1024_resnet18
-	# python scripts/eval_siamese.py +experiment/eval_siamese=shapenet_chair_1024_clip
+train_deepsdf:
+	python scripts/train_deepsdf.py +experiment/train_deepsdf=shapenet_chair_4096
 
-	# python scripts/train_siamese.py +experiment/train_siamese=shapenet_chair_1024
-
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=val_optimization_v1
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=val_optimization_v2
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=val_optimization_v3
+traverse_latent:
+	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_1
+	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_2
+	python scripts/traverse_latent.py +experiment/traverse_latent=random_1
+	python scripts/traverse_latent.py +experiment/traverse_latent=random_2
+	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_1
+	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_2
 
 optimize_deepsdf:
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_train
@@ -49,11 +47,8 @@ optimize_deepsdf:
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_1700
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_2000
 
+optimize_normals:
+	python scripts/optimize_normals.py +experiment/optimize_normals=mean_val
 
-traverse_latent:
-	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_1
-	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_2
-	python scripts/traverse_latent.py +experiment/traverse_latent=random_1
-	python scripts/traverse_latent.py +experiment/traverse_latent=random_2
-	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_1
-	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_2
+optimize_sketch:
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=mean_val
