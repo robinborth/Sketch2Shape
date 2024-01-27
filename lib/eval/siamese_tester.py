@@ -20,8 +20,8 @@ class SiameseTester(LightningModule):
         self,
         ckpt_path: str = ".ckpt",
         data_dir: str = "/data",
-        index_mode: str = "image",  # image, sketch, all
-        query_mode: str = "sketch",  # image, sketch, all
+        index_mode: str = "normal",  # normal, sketch
+        query_mode: str = "sketch",  # normal, sketch
     ):
         super().__init__()
 
@@ -33,7 +33,9 @@ class SiameseTester(LightningModule):
         self._image_ids: list[int] = []
 
         self.index_mode = index_mode
+        self.index_image_type = self.metainfo.image_type_2_type_idx[self.index_mode]
         self.query_mode = query_mode
+        self.query_image_type = self.metainfo.image_type_2_type_idx[self.query_mode]
 
         self.cosine_similarity = MeanMetric()
         self.recall_at_1_object = MeanMetric()
@@ -99,7 +101,8 @@ class SiameseTester(LightningModule):
         return self.normalize(output)
 
     def validation_step(self, batch, batch_idx, dataloader_idx):
-        index_emb = self.forward(batch[self.index_mode])
+        image = batch["image"][batch["image_type"] == self.index_image_type]
+        index_emb = self.forward(image)
         self._index.append(index_emb)
         self._labels.extend(batch["label"].detach().cpu().numpy())
         self._image_ids.extend(batch["image_id"].detach().cpu().numpy())
@@ -124,7 +127,8 @@ class SiameseTester(LightningModule):
         gt_labels = batch["label"].cpu().numpy().reshape(-1, 1)
 
         # get the similarity
-        query_emb = self.forward(batch[self.query_mode])
+        image = batch["image"][batch["image_type"] == self.query_image_type]
+        query_emb = self.forward(image)
         k_at_1_object = self.k_for_num_objects(num_objects=1)
         self.log("k_at_1_object", k_at_1_object)
         similarity, idx = self.search(query_emb, k=self.max_k)

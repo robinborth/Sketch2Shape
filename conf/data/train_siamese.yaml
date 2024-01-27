@@ -12,9 +12,10 @@ shuffle: False
 persistent_workers: True
 # dataset 
 sampler:
-  _target_: pytorch_metric_learning.samplers.MPerClassSampler
+  _target_: lib.data.sampler.ChunkSampler 
   _partial_: True
-  m: 2
+  chunk_size: 2
+  sample_steps: 1
 dataset: 
   _target_: lib.data.siamese_dataset.SiameseDataset
   _partial_: True

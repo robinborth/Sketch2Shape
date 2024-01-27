@@ -65,32 +65,6 @@ class MetaInfo:
         return self._snn_data.iloc[index].to_dict()
 
     #################################################################
-    # SNN pairs loader utils
-    #################################################################
-
-    def load_sketch_image_pairs(self):
-        data = []
-        for _, row in self._metainfo.iterrows():
-            obj_id, label = row["obj_id"], row["label"]
-            images_path = self.data_dir / "shapes" / obj_id / "sketches"
-            assert images_path.exists()
-            for image_file in sorted(images_path.iterdir()):
-                image_id = image_file.stem
-                data.append(dict(obj_id=obj_id, image_id=image_id, label=label))
-        self._sketch_image_pairs = pd.DataFrame(data)
-
-    @property
-    def pair_count(self):
-        return len(self._sketch_image_pairs)
-
-    @property
-    def pair_labels(self):
-        return np.array(self._sketch_image_pairs["label"])
-
-    def get_pair(self, index: int):
-        return self._sketch_image_pairs.iloc[index].to_dict()
-
-    #################################################################
     # Object IDs and Labels
     #################################################################
 

@@ -10,13 +10,12 @@ defaults:
 tags: ["train_siamese", "shapenet_chair_4096"]
 
 trainer:
+  num_sanity_val_steps: 0
   max_epochs: 50
   val_check_interval: 1.0
 
 data:
   batch_size: 256
-  sampler: 
-    m: 2
   
 callbacks:
   early_stopping:

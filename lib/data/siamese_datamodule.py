@@ -62,10 +62,7 @@ class SiameseDataModule(LightningDataModule):
         sampler = None
         metainfo.load_snn()
         if self.hparams["sampler"]:
-            sampler = self.hparams["sampler"](
-                labels=metainfo.snn_labels,
-                length_before_new_iter=metainfo.snn_count,
-            )
+            sampler = self.hparams["sampler"](labels=metainfo.snn_labels)
         return sampler
 
     def train_dataloader(self) -> DataLoader:
@@ -101,15 +98,3 @@ class SiameseDataModule(LightningDataModule):
             persistent_workers=self.hparams["persistent_workers"],
             sampler=self.build_sampler(self.test_metainfo),
         )
-
-
-class SiameseEvalDataModule(SiameseDataModule):
-    def build_sampler(self, metainfo: MetaInfo):
-        sampler = None
-        metainfo.load_sketch_image_pairs()
-        if self.hparams["sampler"]:
-            sampler = self.hparams["sampler"](
-                labels=metainfo.pair_labels,
-                length_before_new_iter=metainfo.pair_count,
-            )
-        return sampler
