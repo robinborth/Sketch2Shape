@@ -21,7 +21,7 @@ train: True
 prior_idx: mean  # random(-2), mean(-1), train(idx)
 eval: True
 save_mesh: True  # only if eval == True
-create_video: False
+create_video: True 
 ckpt_path: ???
 
 trainer:

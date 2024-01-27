@@ -40,6 +40,16 @@ experiments:
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=val_optimization_v2
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=val_optimization_v3
 
+optimize_deepsdf:
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_train
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_500
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_1000
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_1400
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_1700
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_2000
+
+
 traverse_latent:
 	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_1
 	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_2
