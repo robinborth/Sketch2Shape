@@ -39,6 +39,7 @@ class LatentOptimizer(LightningModule):
         diffuse: float = 0.3,
         specular: float = 0.3,
         shininess: float = 200.0,
+        n_downsample: int = 0,
         # logger settings
         log_images: bool = True,
         # default video settings
@@ -59,9 +60,7 @@ class LatentOptimizer(LightningModule):
         self.model.freeze()
 
         # init latent either by using a pretrained one ore the mean of the pretrained
-        self.hparams["prior_idx"] = 19
         if self.hparams["prior_idx"] >= 0:
-            print("PRIORIPROIROPIORISNERIPNTSIOREN")
             idx = torch.tensor([self.hparams["prior_idx"]])
             latent = self.model.lat_vecs(idx.to(self.model.device)).squeeze()
         else:
@@ -91,9 +90,10 @@ class LatentOptimizer(LightningModule):
     def on_train_epoch_start(self):
         self.model.eval()
 
-    def on_train_batch_end(self, outputs, batch, batch_idx):
-        if batch_idx % self.hparams["video_capture_rate"] == 0:
-            self.capture_video_frame()
+    # TODO consider lower res for this anyways to speed up
+    # def on_train_batch_end(self, outputs, batch, batch_idx):
+    #     if batch_idx % self.hparams["video_capture_rate"] == 0:
+    #         self.capture_video_frame()
 
     def test_step(self, batch, batch_idx):
         gt_surface_samples = batch["surface_samples"].detach().cpu().numpy().squeeze()
@@ -179,19 +179,40 @@ class LatentOptimizer(LightningModule):
     # Rendering Utils
     ############################################################
 
-    def normal_to_image(self, x, mask=None, default=1):
-        x = self.to_image(x=x, mask=mask, default=default)
+    def normal_to_image(self, x, mask=None, default=1, res=None):
+        x = self.to_image(x=x, mask=mask, default=default, res=res)
         return (x + 1) / 2
 
     def image_to_normal(self, x, mask=None, default=1):
         x = (x * 2) - 1
         return x.reshape(-1, 3)
 
-    def to_image(self, x, mask=None, default=1):
-        resolution = self.hparams["image_resolution"]
+    def to_image(self, x, mask=None, default=1, res=None):
+        if res is None:
+            res = self.hparams["image_resolution"]
         if mask is not None:
             x[~mask] = default
-        return x.reshape(resolution, resolution, -1)
+        return x.reshape(res, res, -1)
+
+    def downsample_(self, inp, pooler: torch.nn.Module, times=0, is_mask=False):
+        if times == 0:
+            return inp.squeeze()
+
+        if is_mask:
+            inp = inp.to(float).unsqueeze(2)
+
+        res = self.hparams["image_resolution"]
+        c = inp.shape[-1]
+        # down
+        inp = inp.reshape(res, res, -1).transpose(0, 2)
+        for _ in range(times):
+            inp = pooler(inp)
+        inp = inp.transpose(0, 2).reshape(-1, c)
+
+        if is_mask:
+            inp = inp.to(bool).squeeze()
+
+        return inp
 
     def render_normals(
         self,
@@ -241,7 +262,10 @@ class LatentOptimizer(LightningModule):
         depth = torch.zeros(total_points, device=self.device)
         sdf = torch.ones(total_points, device=self.device)
 
-        temp_list = list()
+        import time
+
+        start_time = time.perf_counter()
+        # temp_list = list()
         # sphere tracing
         for _ in range(self.hparams["n_render_steps"]):
             with torch.no_grad():
@@ -262,12 +286,26 @@ class LatentOptimizer(LightningModule):
 
             points[mask] = points[mask] + sdf[mask, None] * rays[mask]
 
-            temp_list.append(mask.sum().cpu().numpy())
+            # temp_list.append(mask.sum().cpu().numpy())
 
-            # if not mask.sum():
-            #     break
+            if not mask.sum():
+                break
 
-        self.mask_sum_list.append(np.array(temp_list))
+        # NO MASK
+        # for _ in range(self.hparams["n_render_steps"]):
+        #     with torch.no_grad():
+        #         sdf_out = self.forward(points=points, mask=None).to(points)
+        #         sdf_out = self.forward(points=points, mask=None).to(points)
+
+        #     sdf_out = torch.clamp(sdf_out, -clamp_sdf, clamp_sdf)
+        #     depth += sdf_out * step_scale
+        #     sdf = sdf_out * step_scale
+
+        #     points = points + sdf[..., None] * rays
+
+        end_time = time.perf_counter()
+        self.timer.append(end_time - start_time)
+        # self.mask_sum_list.append(np.array(temp_list))
 
         surface_mask = sdf < surface_eps
         return points, surface_mask

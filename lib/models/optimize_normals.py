@@ -1,3 +1,6 @@
+from typing import List
+
+import numpy as np
 import torch
 from torch.nn.functional import l1_loss
 
@@ -11,25 +14,54 @@ class DeepSDFNormalRender(LatentOptimizer):
     ) -> None:
         super().__init__(**kwargs)
         self.model.lat_vecs = None
-        # self.model.decoder.load_state_dict(
-        #     torch.load("/shared/logs/deprecated/decoder.pt")
-        # )
         self.mask_sum_list: List[float] = list()
+        self.timer: List[float] = list()
+        self.avg_pool = torch.nn.AvgPool2d(2)
+        self.max_pool = torch.nn.MaxPool2d(2)
 
     def training_step(self, batch, batch_idx):
-        gt_image = batch["gt_image"].squeeze(0)
-        gt_surface_mask = batch["gt_surface_mask"].reshape(-1)
+        # INPUT
+        points = self.downsample_(
+            batch["points"],
+            pooler=self.max_pool,
+            times=self.hparams["n_downsample"],
+        )
+        rays = self.downsample_(
+            batch["rays"],
+            pooler=self.avg_pool,
+            times=self.hparams["n_downsample"],
+        )
+        mask = self.downsample_(
+            batch["mask"],
+            pooler=self.max_pool,
+            times=self.hparams["n_downsample"],
+            is_mask=True,
+        )
+
+        res = self.hparams["image_resolution"] // (2 ** (self.hparams["n_downsample"]))
+
+        # GT
+        gt_image = self.downsample_(
+            batch["gt_image"].reshape(1, -1, 3),
+            pooler=self.avg_pool,
+            times=self.hparams["n_downsample"],
+        ).reshape(res, res, 3)
+        gt_surface_mask = self.downsample_(
+            batch["gt_surface_mask"],
+            pooler=self.max_pool,
+            times=self.hparams["n_downsample"],
+            is_mask=True,
+        )
         gt_normals = self.image_to_normal(gt_image)
-        unit_sphere_mask = batch["mask"].squeeze(0)
 
         # calculate the normals map
         points, surface_mask = self.sphere_tracing(
-            points=batch["points"].squeeze(0),
-            rays=batch["rays"].squeeze(0),
-            mask=unit_sphere_mask,
+            points=points.squeeze(0),
+            rays=rays.squeeze(0),
+            mask=mask.squeeze(0),
         )
         normals = self.render_normals(points=points, mask=surface_mask)
-        image = self.normal_to_image(normals, surface_mask)
+        image = self.normal_to_image(normals, surface_mask, res=res)
         mask = gt_surface_mask & surface_mask
 
         # calculate the loss for the object and usefull information to wandb
@@ -61,11 +93,12 @@ class DeepSDFNormalRender(LatentOptimizer):
         return loss
 
     def on_train_epoch_end(self):
-        import numpy as np
-
+        # np.save(
+        #     "/home/korth/sketch2shape/temp/opt_render/mask.npy",
+        #     np.array(self.mask_sum_list),
+        # )
         np.save(
-            "/home/korth/sketch2shape/temp/opt_render/before.npy",
-            np.array(self.mask_sum_list),
+            "/home/korth/sketch2shape/temp/opt_render/time.npy", np.array(self.timer)
         )
 
 
