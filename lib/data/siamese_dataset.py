@@ -59,20 +59,18 @@ class SiameseBatchDataset(Dataset):
         self.image_transforms = image_transforms
         self.metainfo = MetaInfo(data_dir=data_dir, split=split)
         self.metainfo.load_snn()
+        self.labels = np.unique(self.metainfo.snn_labels, return_inverse=True)[1]
+        _, counts = np.unique(self.labels, return_counts=True)
+        self.num_images = counts[0]
+        assert np.all(counts == self.num_images)
 
     def __len__(self):
         return self.metainfo.obj_id_count
 
     def __getitem__(self, idx: int):
-        # extract the information
-        labels = self.metainfo.snn_labels
-        _, counts = np.unique(labels, return_counts=True)
-        num_images = counts[0]
-        assert np.all(counts == num_images)
-
         data = []
-        for idx in range(num_images):
-            snn_idx = (idx * num_images) + idx
+        for image_idx in range(self.num_images):
+            snn_idx = (idx * self.num_images) + image_idx
             info = self.metainfo.get_snn(snn_idx)
             obj_id = info["obj_id"]
             image_id = info["image_id"]

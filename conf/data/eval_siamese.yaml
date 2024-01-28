@@ -11,21 +11,6 @@ drop_last: False
 persistent_workers: True
 shuffle: False
 # dataset 
-train_sampler:
-  _target_: lib.data.sampler.ChunkSampler 
-  _partial_: True
-  chunk_size: 2
-  sample_steps: -1  # full dataset
-val_sampler:
-  _target_: lib.data.sampler.ChunkSampler 
-  _partial_: True
-  chunk_size: 2
-  sample_steps: -1  # full dataset
-test_sampler:
-  _target_: lib.data.sampler.ChunkSampler 
-  _partial_: True
-  chunk_size: 2
-  sample_steps: -1  # full dataset
 dataset: 
   _target_: lib.data.siamese_dataset.SiameseBatchDataset
   _partial_: True

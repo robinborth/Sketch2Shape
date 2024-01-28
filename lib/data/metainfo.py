@@ -78,7 +78,7 @@ class MetaInfo:
 
     def label_to_obj_id(self, label: int) -> str:
         df = self._metainfo
-        return df.loc[df["label"] == str(label)].iloc[0]["obj_id"]
+        return df.loc[df["label"] == label].iloc[0]["obj_id"]
 
     def obj_id_to_label(self, obj_id: str) -> int:
         df = self._metainfo
