@@ -54,8 +54,8 @@ class Siamese(LightningModule):
         m = self.hparams["margin"]
         triplet_loss = torch.relu(d_ap - d_an + m)  # max(0, d_ap - d_an + m)
         triplet_mask = triplet_loss > 0
-        triplet_loss = triplet_loss[triplet_mask].mean()  # no zero avg
-        # triplet_loss = triplet_loss.mean()  # full avg
+        # triplet_loss = triplet_loss[triplet_mask].mean()  # no zero avg
+        triplet_loss = triplet_loss.mean()  # full avg
         self.log(f"{split}/triplet_loss", triplet_loss)
 
         triplet_count = triplet_mask.sum().float()

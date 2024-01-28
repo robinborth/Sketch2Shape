@@ -38,7 +38,7 @@ class SiameseTester(LightningModule):
         self.obj_capture_rate = obj_capture_rate
         self.obj_capture_image_id = obj_capture_image_id
 
-        self.cosine_similarity = MeanMetric()
+        self.l2_dist = MeanMetric()
         self.recall_at_1_object = MeanMetric()
         self.recall_at_5_object = MeanMetric()
         self.recall_at_1_percent = MeanMetric()
@@ -100,8 +100,7 @@ class SiameseTester(LightningModule):
         return embedding / l2_distance.reshape(-1, 1)
 
     def forward(self, batch):
-        output = self.model(batch).detach().cpu().numpy()
-        return self.normalize(output)
+        return self.model(batch).detach().cpu().numpy()
 
     def validation_step(self, batch, batch_idx, dataloader_idx):
         index_mask = batch["image_type"] == self.index_image_type
@@ -121,9 +120,13 @@ class SiameseTester(LightningModule):
         return retrievals_matrix.sum(axis=1) / self.num_views_per_object
 
     def search(self, query_emb: np.ndarray, k: int = 1):
-        similarity = query_emb @ self.index.T
-        idx = np.argsort(similarity)[:, ::-1][:, :k]
-        return similarity.take(idx), idx
+        # efficient matrix dot product multiplication
+        x, y = query_emb, self.index
+        sx = np.sum(x**2, axis=-1, keepdims=True)
+        sy = np.sum(y**2, axis=-1, keepdims=True)
+        dist = np.sqrt(-2 * x.dot(y.T) + sx + sy.T)  # (Q, I)
+        idx = np.argsort(dist)[:, :k]  # (Q, k)
+        return dist.take(idx), idx
 
     def test_step(self, batch, batch_idx):
         # extract from the batch
@@ -131,11 +134,11 @@ class SiameseTester(LightningModule):
         gt_labels = batch["label"][query_mask].cpu().numpy()
         gt_image_ids = batch["image_id"][query_mask].cpu().numpy()
 
-        # get the similarity
+        # get the distance
         query_emb = self.forward(batch["image"][query_mask])
         k_at_1_object = self.k_for_num_objects(num_objects=1)
         self.log("k_at_1_object", k_at_1_object)
-        similarity, idx = self.search(query_emb, k=self.max_k)
+        dist, idx = self.search(query_emb, k=self.max_k)
 
         # calculate the metrics
         for metric_name in [
@@ -148,8 +151,8 @@ class SiameseTester(LightningModule):
             metric.update(recall)
             self.log(metric_name, metric)
 
-        self.cosine_similarity.update(similarity[:, :k_at_1_object])
-        self.log("cosine_similarity", self.cosine_similarity)
+        self.l2_dist.update(dist[:, :k_at_1_object])
+        self.log("l2_dist", self.l2_dist)
 
         # get the heatmap based on the image_ids
         labels_at_1_object = self.labels[idx[:, :k_at_1_object]]
