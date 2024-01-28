@@ -262,10 +262,6 @@ class LatentOptimizer(LightningModule):
         depth = torch.zeros(total_points, device=self.device)
         sdf = torch.ones(total_points, device=self.device)
 
-        import time
-
-        start_time = time.perf_counter()
-        # temp_list = list()
         # sphere tracing
         for _ in range(self.hparams["n_render_steps"]):
             with torch.no_grad():
@@ -286,26 +282,8 @@ class LatentOptimizer(LightningModule):
 
             points[mask] = points[mask] + sdf[mask, None] * rays[mask]
 
-            # temp_list.append(mask.sum().cpu().numpy())
-
             if not mask.sum():
                 break
-
-        # NO MASK
-        # for _ in range(self.hparams["n_render_steps"]):
-        #     with torch.no_grad():
-        #         sdf_out = self.forward(points=points, mask=None).to(points)
-        #         sdf_out = self.forward(points=points, mask=None).to(points)
-
-        #     sdf_out = torch.clamp(sdf_out, -clamp_sdf, clamp_sdf)
-        #     depth += sdf_out * step_scale
-        #     sdf = sdf_out * step_scale
-
-        #     points = points + sdf[..., None] * rays
-
-        end_time = time.perf_counter()
-        self.timer.append(end_time - start_time)
-        # self.mask_sum_list.append(np.array(temp_list))
 
         surface_mask = sdf < surface_eps
         return points, surface_mask

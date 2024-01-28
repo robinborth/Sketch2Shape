@@ -1,6 +1,3 @@
-from typing import List
-
-import numpy as np
 import torch
 from torch.nn.functional import l1_loss
 
@@ -14,8 +11,6 @@ class DeepSDFNormalRender(LatentOptimizer):
     ) -> None:
         super().__init__(**kwargs)
         self.model.lat_vecs = None
-        self.mask_sum_list: List[float] = list()
-        self.timer: List[float] = list()
         self.avg_pool = torch.nn.AvgPool2d(2)
         self.max_pool = torch.nn.MaxPool2d(2)
 
@@ -91,15 +86,6 @@ class DeepSDFNormalRender(LatentOptimizer):
         self.log_image("image", image)
 
         return loss
-
-    def on_train_epoch_end(self):
-        # np.save(
-        #     "/home/korth/sketch2shape/temp/opt_render/mask.npy",
-        #     np.array(self.mask_sum_list),
-        # )
-        np.save(
-            "/home/korth/sketch2shape/temp/opt_render/time.npy", np.array(self.timer)
-        )
 
 
 # TODO IN PROGRESS - calculate a normal everywhere in space
