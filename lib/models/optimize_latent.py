@@ -43,8 +43,8 @@ class LatentOptimizer(LightningModule):
         log_images: bool = True,
         # default video settings
         video_capture_rate: int = 30,
-        video_azim: float = 30,
-        video_elev: float = -15,
+        video_azim: float = 40,
+        video_elev: float = -30,
         video_dist: int = 4,
         # evaluation settings
         # TODO
