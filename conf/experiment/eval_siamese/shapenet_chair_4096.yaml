@@ -2,11 +2,11 @@
 
 defaults:
   - override /data:
-    - shapenet_chair_1024
+    - shapenet_chair_4096
     - train_siamese
     - eval_siamese
   - override /logger: wandb
 
 ckpt_path: /home/borth/sketch2shape/checkpoints/siamese.ckpt 
-tags: ["eval_siamese", "shapenet_chair_1024", "siamese_ckpt"]
+tags: ["eval_siamese", "shapenet_chair_4096", "siamese_ckpt"]
 

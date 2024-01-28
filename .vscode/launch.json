@@ -41,7 +41,7 @@
             "program": "scripts/eval_siamese.py",
             "console": "integratedTerminal",
             "args": [
-                "+experiment/eval_siamese=shapenet_chair_1024"
+                "+experiment/eval_siamese=shapenet_chair_4096"
             ],
             "justMyCode": true,
         },

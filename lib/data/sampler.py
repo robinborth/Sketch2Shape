@@ -22,6 +22,7 @@ class ChunkSampler(Sampler):
         self.chunk_size = chunk_size
         self.unique_labels, counts = np.unique(self.labels, return_counts=True)
         self.num_images = counts[0]
+        self.num_unique_labels = len(self.unique_labels)
         # ensure that each label idx is only retrieved once
         if sample_steps == -1:  # full samples
             sample_steps = self.num_images // self.chunk_size
