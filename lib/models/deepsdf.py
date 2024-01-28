@@ -143,3 +143,16 @@ class DeepSDF(LightningModule):
                 {"optimizer": optim_latents, "lr_scheduler": scheduler_latents},
             )
         return [optim_decoder, optim_latents]
+
+    def get_latent(self, prior_idx: int):
+        # random latent vector
+        if prior_idx == -2:
+            mu = self.lat_vecs.weight.mean(0)
+            sigma = self.lat_vecs.weight.std(0)
+            return torch.randn_like(mu) * sigma + mu
+        # mean latent vector
+        if prior_idx == -1:
+            return self.lat_vecs.weight.mean(0)
+        # train latent vector
+        idx = torch.tensor([prior_idx]).to(self.device)
+        return self.lat_vecs(idx).squeeze()

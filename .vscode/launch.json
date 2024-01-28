@@ -132,8 +132,7 @@
             "request": "launch",
             "program": "scripts/traverse_latent.py",
             "args": [
-                "data=shapenet_chair_16",
-                "ckpt_path=/shared/logs/deepsdf.ckpt",
+                "+experiment/traverse_latent=version_1"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
