@@ -10,8 +10,8 @@ image_resolution: 256
 mesh_resolution: 256
 mesh_chunk_size: 65536
 video_capture_rate: 30
-video_azim: 30
-video_elev: 15
+video_azim: 40 
+video_elev: -30
 loss:
   _target_: torch.nn.L1Loss
   _partial_: true

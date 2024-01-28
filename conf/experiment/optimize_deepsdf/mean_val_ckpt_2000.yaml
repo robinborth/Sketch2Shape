@@ -1,0 +1,19 @@
+# @package _global_
+
+defaults:
+  - override /data:
+    - shapenet_chair_4096
+    - optimize_latent
+  - override /logger: wandb
+
+ckpt_path: /home/borth/sketch2shape/logs/train_deepsdf/runs/2024-01-26_20-39-50/checkpoints/epoch_1999.ckpt
+tags: ["optimize_deepsdf", "shapenet_chair_4096", "mean_val_ckpt_2000"]
+split: val 
+prior_idx: mean 
+obj_ids:
+  - c10b1973a0d692ef910979f825490a99
+  - 9ddbf01abee716b39b0530265e62c9b7
+  - d64c618e8b0c7db73ded7580b6cd3bad
+  - 27f4207dce674969c3bd24f986301745
+  - bb04dc0b336abf4b263915c09bc4854f
+  - 9795162b409011c2a6fee8e2140acec9

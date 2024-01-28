@@ -8,3 +8,5 @@ prior_idx_end: -1
 image_resolution: 256
 mesh_resolution: 128
 mesh_chunk_size: 65536
+video_azim: 40 
+video_elev: -30

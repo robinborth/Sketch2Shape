@@ -14,7 +14,8 @@ defaults:
 seed: 123
 task_name: traverse_latent
 tags: ["traverse_latent"]
-save_mesh: True
+create_mesh: True
+create_video: True
 ckpt_path: ???
 traversal_steps: 20
 
@@ -24,3 +25,5 @@ trainer:
 model:
   prior_idx_start: -1
   prior_idx_end: 0
+  create_mesh: ${create_mesh}
+  create_video: ${create_video}
