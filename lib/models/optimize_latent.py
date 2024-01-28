@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy as np
 import open3d as o3d
 import torch
@@ -39,7 +41,7 @@ class LatentOptimizer(LightningModule):
         diffuse: float = 0.3,
         specular: float = 0.3,
         shininess: float = 200.0,
-        n_downsample: int = 0,
+        downsample_milestones: List[int] = list(),
         # logger settings
         log_images: bool = True,
         # default video settings

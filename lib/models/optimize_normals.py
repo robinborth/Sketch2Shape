@@ -12,10 +12,17 @@ class DeepSDFNormalRender(LatentOptimizer):
     ) -> None:
         super().__init__(**kwargs)
         self.model.lat_vecs = None
+
+    def setup(self, stage):
         self.avg_pool = torch.nn.AvgPool2d(2)
         self.max_pool = torch.nn.MaxPool2d(2)
         # TODO integrate max_epochs
-        self.c2f_sch = Coarse2FineScheduler(milestones=list(), max_epochs=)
+        self.c2f_sch = Coarse2FineScheduler(
+            milestones=self.hparams["downsample_milestones"],
+            max_epochs=self.trainer.max_epochs,
+        )
+        self.n_downsample = self.c2f_sch[0]
+        print(self.c2f_sch.downsample_list)
 
     def training_step(self, batch, batch_idx):
         # INPUT
