@@ -2,6 +2,7 @@ import torch
 from torch.nn.functional import l1_loss
 
 from lib.models.optimize_latent import LatentOptimizer
+from lib.scheduler import Coarse2FineScheduler
 
 
 class DeepSDFNormalRender(LatentOptimizer):
@@ -13,38 +14,40 @@ class DeepSDFNormalRender(LatentOptimizer):
         self.model.lat_vecs = None
         self.avg_pool = torch.nn.AvgPool2d(2)
         self.max_pool = torch.nn.MaxPool2d(2)
+        # TODO integrate max_epochs
+        self.c2f_sch = Coarse2FineScheduler(milestones=list(), max_epochs=)
 
     def training_step(self, batch, batch_idx):
         # INPUT
         points = self.downsample_(
             batch["points"],
             pooler=self.max_pool,
-            times=self.hparams["n_downsample"],
+            times=self.n_downsample,
         )
         rays = self.downsample_(
             batch["rays"],
             pooler=self.avg_pool,
-            times=self.hparams["n_downsample"],
+            times=self.n_downsample,
         )
         mask = self.downsample_(
             batch["mask"],
             pooler=self.max_pool,
-            times=self.hparams["n_downsample"],
+            times=self.n_downsample,
             is_mask=True,
         )
 
-        res = self.hparams["image_resolution"] // (2 ** (self.hparams["n_downsample"]))
+        res = self.hparams["image_resolution"] // (2 ** (self.n_downsample))
 
         # GT
         gt_image = self.downsample_(
             batch["gt_image"].reshape(1, -1, 3),
             pooler=self.avg_pool,
-            times=self.hparams["n_downsample"],
+            times=self.n_downsample,
         ).reshape(res, res, 3)
         gt_surface_mask = self.downsample_(
             batch["gt_surface_mask"],
             pooler=self.max_pool,
-            times=self.hparams["n_downsample"],
+            times=self.n_downsample,
             is_mask=True,
         )
         gt_normals = self.image_to_normal(gt_image)
@@ -86,6 +89,9 @@ class DeepSDFNormalRender(LatentOptimizer):
         self.log_image("image", image)
 
         return loss
+
+    def on_train_epoch_end(self):
+        self.n_downsample = self.coarse2fine_sch[self.current_epoch]
 
 
 # TODO IN PROGRESS - calculate a normal everywhere in space
