@@ -71,12 +71,10 @@ class DeepSDFNormalEverywhereRender(LatentOptimizer):
 
     def training_step(self, batch, batch_idx):
         gt_image = batch["gt_image"].squeeze(0)
-        gt_surface_mask = batch["gt_surface_mask"].reshape(-1)
         gt_normals = self.image_to_normal(gt_image)
-        unit_sphere_mask = batch["mask"].squeeze(0)
 
         # calculate the normals map
-        points, depth = self.sphere_tracing_min_sdf_all(
+        points = self.sphere_tracing_min_sdf_all(
             points=batch["points"].squeeze(0),
             rays=batch["rays"].squeeze(0),
         )
@@ -98,16 +96,8 @@ class DeepSDFNormalEverywhereRender(LatentOptimizer):
         loss = reg_loss + normal_loss
         self.log("optimize/loss", loss)
 
-        self.log(
-            "optimize/mem_allocated", torch.cuda.memory_allocated() / 1024**2
-        )  # convert to MIB
-
         # visualize the different images
         self.log_image("gt_image", gt_image)
         self.log_image("image", image)
-        self.log_image(
-            "depth",
-            depth.reshape(self.hparams["resolution"], self.hparams["resolution"]),
-        )
 
         return loss

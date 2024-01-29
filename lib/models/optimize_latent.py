@@ -280,7 +280,6 @@ class LatentOptimizer(LightningModule):
 
         min_points = points.clone()
         min_sdf = sdf.clone()
-        depth_at_min = depth.clone()
 
         # sphere tracing
         for _ in range(self.hparams["n_render_steps"]):
@@ -295,7 +294,6 @@ class LatentOptimizer(LightningModule):
 
             min_mask = torch.abs(sdf_out_unclamped) < torch.abs(min_sdf)
             min_sdf[min_mask] = sdf_out_unclamped[min_mask]
-            depth_at_min[min_mask] = depth[min_mask]
             min_points[min_mask] = points[min_mask]
 
-        return min_points, depth_at_min
+        return min_points
