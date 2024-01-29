@@ -20,7 +20,7 @@ class LatentOptimizer(LightningModule):
         self,
         # latent optimization settings
         ckpt_path: str = "best.ckpt",
-        prior_idx: int = -1,  # random(-2), mean(-1), train(idx)
+        prior_idx: int = -1,  # random(-2), mean(-1), prior(idx)
         reg_loss: bool = True,
         reg_weight: float = 1e-05,
         optimizer=None,
