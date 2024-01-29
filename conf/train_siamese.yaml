@@ -24,7 +24,6 @@ ckpt_path: null
 
 trainer:
   max_epochs: 10
-  val_check_interval: 0.25
 
 callbacks:
   early_stopping:

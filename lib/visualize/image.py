@@ -63,59 +63,9 @@ def transform_to_plot(data, batch=False):
     return np.clip(data, 0, 1)
 
 
-def plot_single_image(data):
+def plot_single_image(image):
     plt.clf()
-    data = transform_to_plot(data)
     plt.figure(figsize=(2, 2))
-    plt.imshow(data)
+    plt.imshow(image)
     plt.axis("off")
     plt.show()
-
-
-def show_sketch(dataset, idx):
-    image_data = transform_to_plot(dataset[idx]["sketch"], batch=False)
-    plot_single_image(image_data)
-
-
-def show_sketches(dataset, idx):
-    image_data = transform_to_plot(dataset[idx]["sketch"], batch=True)
-    image_grid(image_data, 4, 8)
-
-
-def show_rendered_images(dataset, idx):
-    image_data = transform_to_plot(dataset[idx]["image"], batch=True)
-    image_grid(image_data, 4, 8)
-
-
-def plot_top_32(
-    metainfo,
-    dataset,
-    batch,
-    image_id,
-):
-    idx = np.where(batch["image_ids"] == image_id)[0][0]
-    gt_label = batch["labels"][idx]
-    # print(f"{gt_label=}")
-    gt_image_id = batch["image_ids"][idx]
-    # print(f"{gt_image_id=}")
-    labels_at_1_object = batch["labels_at_1_object"][idx]
-    # print(f"{labels_at_1_object=}")
-    image_ids_at_1_object = batch["image_ids_at_1_object"][idx]
-    # print(f"{image_ids_at_1_object=}")
-
-    obj_id = metainfo.label_to_obj_id(gt_label)
-    image_id = str(gt_image_id).zfill(5)
-    sketch = dataset._fetch("sketches", obj_id, image_id)
-    plot_single_image(sketch)
-
-    images = []
-    for label, image_id in zip(labels_at_1_object, image_ids_at_1_object):
-        is_false = gt_label != label
-        obj_id = metainfo.label_to_obj_id(label)
-        image_id = str(image_id).zfill(5)
-        image = dataset._fetch("images", obj_id, image_id)
-        if is_false:
-            image[image > 0.95] = 0
-        images.append(image)
-    image_data = transform_to_plot(images, batch=True)
-    image_grid(image_data, 4, 8)

@@ -8,7 +8,7 @@ num_latent_vectors: ${data.num_obj_train}
 clamp: True
 clamp_val: 0.1
 reg_loss: True
-reg_weight: 1e-4
+reg_weight: 1e-04
 skip_connection: [4]
 dropout: 0.2
 weight_norm: True
@@ -21,9 +21,9 @@ loss:
 decoder_optimizer:
   _target_: torch.optim.Adam
   _partial_: true
-  lr: 5e-4
+  lr: 5e-04
 
 latents_optimizer:
   _target_: torch.optim.Adam
   _partial_: true
-  lr: 1e-3
+  lr: 1e-03
