@@ -27,10 +27,10 @@ def preprocess(cfg: DictConfig) -> None:
             siamese.metainfo.save_sketch(sketch, obj_id=obj_id, image_id=f"{idx:05}")
 
     logger.debug("==> initializing normals everywhere ...")
-    normals = hydra.utils.instantiate(cfg.data.preprocess_normals_everywhere)
+    normals_preprocess = hydra.utils.instantiate(cfg.data.preprocess_normals_everywhere)
     logger.debug("==> start preprocessing normals ...")
-    for obj_id in tqdm(list(normals.obj_ids_iter())):
-        normals = normals.preprocess(obj_id=obj_id)
+    for obj_id in tqdm(list(normals_preprocess.obj_ids_iter())):
+        normals = normals_preprocess.preprocess(obj_id=obj_id)
         for idx, normal in enumerate(normals):
             siamese.metainfo.save_normal_everywhere(normal, obj_id, f"{idx:05}")
 
