@@ -18,7 +18,7 @@ tags: ["optimize_normals"]
 split: val
 obj_ids: ???
 train: True
-prior_idx: False
+prior_idx: mean  # random(-2), mean(-1), train(idx)
 eval: True
 save_mesh: True
 create_video: True

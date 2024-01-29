@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 import cv2 as cv
 import numpy as np
 import open3d as o3d
-from sklearn.neighbors import KDTree
+import point_cloud_utils as pcu
 
 from lib.data.metainfo import MetaInfo
 from lib.render.mesh import render_normals
@@ -11,10 +11,16 @@ from lib.render.mesh import render_normals
 o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)
 
 
+@dataclass
 class PreprocessMesh:
-    def __init__(self, data_dir: str = "/data", skip: bool = True):
-        self.skip = skip
-        self.metainfo = MetaInfo(data_dir=data_dir)
+    data_dir: str = "/data"
+    skip: bool = True
+    resolution: int = 20000
+    smoothing: bool = True
+    laplacian_num_iters: int = 2
+
+    def __post_init__(self):
+        self.metainfo = MetaInfo(data_dir=self.data_dir)
 
     def obj_ids_iter(self):
         if not self.skip:
@@ -24,8 +30,47 @@ class PreprocessMesh:
             if not path.exists():
                 yield obj_id
 
+    def smooth_watertight_mesh(
+        self,
+        mesh: o3d.geometry.TriangleMesh,
+        resolution: int = 20000,
+        laplacian_num_iters: int = 2,
+    ):
+        # extract verts and faces
+        verts = np.asarray(mesh.vertices)
+        faces = np.asarray(mesh.triangles)
+        # watertight and smooth, note that it's not watertight
+        vw, fw = pcu.make_mesh_watertight(verts, faces, resolution)
+        if self.smoothing:
+            vw = pcu.laplacian_smooth_mesh(
+                vw,
+                fw,
+                num_iters=laplacian_num_iters,
+                use_cotan_weights=True,
+            )
+        # translate back to open3d mesh
+        verts = o3d.utility.Vector3dVector(vw)
+        faces = o3d.utility.Vector3iVector(fw)
+        mesh = o3d.geometry.TriangleMesh(verts, faces)
+        mesh.compute_vertex_normals()
+        return mesh
+
+    def normalize_mesh(self, mesh: o3d.geometry.TriangleMesh):
+        points = np.asarray(mesh.vertices)
+        translate = (np.min(points, axis=0) + np.max(points, axis=0)) / 2.0
+        points -= translate
+        points /= np.linalg.norm(points, axis=-1).max()
+        mesh.vertices = o3d.utility.Vector3dVector(points)
+        return mesh
+
     def preprocess(self, obj_id: str):
-        return self.metainfo.load_mesh(obj_id=obj_id, normalize=True)
+        mesh = self.metainfo.load_mesh(obj_id=obj_id)
+        sw_mesh = self.smooth_watertight_mesh(
+            mesh,
+            resolution=self.resolution,
+            laplacian_num_iters=self.laplacian_num_iters,
+        )
+        return self.normalize_mesh(sw_mesh)
 
 
 @dataclass
@@ -50,6 +95,15 @@ class PreprocessSiamese:
     def __post_init__(self):
         self.metainfo = MetaInfo(data_dir=self.data_dir)
 
+    def obj_ids_iter(self):
+        if not self.skip:
+            yield from self.metainfo.obj_ids
+        for obj_id in self.metainfo.obj_ids:
+            normals_dir = self.metainfo.normals_dir_path(obj_id=obj_id)
+            sketches_dir = self.metainfo.sketches_dir_path(obj_id=obj_id)
+            if not normals_dir.exists() or not sketches_dir.exists():
+                yield obj_id
+
     def image_to_sketch(self, images: np.ndarray):
         edges = []
         for image in images:
@@ -70,15 +124,6 @@ class PreprocessSiamese:
         normals = normals.reshape(normals.shape[0], self.width, self.height, -1)
         normals = (normals * 255).astype(np.uint8)
         return normals
-
-    def obj_ids_iter(self):
-        if not self.skip:
-            yield from self.metainfo.obj_ids
-        for obj_id in self.metainfo.obj_ids:
-            normals_dir = self.metainfo.normals_dir_path(obj_id=obj_id)
-            sketches_dir = self.metainfo.sketches_dir_path(obj_id=obj_id)
-            if not normals_dir.exists() or not sketches_dir.exists():
-                yield obj_id
 
     def preprocess(self, obj_id: str):
         mesh = self.metainfo.load_normalized_mesh(obj_id=obj_id)
@@ -101,154 +146,22 @@ class PreprocessSiamese:
 class PreprocessSDF:
     data_dir: str = "/data"
     skip: bool = True
-    # camera settings
-    azims: list[int] = field(default_factory=list)
-    elevs: list[int] = field(default_factory=list)
-    dist: float = 4.0
-    width: int = 256
-    height: int = 256
-    focal: int = 512
-    sphere_eps: float = 1e-1
-    # base samples
-    cloud_samples: int = 500000
     # sample surface points
     surface_samples: int = 50000
-    # sample inside points
-    inside_samples: int = 150000
-    inside_buffer_multiplier: float = 1.2
-    inside_delta_mean: float = 0.0
-    inside_delta_var: float = 1e-02
+    # sample near points
+    near_samples_1: int = 100000
+    near_scale_1: float = 5e-03
+    near_buffer_1: float = 1.1
     # sample outside points
-    outside_samples: int = 250000
-    outside_buffer_multiplier: float = 1.2
-    outside_delta_mean: float = 0.0
-    outside_delta_var: float = 5e-02
+    near_samples_2: int = 100000
+    near_scale_2: float = 5e-02
+    near_buffer_2: float = 1.1
     # sample unit sphere points
-    unit_samples: int = 50000
-    unit_buffer_multiplier: float = 1.2
-    unit_alpha: float = 2.0
-    unit_beta: float = 0.5
+    unit_samples: int = 100000
+    unit_buffer: float = 2.0
 
     def __post_init__(self):
         self.metainfo = MetaInfo(self.data_dir)
-
-    def _get_cloud_samples(self, num_samples: int):
-        mask = np.random.choice(self.cloud_points.shape[0], num_samples)
-        return self.cloud_points[mask], self.cloud_normals[mask]
-
-    def _get_sdfs(self, query: np.ndarray):
-        # TODO add more points with a more k=5 if not then we throw the point away
-        sdfs, idx = self.tree.query(query, k=1)
-        nearest_point = self.cloud_points[idx.squeeze()]
-        nearest_normal = self.cloud_normals[idx.squeeze()]
-        inside_mask = np.sum((query - nearest_point) * nearest_normal, axis=-1) < 0
-        sdfs[inside_mask] = -sdfs[inside_mask]
-        return sdfs.squeeze()
-
-    def _sample_surface(self, num_samples: int):
-        points, _ = self._get_cloud_samples(num_samples)
-        sdfs = np.zeros(points.shape[0])
-        return points, sdfs
-
-    def _sample_near_surface(
-        self,
-        num_samples: int = 10000,
-        inside_surface: bool = True,
-        buffer_multiplier: float = 1.0,
-        delta_mean: float = 0.0,
-        delta_var: float = 5e-02,
-    ):
-        assert buffer_multiplier >= 1.0
-        num_query_samples = int(num_samples * buffer_multiplier)
-        delta = np.abs(np.random.normal(delta_mean, delta_var, size=num_query_samples))
-        if inside_surface:
-            delta = -delta
-
-        points, normals = self._get_cloud_samples(num_query_samples)
-        points = points + normals * delta[..., None]
-        sdfs = self._get_sdfs(query=points)
-
-        valid_mask = sdfs < 0 if inside_surface else sdfs > 0
-        valid_mask &= np.linalg.norm(points, axis=-1) <= 1.0
-
-        points, sdfs = points[valid_mask], sdfs[valid_mask]
-
-        # ensures that you have the required points and sdfs with recursion
-        if sdfs.shape[0] < num_samples:
-            print("WARNING: buffer_multiplier to low. TODO change to logger!")
-            points, sdfs = self._sample_near_surface(
-                num_samples=num_samples,
-                inside_surface=inside_surface,
-                buffer_multiplier=buffer_multiplier * 2,
-                delta_mean=delta_mean,
-                delta_var=delta_var,
-            )
-
-        final_mask = np.random.choice(points.shape[0], num_samples)
-        return points[final_mask], sdfs[final_mask]
-
-    def _sample_unit_ball(
-        self,
-        num_samples: int = 100000,
-        buffer_multiplier: float = 1.2,
-        alpha: float = 2.0,
-        beta: float = 0.5,
-    ):
-        assert buffer_multiplier >= 1.0
-        num_query_samples = int(num_samples * buffer_multiplier)
-        circle = o3d.geometry.TriangleMesh.create_sphere()
-        point_cloud = circle.sample_points_uniformly(number_of_points=num_query_samples)
-
-        points = np.asarray(point_cloud.points)
-        points = points / np.linalg.norm(points, axis=-1)[..., None]
-
-        radius = np.random.beta(alpha, beta, points.shape[0])
-        points = points * radius[..., None]
-
-        sdfs = self._get_sdfs(points)
-        outside_mask = sdfs > 0
-        points, sdfs = points[outside_mask], sdfs[outside_mask]
-
-        if points.shape[0] < num_samples:
-            print("WARNING: buffer_multiplier to low. TODO change to logger!")
-            points, sdfs = self._sample_unit_ball(
-                num_samples=num_samples,
-                buffer_multiplier=buffer_multiplier * 2,
-                alpha=alpha,
-                beta=beta,
-            )
-
-        final_mask = np.random.choice(points.shape[0], num_samples)
-        return points[final_mask], sdfs[final_mask]
-
-    def sample_surface(self):
-        return self._sample_surface(num_samples=self.surface_samples)
-
-    def sample_inside_surface(self):
-        return self._sample_near_surface(
-            num_samples=self.inside_samples,
-            inside_surface=True,
-            buffer_multiplier=self.inside_buffer_multiplier,
-            delta_mean=self.inside_delta_mean,
-            delta_var=self.inside_delta_var,
-        )
-
-    def sample_outside_surface(self):
-        return self._sample_near_surface(
-            num_samples=self.outside_samples,
-            inside_surface=False,
-            buffer_multiplier=self.outside_buffer_multiplier,
-            delta_mean=self.outside_delta_mean,
-            delta_var=self.outside_delta_var,
-        )
-
-    def sample_unit_ball(self):
-        return self._sample_unit_ball(
-            num_samples=self.unit_samples,
-            buffer_multiplier=self.unit_buffer_multiplier,
-            alpha=self.unit_alpha,
-            beta=self.unit_beta,
-        )
 
     def obj_ids_iter(self):
         if not self.skip:
@@ -259,26 +172,86 @@ class PreprocessSDF:
             if not surface_samples_path.exists() or not sdf_samples_path.exists():
                 yield obj_id
 
+    def get_sdfs(self, query: np.ndarray):
+        query_point = o3d.core.Tensor(query, dtype=o3d.core.Dtype.Float32)
+        return self.scene.compute_signed_distance(query_point).numpy()
+
+    def sample_surface(self, num_samples: int):
+        pcd = self.mesh.sample_points_uniformly(num_samples)
+        points = np.asarray(pcd.points)
+        assert num_samples == points.shape[0]
+        sdfs = np.zeros(points.shape[0])
+        return points, sdfs
+
+    def sample_near_surface(
+        self,
+        num_samples: int = 100000,
+        scale: float = 5e-02,
+        buffer: float = 1.1,
+    ):
+        total_points = 0
+        tmp_points = []
+        while total_points < num_samples:
+            to_sample = int((num_samples - total_points) * buffer)
+            surface_points, _ = self.sample_surface(to_sample)
+            delta = np.random.normal(scale=scale, size=(to_sample, 3))
+            points = surface_points + delta
+            sphere_mask = np.linalg.norm(points, axis=-1) <= 1.0
+            points = points[sphere_mask]  # (P, 3)
+            tmp_points.append(points)
+            total_points += len(points)
+        points = np.concatenate(tmp_points)  # (N, 3)
+        points = points[np.random.choice(points.shape[0], num_samples)]
+        assert num_samples == points.shape[0]
+        sdf = self.get_sdfs(points)
+        return points, sdf
+
+    def sample_unit_ball(self, num_samples: int = 100000, buffer: float = 2.0):
+        total_points = 0
+        tmp_points = []
+        while total_points < num_samples:
+            to_sample = int((num_samples - total_points) * buffer)
+            points = np.random.uniform(-1, 1, size=(to_sample, 3))
+            sphere_mask = np.linalg.norm(points, axis=-1) <= 1.0
+            points = points[sphere_mask]
+            tmp_points.append(points)
+            total_points += len(points)
+        points = np.concatenate(tmp_points)  # (N, 3)
+        points = points[np.random.choice(points.shape[0], num_samples)]
+        assert num_samples == points.shape[0]
+        sdf = self.get_sdfs(points)
+        return points, sdf
+
+    def load(self, obj_id: str):
+        self.mesh = self.metainfo.load_normalized_mesh(obj_id)
+        self.scene = o3d.t.geometry.RaycastingScene()
+        self.scene.add_triangles(o3d.t.geometry.TriangleMesh.from_legacy(self.mesh))
+
     def preprocess(self, obj_id: str):
-        # update state of the sdf
-        mesh = self.metainfo.load_normalized_mesh(obj_id)
-        points, normals, masks = render_normals(
-            mesh=mesh,
-            azims=self.azims,
-            elevs=self.elevs,
-        )
-        self.cloud_points, self.cloud_normals = points[masks], normals[masks]
-        self.tree = KDTree(self.cloud_points, leaf_size=2)
+        # extra function in order to load it outisde preprocess
+        self.load(obj_id=obj_id)
 
         # sample points with sdf values
-        unit_points, unit_sdfs = self.sample_unit_ball()
-        inside_points, inside_sdfs = self.sample_inside_surface()
-        outside_points, outside_sdfs = self.sample_outside_surface()
+        unit_points, unit_sdfs = self.sample_unit_ball(
+            num_samples=self.unit_samples,
+            buffer=self.unit_buffer,
+        )
+        near_point_1, near_sdfs_1 = self.sample_near_surface(
+            num_samples=self.near_samples_1,
+            scale=self.near_scale_1,
+            buffer=self.near_buffer_1,
+        )
+        near_point_2, near_sdfs_2 = self.sample_near_surface(
+            num_samples=self.near_samples_2,
+            scale=self.near_scale_2,
+            buffer=self.near_buffer_2,
+        )
         # combine the samples together
-        points = np.concatenate([unit_points, inside_points, outside_points])
-        sdfs = np.concatenate([unit_sdfs, inside_sdfs, outside_sdfs])
+        points = np.concatenate([unit_points, near_point_1, near_point_2])
+        sdfs = np.concatenate([unit_sdfs, near_sdfs_1, near_sdfs_2])
         sdf_samples = np.concatenate([points, sdfs[..., None]], axis=-1)
 
         # sample points on the surface for evaluation
-        surface_samples, _ = self.sample_surface()
+        surface_samples, _ = self.sample_surface(num_samples=self.surface_samples)
+
         return sdf_samples, surface_samples

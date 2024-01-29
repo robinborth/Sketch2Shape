@@ -30,10 +30,10 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
         obj_ids = metainfo.obj_ids
         log.info(f"==> selecting obj_ids ({cfg.split}) ...>")
 
-    if cfg.split != "train" and cfg.prior_idx:
+    if cfg.split != "train" and cfg.prior_idx == "train":
         log.info("WARNING! Only select prior_idx for split=train ...>")
         log.info("==> Set prior_idx=False ...>")
-        cfg.prior_idx = False
+        cfg.prior_idx = "mean"
 
     if not cfg.eval and cfg.save_mesh:
         log.info("WARNING! The mesh is only created in the eval loop ...>")
@@ -48,8 +48,13 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
         datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
 
         log.info(f"==> initializing model <{cfg.model._target_}>")
-        if cfg.prior_idx:  # set the prior_idx for the trained shapes
+        # set the prior_idx for the trained shapes
+        if cfg.prior_idx == "train":
             cfg.model.prior_idx = metainfo.obj_id_to_label(obj_id=obj_id)
+        if cfg.prior_idx == "mean":
+            cfg.model.prior_idx = -1
+        if cfg.prior_idx == "random":
+            cfg.model.prior_idx = -2
         model: LightningModule = hydra.utils.instantiate(cfg.model)
 
         log.info("==> initializing callbacks ...")

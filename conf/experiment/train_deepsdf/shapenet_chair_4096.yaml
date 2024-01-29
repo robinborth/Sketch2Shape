@@ -2,11 +2,11 @@
 
 defaults:
   - override /data:
-      - shapenet_chair_1024
+      - shapenet_chair_4096
       - train_deepsdf
   - override /logger: wandb
 
-tags: ["train_deepsdf", "shapenet_chair_1024"]
+tags: ["train_deepsdf", "shapenet_chair_4096"]
 
 model:
   decoder_scheduler:
@@ -21,15 +21,19 @@ model:
     gamma: 0.9
 
 trainer:
-  max_epochs: 10000
+  max_epochs: 2000
   precision: 16-mixed
 
 data:
   batch_size: 32
   num_workers: 7
   chunk_size: 16384
-  half: False
+  half: True
 
 callbacks:
   early_stopping:
-    patience: 10000
+    patience: 2000
+  model_checkpoint:
+    save_top_k: -1
+    every_n_epochs: 100
+    save_last: True

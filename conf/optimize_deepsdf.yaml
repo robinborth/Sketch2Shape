@@ -18,10 +18,10 @@ tags: ["optimize_deepsdf"]
 split: val  # train, val, test
 obj_ids: ???  # overrids the split setting, make sure that obj_ids are only from the same split.
 train: True
-prior_idx: True  # only if split == train
+prior_idx: mean  # random(-2), mean(-1), prior(idx)
 eval: True
 save_mesh: True  # only if eval == True
-create_video: False
+create_video: True 
 ckpt_path: ???
 
 trainer:
@@ -31,17 +31,15 @@ trainer:
 data:
   train_dataset:
     _target_: lib.data.deepsdf_dataset.DeepSDFLatentOptimizerDataset
-    chunk_size: 16384
+    chunk_size: 250000 
     half: True
-
 
 model:
   scheduler:
     _partial_: True
     _target_: torch.optim.lr_scheduler.StepLR
-    step_size: 100
+    step_size: 50 
     gamma: 0.9
-
   
 callbacks:
   early_stopping:

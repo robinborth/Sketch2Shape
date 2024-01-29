@@ -22,7 +22,7 @@ class LatentOptimizer(LightningModule):
         self,
         # latent optimization settings
         ckpt_path: str = "best.ckpt",
-        prior_idx: int = -1,
+        prior_idx: int = -1,  # random(-2), mean(-1), prior(idx)
         reg_loss: bool = True,
         reg_weight: float = 1e-05,
         optimizer=None,
@@ -46,8 +46,8 @@ class LatentOptimizer(LightningModule):
         log_images: bool = True,
         # default video settings
         video_capture_rate: int = 30,
-        video_azim: float = 0.0,
-        video_elev: float = 45.0,
+        video_azim: float = 40,
+        video_elev: float = -30,
         video_dist: int = 4,
         # evaluation settings
         # TODO
@@ -56,17 +56,11 @@ class LatentOptimizer(LightningModule):
         self.save_hyperparameters(logger=False)
 
         # init model
-        self.model = DeepSDF.load_from_checkpoint(
-            self.hparams["ckpt_path"], strict=False
-        )
+        self.model = DeepSDF.load_from_checkpoint(ckpt_path, strict=False)
         self.model.freeze()
 
-        # init latent either by using a pretrained one ore the mean of the pretrained
-        if self.hparams["prior_idx"] >= 0:
-            idx = torch.tensor([self.hparams["prior_idx"]])
-            latent = self.model.lat_vecs(idx.to(self.model.device)).squeeze()
-        else:
-            latent = self.model.lat_vecs.weight.mean(0)
+        # init latent either by pretrained, mean or random
+        latent = self.model.get_latent(prior_idx)
         self.register_buffer("latent", latent)
         self.mesh: o3d.geometry.TriangleMesh = None
 
@@ -77,7 +71,7 @@ class LatentOptimizer(LightningModule):
         # video settings
         camera = Camera(
             azim=self.hparams["video_azim"],
-            elev=-self.hparams["video_elev"],
+            elev=self.hparams["video_elev"],
             dist=self.hparams["video_dist"],
         )
         points, rays, mask = camera.unit_sphere_intersection_rays()

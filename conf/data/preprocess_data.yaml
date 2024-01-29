@@ -18,6 +18,8 @@ preprocess_mesh:
   _target_: lib.data.preprocess.PreprocessMesh
   data_dir: ${data.data_dir}
   skip: True
+  resolution: 30000
+  laplacian_num_iters: 1
 
 ########################################################################
 # Preprocessing Siamese
@@ -30,15 +32,15 @@ preprocess_siamese:
   skip: True
   # camera settings
   azims: [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340]
-  elevs: [-75, -60, -45, -30, -15, 0 , 15, 30]
+  elevs: [-50, -30, -10, 10, 30]
   dist: ${data.camera_dist} 
   width: ${data.camera_width} 
   height: ${data.camera_height} 
   focal: ${data.camera_focal} 
   sphere_eps: ${data.camera_sphere_eps} 
   # sketch settings
-  t_lower: 20 # 20
-  t_upper: 40 # 40
+  t_lower: 100
+  t_upper: 150
   aperture_size: 3  # 3, 5, 7
   l2_gradient: True
 
@@ -51,30 +53,16 @@ preprocess_sdf:
   # processing settings
   data_dir: ${data.data_dir}
   skip: True
-  # camera settings
-  azims: [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330]
-  elevs: [-90, -60, -30, 0, 30, 60,  90]
-  dist: ${data.camera_dist} 
-  width: ${data.camera_width} 
-  height: ${data.camera_height} 
-  focal: ${data.camera_focal} 
-  sphere_eps: ${data.camera_sphere_eps} 
-  # base samples
-  cloud_samples: 500000
   # sample surface points
   surface_samples: 50000
-  # sample inside points
-  inside_samples: 150000
-  inside_buffer_multiplier: 1.2
-  inside_delta_mean: 0.0
-  inside_delta_var: 1e-02
-  # sample outside points
-  outside_samples: 300000
-  outside_buffer_multiplier: 1.2
-  outside_delta_mean: 0.0
-  outside_delta_var: 5e-02
+  # sample near points
+  near_samples_1: 100000
+  near_scale_1: 5e-03
+  near_buffer_1: 1.1
+  # sample near points
+  near_samples_2: 100000
+  near_scale_2: 5e-02
+  near_buffer_2: 1.1
   # sample unit sphere points
   unit_samples: 50000
-  unit_buffer_multiplier: 1.2
-  unit_alpha: 2.0
-  unit_beta: 0.5
+  unit_buffer: 2.0

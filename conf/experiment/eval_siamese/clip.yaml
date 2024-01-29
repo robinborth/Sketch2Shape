@@ -2,13 +2,13 @@
 
 defaults:
   - override /data:
-    - shapenet_chair_1024
+    - shapenet_chair_4096
     - train_siamese
     - eval_siamese
   - override /logger: wandb
 
 ckpt_path: clip 
-tags: ["eval_siamese", "shapenet_chair_1024", "clip"]
+tags: ["eval_siamese", "shapenet_chair_4096", "clip"]
 
 eval_data:
   sketch_transforms:
