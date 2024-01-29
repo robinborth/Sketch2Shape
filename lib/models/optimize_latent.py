@@ -33,7 +33,7 @@ class LatentOptimizer(LightningModule):
         clamp_sdf: float = 0.1,
         step_scale: float = 1.0,
         surface_eps: float = 1e-03,
-        sphere_eps: float = 3e-02,
+        sphere_eps: float = 1e-01,  # similar to settings from camera class
         normal_eps: float = 5e-03,
         ambient: float = 0.5,
         diffuse: float = 0.3,
@@ -171,16 +171,17 @@ class LatentOptimizer(LightningModule):
     # Rendering Utils
     ############################################################
 
-    def normal_to_image(self, x, mask=None, default=1):
-        x = self.to_image(x=x, mask=mask, default=default)
+    def normal_to_image(self, x, mask=None, default=1, resolution=None):
+        x = self.to_image(x=x, mask=mask, default=default, resolution=resolution)
         return (x + 1) / 2
 
     def image_to_normal(self, x, mask=None, default=1):
         x = (x * 2) - 1
         return x.reshape(-1, 3)
 
-    def to_image(self, x, mask=None, default=1):
-        resolution = self.hparams["image_resolution"]
+    def to_image(self, x, mask=None, default=1, resolution=None):
+        if resolution is None:
+            resolution = self.hparams["image_resolution"]
         if mask is not None:
             x[~mask] = default
         return x.reshape(resolution, resolution, -1)
@@ -222,7 +223,6 @@ class LatentOptimizer(LightningModule):
         rays: torch.Tensor,
         mask: torch.Tensor,
     ):
-        device = self.model.device
         clamp_sdf = self.hparams["clamp_sdf"]
         step_scale = self.hparams["step_scale"]
         surface_eps = self.hparams["surface_eps"]
@@ -231,38 +231,40 @@ class LatentOptimizer(LightningModule):
         mask = mask.clone()
 
         total_points = (points.shape[0],)
-        depth = torch.zeros(total_points).to(device)
-        sdf = torch.ones(total_points).to(device)
-
-        # TODO speed improvement:
-        # [ ] track previous points and sdfs: if sign switch, interpolate
+        depth = torch.zeros(total_points, device=self.device)
+        sdf = torch.ones(total_points, device=self.device)
 
         # sphere tracing
-        for _ in range(self.hparams["n_render_steps"]):
+        for step in range(self.hparams["n_render_steps"]):
+            # get the deepsdf values from the model
             with torch.no_grad():
                 sdf_out = self.forward(points=points, mask=mask).to(points)
 
+            # transform the sdf value
             sdf_out = torch.clamp(sdf_out, -clamp_sdf, clamp_sdf)
-            depth[mask] += sdf_out * step_scale
-            if _ > 50:
-                sdf[mask] = sdf_out * step_scale * 0.5
-            else:
-                sdf[mask] = sdf_out * step_scale
+            if step > 50:
+                sdf_out = sdf_out * 0.5
+            sdf_out = sdf_out * step_scale
 
+            # update the depth and the sdf values
+            depth[mask] += sdf_out
+            sdf[mask] = sdf_out
+
+            # check if the rays converged
             surface_idx = torch.abs(sdf) < surface_eps
-
-            void_idx = depth > 2.0
+            void_idx = points.norm(dim=-1) > (1 + self.hparams["sphere_eps"] * 2)
             mask[surface_idx | void_idx] = False
 
+            # update the current point on the ray
             points[mask] = points[mask] + sdf[mask, None] * rays[mask]
 
+            # check if converged
             if not mask.sum():
                 break
 
         surface_mask = sdf < surface_eps
         return points, surface_mask
 
-    # TODO IN PROGRESS
     def sphere_tracing_min_sdf_all(
         self,
         points: torch.Tensor,
