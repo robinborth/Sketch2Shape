@@ -26,7 +26,7 @@ ckpt_path: ???
 
 trainer:
   num_sanity_val_steps: 0
-  max_epochs: 15
+  max_epochs: 20 
   accumulate_grad_batches: 4
 
 data:

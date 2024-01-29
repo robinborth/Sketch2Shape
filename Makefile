@@ -51,10 +51,10 @@ optimize_deepsdf:
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_2500
 
 optimize_normals:
-	python scripts/optimize_normals.py +experiment/optimize_normals=mean_val
+	python scripts/optimize_normals.py +experiment/optimize_normals=mean_train
 
 optimize_sketch:
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=mean_val
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=mean_train
 
 optimize_chair:
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=chair_train_prior
@@ -71,3 +71,27 @@ optimize_chair:
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=chair_train_prior_close
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=chair_train_mean
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=chair_train_random
+
+night:
+	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_1
+	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_2
+	python scripts/traverse_latent.py +experiment/traverse_latent=random_1
+	python scripts/traverse_latent.py +experiment/traverse_latent=random_2
+	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_1
+	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_2
+
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_train
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=train_mesh_ckpt_1000
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=train_mesh_ckpt_2000
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=train_mesh_ckpt_3000
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=chair_train_prior
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=chair_train_prior_close
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=chair_train_mean
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=chair_train_random
+
+	python scripts/optimize_normals.py +experiment/optimize_normals=mean_train
+	python scripts/optimize_normals.py +experiment/optimize_normals=chair_train_prior
+	python scripts/optimize_normals.py +experiment/optimize_normals=chair_train_prior_close
+	python scripts/optimize_normals.py +experiment/optimize_normals=chair_train_mean
+	python scripts/optimize_normals.py +experiment/optimize_normals=chair_train_random
