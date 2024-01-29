@@ -134,6 +134,7 @@ def render_normals_everywhere(
             d4 = (min_dist_points - [0, delta, 0]).astype(np.float32)
             d5 = (min_dist_points + [0, 0, delta]).astype(np.float32)
             d6 = (min_dist_points - [0, 0, delta]).astype(np.float32)
+
             # calculate approximate normals
             dist1 = scene.compute_distance(d1).numpy()
             dist2 = scene.compute_distance(d2).numpy()
@@ -141,18 +142,12 @@ def render_normals_everywhere(
             dist4 = scene.compute_distance(d4).numpy()
             dist5 = scene.compute_distance(d5).numpy()
             dist6 = scene.compute_distance(d6).numpy()
-            normal_everywhere = np.stack(
-                [dist1 - dist2, dist3 - dist4, dist5 - dist6], axis=-1
-            )
-            normal_everywhere = np.stack(
-                [dist1 - dist2, dist3 - dist4, dist5 - dist6], axis=-1
-            )
 
-            normal_everywhere /= np.linalg.norm(
-                normal_everywhere, axis=-1, keepdims=True
-            )
+            normal_ev = np.stack([dist1 - dist2, dist3 - dist4, dist5 - dist6], axis=-1)
 
-            normals[~mask] = normal_everywhere[~mask]
+            normal_ev /= np.linalg.norm(normal_ev, axis=-1, keepdims=True)
+
+            normals[~mask] = normal_ev[~mask]
 
             _points.append(points)
             _normals.append(normals)
