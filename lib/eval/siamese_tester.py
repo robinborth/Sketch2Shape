@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 import torch.nn as nn
 import wandb
 from lightning import LightningModule
@@ -61,10 +62,6 @@ class SiameseTester(LightningModule):
         )
 
     @property
-    def index(self):
-        return np.concatenate(self._index)
-
-    @property
     def labels(self):
         return np.array(self._labels)
 
@@ -100,11 +97,11 @@ class SiameseTester(LightningModule):
         return embedding / l2_distance.reshape(-1, 1)
 
     def forward(self, batch):
-        return self.model(batch).detach().cpu().numpy()
+        return self.model(batch)
 
     def validation_step(self, batch, batch_idx, dataloader_idx):
         index_mask = batch["image_type"] == self.index_image_type
-        index_emb = self.forward(batch["image"][index_mask])
+        index_emb = self.forward(batch["image"][index_mask]).detach().cpu().numpy()
         self._index.append(index_emb)
         self._labels.extend(batch["label"][index_mask].detach().cpu().numpy())
         self._image_ids.extend(batch["image_id"][index_mask].detach().cpu().numpy())
@@ -119,14 +116,17 @@ class SiameseTester(LightningModule):
         retrievals_matrix = labels == gt_labels.reshape(-1, 1)
         return retrievals_matrix.sum(axis=1) / self.num_views_per_object
 
-    def search(self, query_emb: np.ndarray, k: int = 1):
-        # efficient matrix dot product multiplication
-        x, y = query_emb, self.index
-        sx = np.sum(x**2, axis=-1, keepdims=True)
-        sy = np.sum(y**2, axis=-1, keepdims=True)
-        dist = np.sqrt(-2 * x.dot(y.T) + sx + sy.T)  # (Q, I)
-        idx = np.argsort(dist)[:, :k]  # (Q, k)
-        return dist.take(idx), idx
+    def search(self, query_emb: torch.Tensor, k: int = 1):
+        # efficient matrix dot product multiplication on GPU
+        sx = torch.sum(query_emb**2, dim=-1, keepdim=True)
+        sy = torch.sum(self.index**2, dim=-1, keepdim=True)
+        dist = torch.sqrt(-2 * (query_emb @ self.index.T) + sx + sy.T)  # (Q, I)
+        idx = torch.argsort(dist)[:, :k]  # (Q, k)
+        return dist.take(idx).detach().cpu().numpy(), idx.detach().cpu().numpy()
+
+    def on_test_start(self) -> None:
+        index = np.concatenate(self._index)
+        self.index = torch.tensor(index).to(self.device)
 
     def test_step(self, batch, batch_idx):
         # extract from the batch
