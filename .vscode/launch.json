@@ -73,8 +73,8 @@
             "request": "launch",
             "program": "scripts/preprocess_data.py",
             "args": [
-                "data=shapenet_chair_16",
-                "data.preprocess_siamese.skip=False"
+                "data=shapenet_chair_4096",
+                // "data.preprocess_siamese.skip=False"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

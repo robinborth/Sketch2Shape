@@ -163,9 +163,9 @@ class PreprocessNormalEverywhere:
 
     def obj_ids_iter(self):
         yield from [
-            "52310bca00e6a3671201d487ecde379e"
-            "2948af0b6a12f1c7ad484915511ccff6"
-            "92e2317fd0d0129bb910025244eec99a"
+            "52310bca00e6a3671201d487ecde379e",
+            "2948af0b6a12f1c7ad484915511ccff6",
+            "92e2317fd0d0129bb910025244eec99a",
             "1459c329e2123d4fe5b03ab845ae95c"
         ]
 
