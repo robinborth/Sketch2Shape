@@ -18,7 +18,7 @@ tags: ["optimize_deepsdf"]
 split: val  # train, val, test
 obj_ids: ???  # overrids the split setting, make sure that obj_ids are only from the same split.
 train: True
-prior_idx: mean  # random(-2), mean(-1), train(idx)
+prior_idx: mean  # random(-2), mean(-1), prior(idx)
 eval: True
 save_mesh: True  # only if eval == True
 create_video: True 

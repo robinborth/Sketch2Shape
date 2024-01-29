@@ -10,7 +10,7 @@ ckpt_path: /home/borth/sketch2shape/logs/train_deepsdf/runs/2024-01-26_20-39-50/
 tags: ["optimize_deepsdf", "shapenet_chair_4096", "train_mesh_ckpt_1000"]
 train: False
 split: train
-prior_idx: train
+prior_idx: prior
 create_video: False
 obj_ids:
   - 52310bca00e6a3671201d487ecde379e
