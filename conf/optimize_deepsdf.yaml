@@ -3,7 +3,7 @@
 defaults:
   - data:
     - optimize_latent 
-  - model: optimize_deepsdf
+  - model: optimize_latent
   - trainer: default
   - logger: default
   - hydra: default
@@ -18,7 +18,7 @@ tags: ["optimize_deepsdf"]
 split: val  # train, val, test
 obj_ids: ???  # overrids the split setting, make sure that obj_ids are only from the same split.
 train: True
-prior_idx: mean  # random(-2), mean(-1), prior(idx)
+prior_idx: mean  # random(-2), mean(-1), prior, prior(idx)
 eval: True
 save_mesh: True  # only if eval == True
 create_video: True 
@@ -35,9 +35,16 @@ data:
     half: True
 
 model:
+  _target_: lib.models.optimize_deepsdf.DeepSDFLatentOptimizer
+  reg_weight: 1e-04
+  video_capture_rate: 30
+  loss:
+    _target_: torch.nn.L1Loss
+    _partial_: true
+    reduction: mean
+  optimizer:
+    lr: 1e-03
   scheduler:
-    _partial_: True
-    _target_: torch.optim.lr_scheduler.StepLR
     step_size: 50 
     gamma: 0.9
   
