@@ -170,7 +170,23 @@ class MetaInfo:
         return Image.open(path)
 
     #################################################################
-    # Normals: Loading and Storing Utils
+    # NormalsEverywhere: Loading and Storing Utils
+    #################################################################
+
+    def normal_everywhere_dir_path(self, obj_id: str) -> Path:
+        return self.data_dir / "shapes" / obj_id / "normals_everywhere"
+
+    def save_normal_everywhere(self, normals: np.ndarray, obj_id: str, image_id: str):
+        path = self.normal_everywhere_dir_path(obj_id) / f"{image_id}.png"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        Image.fromarray(normals).save(path)
+
+    def load_normal_everywhere(self, obj_id: str, image_id: str) -> Path:
+        path = self.normal_everywhere_dir_path(obj_id) / f"{image_id}.png"
+        return Image.open(path)
+
+    #################################################################
+    # Sketch : Loading and Storing Utils
     #################################################################
 
     def sketches_dir_path(self, obj_id: str) -> Path:

@@ -101,6 +101,7 @@ def render_normals_everywhere(
             # normals map
             t_hit = out["t_hit"].numpy()
             mask = t_hit != np.inf
+            t_hit[~mask] = 0
 
             # correct normals
             normals = out["primitive_normals"].numpy()

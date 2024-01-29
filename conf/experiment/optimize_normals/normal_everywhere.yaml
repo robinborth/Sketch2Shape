@@ -1,0 +1,24 @@
+# @package _global_
+
+defaults:
+  - override /data:
+    - shapenet_chair_4096
+    - optimize_latent
+  - override /logger: wandb
+
+ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
+tags: ["optimize_normals", "shapenet_chair_4096", "normal_everywhere"]
+split: train 
+prior_idx: mean 
+obj_ids:
+  - 52310bca00e6a3671201d487ecde379e
+  # - 2948af0b6a12f1c7ad484915511ccff6
+  # - 92e2317fd0d0129bb910025244eec99a
+  # - 1459c329e2123d4fe5b03ab845ae95c
+
+data:
+  train_dataset:
+    _target_: lib.data.deepsdf_dataset.NormalEverywhereLatentOptimizerDataset
+
+model:
+  _target_: lib.models.optimize_normals.DeepSDFNormalEverywhereRender

@@ -6,7 +6,7 @@ import open3d as o3d
 import point_cloud_utils as pcu
 
 from lib.data.metainfo import MetaInfo
-from lib.render.mesh import render_normals
+from lib.render.mesh import render_normals, render_normals_everywhere
 
 o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)
 
@@ -140,6 +140,57 @@ class PreprocessSiamese:
         normals = self.normals_to_image(normals=normals, mask=masks)
         sketches = self.image_to_sketch(normals)
         return normals, sketches
+
+
+@dataclass
+class PreprocessNormalEverywhere:
+    # processing settings
+    data_dir: str = "/data"
+    skip: bool = True
+    # camera settings
+    azims: list[int] = field(default_factory=list)
+    elevs: list[int] = field(default_factory=list)
+    dist: float = 4.0
+    width: int = 256
+    height: int = 256
+    focal: int = 512
+    sphere_eps: float = 1e-1
+    delta: float = 5e-02
+    n_steps: int = 10
+
+    def __post_init__(self):
+        self.metainfo = MetaInfo(data_dir=self.data_dir)
+
+    def obj_ids_iter(self):
+        yield from [
+            "52310bca00e6a3671201d487ecde379e"
+            "2948af0b6a12f1c7ad484915511ccff6"
+            "92e2317fd0d0129bb910025244eec99a"
+            "1459c329e2123d4fe5b03ab845ae95c"
+        ]
+
+    def normals_to_image(self, normals: np.ndarray):
+        normals = (normals + 1) / 2
+        normals = normals.reshape(normals.shape[0], self.width, self.height, -1)
+        normals = (normals * 255).astype(np.uint8)
+        return normals
+
+    def preprocess(self, obj_id: str):
+        mesh = self.metainfo.load_normalized_mesh(obj_id=obj_id)
+        _, normals, _ = render_normals_everywhere(
+            mesh=mesh,
+            azims=self.azims,
+            elevs=self.elevs,
+            dist=self.dist,
+            width=self.width,
+            height=self.height,
+            focal=self.focal,
+            sphere_eps=self.sphere_eps,
+            delta=self.delta,
+            n_steps=self.n_steps,
+        )
+        normals_everywhere = self.normals_to_image(normals=normals)
+        return normals_everywhere
 
 
 @dataclass

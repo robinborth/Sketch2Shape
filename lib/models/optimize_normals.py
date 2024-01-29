@@ -69,9 +69,11 @@ class DeepSDFNormalRender(LatentOptimizer):
 class DeepSDFNormalEverywhereRender(LatentOptimizer):
     def __init__(
         self,
+        c2f_scheduler: Coarse2FineScheduler,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
+        self.c2f_scheduler = c2f_scheduler  # TODO integrate
         self.model.lat_vecs = None
 
     def training_step(self, batch, batch_idx):
@@ -86,20 +88,22 @@ class DeepSDFNormalEverywhereRender(LatentOptimizer):
         normals = self.render_normals(points=points, mask=None)
         image = self.normal_to_image(normals, None)
 
-        # calculate the loss for the object and usefull information to wandb
         normal_loss = l1_loss(gt_normals, normals)
-
         self.log("optimize/normal_loss", normal_loss)
 
         latent_norm = torch.linalg.norm(self.latent, dim=-1)
         self.log("optimize/latent_norm", latent_norm)
-        # add regularization loss
+
+        reg_loss = torch.tensor(0).to(normal_loss)
         if self.hparams["reg_loss"]:
             reg_loss = latent_norm * self.hparams["reg_weight"]
             self.log("optimize/reg_loss", reg_loss)
 
         loss = reg_loss + normal_loss
         self.log("optimize/loss", loss)
+
+        mem_allocated = torch.cuda.memory_allocated() / 1024**2  # convert to MIB
+        self.log("optimize/mem_allocated", mem_allocated)
 
         # visualize the different images
         self.log_image("gt_image", gt_image)

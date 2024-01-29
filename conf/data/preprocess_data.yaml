@@ -45,6 +45,26 @@ preprocess_siamese:
   l2_gradient: True
 
 ########################################################################
+# Preprocessing NormalsEverywhere
+########################################################################
+
+preprocess_normals_everywhere:
+  _target_: lib.data.preprocess.PreprocessNormalEverywhere
+  # processing settings
+  data_dir: ${data.data_dir}
+  skip: True
+  # camera settings
+  azims: [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340]
+  elevs: [-50, -30, -10, 10, 30]
+  dist: ${data.camera_dist} 
+  width: ${data.camera_width} 
+  height: ${data.camera_height} 
+  focal: ${data.camera_focal} 
+  sphere_eps: ${data.camera_sphere_eps} 
+  delta: 5e-02
+  n_steps: 10
+
+########################################################################
 # Preprocessing SDF
 ########################################################################
 

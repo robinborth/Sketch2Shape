@@ -152,6 +152,38 @@ class NormalLatentOptimizerDataset(Dataset):
         return self.data[idx]
 
 
+class NormalEverywhereLatentOptimizerDataset(Dataset):
+    def __init__(
+        self,
+        data_dir: str = "/data",
+        obj_id: str = "obj_id",
+        azims: list[int] = [],
+        elevs: list[int] = [],
+        dist: float = 4.0,
+    ):
+        self.metainfo = MetaInfo(data_dir=data_dir)
+        self.transforms = ToTensor()
+        self.data = []
+        label = 0
+        for azim in azims:
+            for elev in elevs:
+                data = {}
+                camera = Camera(azim=azim, elev=elev, dist=dist)
+                points, rays, mask = camera.unit_sphere_intersection_rays()
+                data["points"], data["rays"], data["mask"] = points, rays, mask
+                data["camera_position"] = camera.camera_position()
+                normal = self.metainfo.load_normal_everywhere(obj_id, f"{label:05}")
+                data["gt_image"] = self.transforms(normal).permute(1, 2, 0)
+                label += 1
+                self.data.append(data)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx]
+
+
 class SketchLatentOptimizerDataset(Dataset):
     def __init__(
         self,
