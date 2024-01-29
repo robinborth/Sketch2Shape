@@ -145,9 +145,7 @@ class NormalLatentOptimizerDataset(Dataset):
                 data["camera_position"] = camera.camera_position()
                 normal = self.metainfo.load_normal(obj_id, f"{label:05}")
                 data["gt_image"] = self.transforms(normal).permute(1, 2, 0)
-                data["gt_surface_mask"] = (
-                    data["gt_image"].sum(axis=-1) < 2.95
-                ).reshape(-1)
+                data["gt_surface_mask"] = (data["gt_image"].sum(-1) < 2.95).reshape(-1)
                 label += 1
                 self.data.append(data)
 

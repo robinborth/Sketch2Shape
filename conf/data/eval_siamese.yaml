@@ -1,22 +1,18 @@
 # @package eval_data
 
-_target_: lib.data.siamese_datamodule.SiameseDataModule
+_target_: lib.data.siamese_datamodule.SiameseTesterDataModule
 # paths
 data_dir: ${paths.data_dir}/${data.dataset_name}
 # training
-batch_size: 144
+batch_size: 1
 num_workers: 7
 pin_memory: True
-drop_last: True
+drop_last: False 
 persistent_workers: True
 shuffle: False
 # dataset 
-sampler:
-  _target_: pytorch_metric_learning.samplers.MPerClassSampler
-  _partial_: True
-  m: ${eval_data.batch_size} 
 dataset: 
-  _target_: lib.data.siamese_dataset.SiameseDataset
+  _target_: lib.data.siamese_dataset.SiameseBatchDataset
   _partial_: True
 sketch_transforms:
   _target_: torchvision.transforms.Compose
