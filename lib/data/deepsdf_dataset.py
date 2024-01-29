@@ -134,10 +134,6 @@ class NormalLatentOptimizerDataset(Dataset):
         label = 0
         for azim in azims:
             for elev in elevs:
-                # HACK to skip views from elev=75
-                if label % 8 == 0:
-                    label += 1
-                    continue
                 data = {}
                 camera = Camera(azim=azim, elev=elev, dist=dist)
                 points, rays, mask = camera.unit_sphere_intersection_rays()
