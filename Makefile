@@ -43,9 +43,12 @@ optimize_deepsdf:
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_500
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_1000
-	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_1400
-	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_1700
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_1500
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_2000
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_2500
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=train_mesh_ckpt_1000
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=train_mesh_ckpt_2000
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=train_mesh_ckpt_3000
 
 optimize_normals:
 	python scripts/optimize_normals.py +experiment/optimize_normals=mean_val
