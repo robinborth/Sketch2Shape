@@ -2,8 +2,8 @@
 
 defaults:
   - data:
-      - optimize_latent
-  - model: optimize_sketch
+    - optimize_latent
+  - model: optimize_latent
   - trainer: default
   - logger: default
   - hydra: default
@@ -18,7 +18,7 @@ tags: ["optimize_sketch"]
 split: val
 obj_ids: ???
 train: True
-prior_idx: mean  # random(-2), mean(-1), train(idx)
+prior_idx: mean  # random(-2), mean(-1), prior, prior(idx)
 eval: True
 save_mesh: True
 create_video: True
@@ -27,8 +27,8 @@ siamese_ckpt_path: ???
 
 trainer:
   num_sanity_val_steps: 0
-  max_epochs: 1
-  accumulate_grad_batches: 4
+  max_epochs: 15
+  accumulate_grad_batches: 8
 
 data:
   train_dataset:
@@ -36,3 +36,15 @@ data:
     azims: ${data.preprocess_siamese.azims}
     elevs: ${data.preprocess_siamese.elevs}
   shuffle: True
+
+model:
+  _target_: lib.models.optimize_sketch.DeepSDFSketchRender
+  siamese_ckpt_path: ${siamese_ckpt_path} 
+  siamese_weight: 1.0
+  video_capture_rate: 8
+  reg_weight: 2e-03
+  optimizer:
+    lr: 1e-02
+  scheduler:
+    step_size: 5
+    gamma: 0.5

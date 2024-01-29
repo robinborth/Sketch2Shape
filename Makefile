@@ -52,3 +52,19 @@ optimize_normals:
 
 optimize_sketch:
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=mean_val
+
+optimize_chair:
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=chair_train_prior
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=chair_train_prior_close
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=chair_train_mean
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=chair_train_random
+
+	python scripts/optimize_normals.py +experiment/optimize_normals=chair_train_prior
+	python scripts/optimize_normals.py +experiment/optimize_normals=chair_train_prior_close
+	python scripts/optimize_normals.py +experiment/optimize_normals=chair_train_mean
+	python scripts/optimize_normals.py +experiment/optimize_normals=chair_train_random
+
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=chair_train_prior
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=chair_train_prior_close
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=chair_train_mean
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=chair_train_random

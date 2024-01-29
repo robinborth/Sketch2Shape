@@ -1,3 +1,4 @@
+import re
 from logging import Logger
 from pathlib import Path
 
@@ -49,8 +50,10 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
 
         log.info(f"==> initializing model <{cfg.model._target_}>")
         # set the prior_idx for the trained shapes
-        if cfg.prior_idx == "train":
+        if cfg.prior_idx == "prior":
             cfg.model.prior_idx = metainfo.obj_id_to_label(obj_id=obj_id)
+        if match := re.match(r"prior\((\d+)\)", cfg.prior_idx):
+            cfg.model.prior_idx = int(match.group(1))
         if cfg.prior_idx == "mean":
             cfg.model.prior_idx = -1
         if cfg.prior_idx == "random":
