@@ -22,7 +22,6 @@ class DeepSDFNormalRender(LatentOptimizer):
             max_epochs=self.trainer.max_epochs,
         )
         self.n_downsample = self.c2f_sch[0]
-        print(self.c2f_sch.downsample_list)
 
     def training_step(self, batch, batch_idx):
         # INPUT
@@ -98,7 +97,7 @@ class DeepSDFNormalRender(LatentOptimizer):
         return loss
 
     def on_train_epoch_end(self):
-        self.n_downsample = self.coarse2fine_sch[self.current_epoch]
+        self.n_downsample = self.c2f_sch[0]
 
 
 # TODO IN PROGRESS - calculate a normal everywhere in space
