@@ -42,7 +42,7 @@ class SiameseDataset(Dataset):
         return {
             "image": image,
             "image_id": int(image_id),
-            "image_type": self.metainfo.image_type_2_type_idx[image_type],
+            "type_idx": self.metainfo.image_type_2_type_idx[image_type],
             "label": label,
         }
 
@@ -91,7 +91,7 @@ class SiameseBatchDataset(Dataset):
                 {
                     "image": image,
                     "image_id": int(image_id),
-                    "image_type": self.metainfo.image_type_2_type_idx[image_type],
+                    "type_idx": self.metainfo.image_type_2_type_idx[image_type],
                     "label": label,
                 }
             )

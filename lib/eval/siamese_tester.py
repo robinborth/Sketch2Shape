@@ -33,9 +33,9 @@ class SiameseTester(LightningModule):
         self._image_ids: list[int] = []
 
         self.index_mode = index_mode
-        self.index_image_type = self.metainfo.image_type_2_type_idx[self.index_mode]
+        self.index_type_idx = self.metainfo.image_type_2_type_idx[self.index_mode]
         self.query_mode = query_mode
-        self.query_image_type = self.metainfo.image_type_2_type_idx[self.query_mode]
+        self.query_type_idx = self.metainfo.image_type_2_type_idx[self.query_mode]
         self.obj_capture_rate = obj_capture_rate
         self.obj_capture_image_id = obj_capture_image_id
 
@@ -100,7 +100,7 @@ class SiameseTester(LightningModule):
         return self.model(batch)
 
     def validation_step(self, batch, batch_idx, dataloader_idx):
-        index_mask = batch["image_type"] == self.index_image_type
+        index_mask = batch["type_idx"] == self.index_type_idx
         index_emb = self.forward(batch["image"][index_mask]).detach().cpu().numpy()
         self._index.append(index_emb)
         self._labels.extend(batch["label"][index_mask].detach().cpu().numpy())
@@ -130,7 +130,7 @@ class SiameseTester(LightningModule):
 
     def test_step(self, batch, batch_idx):
         # extract from the batch
-        query_mask = batch["image_type"] == self.query_image_type
+        query_mask = batch["type_idx"] == self.query_type_idx
         gt_labels = batch["label"][query_mask].cpu().numpy()
         gt_image_ids = batch["image_id"][query_mask].cpu().numpy()
 

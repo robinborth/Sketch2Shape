@@ -17,7 +17,9 @@ class ChunkSampler(Sampler):
         labels: np.ndarray,
         chunk_size: int = 2,
         sample_steps: int = 1,
+        seed: int | None = None,
     ):
+        self.seed = seed
         self.labels = np.unique(labels, return_inverse=True)[1]
         self.chunk_size = chunk_size
         self.unique_labels, counts = np.unique(self.labels, return_counts=True)
@@ -35,6 +37,8 @@ class ChunkSampler(Sampler):
         return self.chunk_size * len(self.unique_labels) * self.sample_steps
 
     def __iter__(self):
+        if self.seed is not None:
+            np.random.seed(self.seed)
         num_images, chunk_size = self.num_images, self.chunk_size
         idx_list = []
         for step in range(self.sample_steps):
