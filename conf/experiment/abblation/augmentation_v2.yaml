@@ -7,14 +7,14 @@ defaults:
     - eval_siamese
   - override /logger: wandb
 
-tags: ["train_siamese", "shapenet_chair_4096"]
+tags: ["train_siamese", "shapenet_chair_4096", "augmentation_v2"]
 
 trainer:
-  max_epochs: 500
+  max_epochs: 400
   check_val_every_n_epoch: 2
 
 model:
-  reg_weight: 2e-01
+  reg_weight: 1e-01
   lr_head: 1e-03
   lr_backbone: 1e-05
   embedding_size: 128
@@ -23,14 +23,14 @@ model:
 data:
   batch_size: 256
   sketch_transforms:
-    rotation_degree: 0
-    p_zoom_out: 0
-    p_erasing: 0
-    p_adjust_sharpness: 0
-    p_perspective: 0
+    rotation_degree: 0.5
+    p_zoom_out: 0.5
+    p_erasing: 0.5
+    p_adjust_sharpness: 0.5
+    p_perspective: 0.5
   image_transforms:
-    p_zoom_out: 0
-    p_erasing: 0
+    p_zoom_out: 0.5
+    p_erasing: 0.5
   
 callbacks:
   early_stopping:

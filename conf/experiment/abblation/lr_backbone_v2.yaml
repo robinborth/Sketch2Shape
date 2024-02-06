@@ -7,14 +7,14 @@ defaults:
     - eval_siamese
   - override /logger: wandb
 
-tags: ["train_siamese", "shapenet_chair_4096"]
+tags: ["train_siamese", "shapenet_chair_4096", "lr_backbone_v2"]
 
 trainer:
-  max_epochs: 500
+  max_epochs: 200
   check_val_every_n_epoch: 2
 
 model:
-  reg_weight: 2e-01
+  reg_weight: 1e-01
   lr_head: 1e-03
   lr_backbone: 1e-05
   embedding_size: 128

@@ -52,7 +52,7 @@ class SiameseTester(LightningModule):
             return EvalResNet18()
         if ckpt_path == "clip":
             return EvalCLIP()
-        return Siamese.load_from_checkpoint(ckpt_path).decoder
+        return Siamese.load_from_checkpoint(ckpt_path)
 
     @property
     def max_k(self):
@@ -99,7 +99,7 @@ class SiameseTester(LightningModule):
     def forward(self, batch):
         return self.model(batch)
 
-    def validation_step(self, batch, batch_idx, dataloader_idx):
+    def validation_step(self, batch, batch_idx, dataloader_idx: int = 0):
         index_mask = batch["type_idx"] == self.index_type_idx
         index_emb = self.forward(batch["image"][index_mask]).detach().cpu().numpy()
         self._index.append(index_emb)

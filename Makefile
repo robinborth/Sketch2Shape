@@ -25,7 +25,7 @@ train_siamese:
 eval_siamese:
 	python scripts/eval_siamese.py +experiment/eval_siamese=resnet18
 	python scripts/eval_siamese.py +experiment/eval_siamese=clip
-	python scripts/eval_siamese.py +experiment/eval_siamese=siamese
+	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese
 
 train_deepsdf:
 	python scripts/train_deepsdf.py +experiment/train_deepsdf=shapenet_chair_4096
@@ -71,3 +71,10 @@ optimize_chair:
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=chair_train_prior_close
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=chair_train_mean
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=chair_train_random
+
+abblation:
+	# python scripts/train_siamese.py +experiment/abblation=base
+	python scripts/train_siamese.py +experiment/abblation=augmentation_v1
+	python scripts/train_siamese.py +experiment/abblation=augmentation_v2
+	python scripts/train_siamese.py +experiment/abblation=lr_backbone_v1
+	python scripts/train_siamese.py +experiment/abblation=lr_backbone_v2

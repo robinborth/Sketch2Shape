@@ -5,14 +5,11 @@ pretrained: True
 reg_loss: True 
 reg_weight: 1e-01
 margin: 1.0 
+lr_head: 1e-03
+lr_backbone: 1e-05
 scheduler:
   _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
   _partial_: true
   mode: min
   factor: 0.5
   patience: 10
-optimizer:
-  _target_: torch.optim.Adam
-  _partial_: true
-  lr: 1e-03 
-  weight_decay: 0.0

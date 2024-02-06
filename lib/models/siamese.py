@@ -12,19 +12,24 @@ class Siamese(LightningModule):
         pretrained: bool = True,
         reg_loss: bool = True,
         reg_weight: float = 1e-03,
-        optimizer=None,
+        lr_head: float = 1e-03,
+        lr_backbone: float = 1e-05,
         scheduler=None,
     ) -> None:
         super().__init__()
         self.save_hyperparameters(logger=False)
+        self.lr_head = lr_head
+        self.lr_backbone = lr_backbone
 
         # load the resnet18 backbone
         weights = ResNet18_Weights.IMAGENET1K_V1 if pretrained else None
-        self.decoder = resnet18(weights=weights)
-        self.decoder.fc = torch.nn.Linear(in_features=512, out_features=embedding_size)
+        self.backbone = resnet18(weights=weights)
+        self.backbone.fc = torch.nn.Identity()
+        self.head = torch.nn.Linear(in_features=512, out_features=embedding_size)
 
     def forward(self, batch):
-        return self.decoder(batch)
+        x = self.backbone(batch)
+        return self.head(x)
 
     def get_all_triplets_indices(self, labels):
         labels1 = labels.unsqueeze(1)
@@ -84,7 +89,12 @@ class Siamese(LightningModule):
         return self.model_step(batch, split="test")
 
     def configure_optimizers(self):
-        optimizer = self.hparams["optimizer"](params=self.parameters())
+        optimizer = torch.optim.Adam(
+            [
+                {"params": self.backbone.parameters(), "lr": self.lr_backbone},
+                {"params": self.head.parameters(), "lr": self.lr_head},
+            ]
+        )
         if self.hparams["scheduler"] is not None:
             scheduler = self.hparams["scheduler"](optimizer=optimizer)
             return {

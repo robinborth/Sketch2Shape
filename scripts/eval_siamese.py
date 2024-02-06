@@ -31,7 +31,7 @@ def evaluate(cfg: DictConfig) -> None:
     trainer.validate(
         tester,
         dataloaders=[
-            datamodule.train_dataloader(),
+            # datamodule.train_dataloader(),
             datamodule.val_dataloader(),
         ],
     )
