@@ -4,7 +4,9 @@ _target_: lib.models.traverse_latent.DeepSDFLatentTraversal
 ckpt_path: ${ckpt_path} 
 prior_idx: -1
 prior_idx_start: -1
-prior_idx_end: -1
+prior_idx_end: 0
+create_mesh: ${create_mesh}
+create_video: ${create_video}
 image_resolution: 256
 mesh_resolution: 128
 mesh_chunk_size: 65536

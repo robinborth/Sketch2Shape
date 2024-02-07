@@ -36,9 +36,9 @@ class DeepSDFSketchRender(LatentOptimizer):
 
         # calculate the embeddings
         sketch_input = sketch.reshape(-1, 3, 256, 256)
-        sketch_emb = self.siamese.decoder(sketch_input)
+        sketch_emb = self.siamese(sketch_input)
         rendered_normals_input = rendered_normals.reshape(-1, 3, 256, 256)
-        rendered_normals_emb = self.siamese.decoder(rendered_normals_input)
+        rendered_normals_emb = self.siamese(rendered_normals_input)
 
         siamese_loss = l1_loss(sketch_emb, rendered_normals_emb)
         siamese_loss *= self.hparams["siamese_weight"]

@@ -72,6 +72,8 @@ optimize_chair:
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=chair_train_mean
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=chair_train_random
 
+
+
 abblation:
 	# python scripts/train_siamese.py +experiment/abblation=base
 	python scripts/train_siamese.py +experiment/abblation=augmentation_v1

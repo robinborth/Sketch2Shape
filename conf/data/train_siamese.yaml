@@ -26,18 +26,9 @@ dataset:
   _partial_: True
 sketch_transforms:
   _target_: lib.data.transforms.SketchTransform
-  image_size: ${data.camera_width}
-  rotation_degree: 15
-  p_zoom_out: 0.5
-  p_erasing: 0.5
-  p_adjust_sharpness: 0.5
-  p_perspective: 0.5
   mean: 0.5
   std: 0.5
 image_transforms:
   _target_: lib.data.transforms.NormalTransform
-  image_size: ${data.camera_width}
-  p_zoom_out: 0.5
-  p_erasing: 0.5
   mean: 0.5
   std: 0.5

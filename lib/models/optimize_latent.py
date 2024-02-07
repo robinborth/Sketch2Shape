@@ -43,7 +43,7 @@ class LatentOptimizer(LightningModule):
         log_images: bool = True,
         # default video settings
         video_capture_rate: int = 30,
-        video_azim: float = 40,
+        video_azim: float = 40,  # 00011.png
         video_elev: float = -30,
         video_dist: int = 4,
         # evaluation settings
@@ -161,6 +161,7 @@ class LatentOptimizer(LightningModule):
             normals = self.render_normals(points=points, mask=surface_mask)
         image = self.normal_to_image(normals, surface_mask)
         self.log_image("video_frame", image)
+        return image
 
     def log_image(self, key: str, image: torch.Tensor):
         image = image.detach().cpu().numpy()

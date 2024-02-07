@@ -21,9 +21,3 @@ traversal_steps: 20
 
 trainer:
   num_sanity_val_steps: 0
-
-model:
-  prior_idx_start: -1
-  prior_idx_end: 0
-  create_mesh: ${create_mesh}
-  create_video: ${create_video}

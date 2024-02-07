@@ -1,0 +1,17 @@
+# @package _global_
+
+defaults:
+  - override /data: shapenet_chair_4096
+  - override /logger: wandb
+  - override /model: debug_snn
+  - _self_
+
+ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt 
+siamese_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
+tags: ["traverse_latent", "shapenet_chair_4096", "debug_snn"]
+traversal_steps: 50 
+
+model:
+  std: 1e-01
+  prior_idx: 2
+  create_video: True

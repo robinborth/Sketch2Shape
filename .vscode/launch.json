@@ -125,52 +125,10 @@
             "request": "launch",
             "program": "scripts/traverse_latent.py",
             "args": [
-                "+experiment/traverse_latent=version_1"
+                "+experiment/traverse_latent=debug_snn"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
         },
-        // {
-        //     "name": "Debug: SDF Reconstruction",
-        //     "type": "python",
-        //     "request": "launch",
-        //     "program": "scripts/reconstruct_objects_deepsdf.py",
-        //     "args": [
-        //         "log_path=/home/korth/sketch2shape/logs/train/runs/2023-11-27_19-21-00"
-        //     ],
-        //     "console": "integratedTerminal",
-        //     "justMyCode": false,
-        // },
-        // {
-        //     "name": "Debug: SDF Traversal",
-        //     "type": "python",
-        //     "request": "launch",
-        //     "program": "scripts/traverse_latents_deepsdf.py",
-        //     "args": [
-        //         "log_path=/home/korth/sketch2shape/logs/train/runs/2023-11-30_15-49-08"
-        //     ],
-        //     "console": "integratedTerminal",
-        //     "justMyCode": false,
-        // },
-        // {
-        //     "name": "Debug: Pointcloud reconstruction",
-        //     "type": "python",
-        //     "request": "launch",
-        //     "program": "scripts/reconstruct_from_pointcloud_deepsdf.py",
-        //     "args": [],
-        //     "console": "integratedTerminal",
-        //     "justMyCode": false,
-        // },
-        // {
-        //     "name": "Debug: Eval DeepSDF",
-        //     "type": "python",
-        //     "request": "launch",
-        //     "program": "scripts/eval_deepsdf.py",
-        //     "args": [
-        //         "logger=wandb",
-        //     ],
-        //     "console": "integratedTerminal",
-        //     "justMyCode": false,
-        // },
     ]
 }
