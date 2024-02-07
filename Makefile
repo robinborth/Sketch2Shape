@@ -33,12 +33,19 @@ train_deepsdf:
 traverse_latent:
 	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_1
 	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_2
+	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_3
+	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_4
 	python scripts/traverse_latent.py +experiment/traverse_latent=random_1
 	python scripts/traverse_latent.py +experiment/traverse_latent=random_2
+	python scripts/traverse_latent.py +experiment/traverse_latent=random_3
+	python scripts/traverse_latent.py +experiment/traverse_latent=random_4
 	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_1
 	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_2
+	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_3
+	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_4
 
 optimize_deepsdf:
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=baseline
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_train
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=train_mesh_ckpt_1000
@@ -49,12 +56,13 @@ optimize_deepsdf:
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_1500
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_2000
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_2500
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=mean_val_ckpt_3000
 
 optimize_normals:
-	python scripts/optimize_normals.py +experiment/optimize_normals=mean_val
+	python scripts/optimize_normals.py +experiment/optimize_normals=mean_train
 
 optimize_sketch:
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=mean_val
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=mean_train
 
 optimize_chair:
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=chair_train_prior
@@ -72,11 +80,13 @@ optimize_chair:
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=chair_train_mean
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=chair_train_random
 
+optimize_couch:
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=couch_train_prior
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=couch_train_prior_close
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=couch_train_mean
+	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=couch_train_random
 
-
-abblation:
-	# python scripts/train_siamese.py +experiment/abblation=base
-	python scripts/train_siamese.py +experiment/abblation=augmentation_v1
-	python scripts/train_siamese.py +experiment/abblation=augmentation_v2
-	python scripts/train_siamese.py +experiment/abblation=lr_backbone_v1
-	python scripts/train_siamese.py +experiment/abblation=lr_backbone_v2
+	python scripts/optimize_normals.py +experiment/optimize_normals=couch_train_prior
+	python scripts/optimize_normals.py +experiment/optimize_normals=couch_train_prior_close
+	python scripts/optimize_normals.py +experiment/optimize_normals=couch_train_mean
+	python scripts/optimize_normals.py +experiment/optimize_normals=couch_train_random

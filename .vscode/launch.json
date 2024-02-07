@@ -85,9 +85,7 @@
             "request": "launch",
             "program": "scripts/optimize_normals.py",
             "args": [
-                "+data=shapenet_chair_16",
-                "ckpt_path=/shared/logs/deepsdf.ckpt",
-                "logger=wandb",
+                "+experiment/optimize_normals=chair_train_mean",
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

@@ -7,11 +7,8 @@ defaults:
   - override /logger: wandb
 
 ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
-tags: ["optimize_deepsdf", "shapenet_chair_4096", "mean_train"]
-split: train
+tags: ["optimize_deepsdf", "shapenet_chair_4096", "couch_train_mean"]
+split: train 
 prior_idx: mean 
 obj_ids:
-  - 52310bca00e6a3671201d487ecde379e
-  - 2948af0b6a12f1c7ad484915511ccff6
-  - 92e2317fd0d0129bb910025244eec99a
   - 1459c329e2123d4fe5b03ab845ae95c

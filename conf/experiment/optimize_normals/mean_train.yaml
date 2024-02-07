@@ -6,12 +6,10 @@ defaults:
     - optimize_latent
   - override /logger: wandb
 
-ckpt_path: /home/borth/sketch2shape/logs/train_deepsdf/runs/2024-01-26_20-39-50/checkpoints/epoch_1999.ckpt
-tags: ["optimize_deepsdf", "shapenet_chair_4096", "train_mesh_ckpt_2000"]
-train: False
-split: train
-prior_idx: prior
-create_video: False
+ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
+tags: ["optimize_normals", "shapenet_chair_4096", "mean_train"]
+split: train 
+prior_idx: mean 
 obj_ids:
   - 52310bca00e6a3671201d487ecde379e
   - 2948af0b6a12f1c7ad484915511ccff6
