@@ -1,0 +1,15 @@
+# @package _global_
+
+defaults:
+  - override /data:
+    - shapenet_chair_4096
+    - optimize_latent
+  - override /logger: wandb
+
+ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
+siamese_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
+tags: ["optimize_sketch", "shapenet_chair_4096", "couch_train_prior"]
+split: train 
+prior_idx: prior
+obj_ids:
+  - 1459c329e2123d4fe5b03ab845ae95c

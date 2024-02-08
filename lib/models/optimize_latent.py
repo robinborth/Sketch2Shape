@@ -174,10 +174,10 @@ class LatentOptimizer(LightningModule):
 
     def normal_to_image(self, x, mask=None, default=1, resolution=None):
         x = self.to_image(x=x, mask=mask, default=default, resolution=resolution)
-        return (x + 1) / 2
+        return (x * 0.5) + 0.5
 
     def image_to_normal(self, x, mask=None, default=1):
-        x = (x * 2) - 1
+        x = (x - 0.5) * 2
         return x.reshape(-1, 3)
 
     def to_image(self, x, mask=None, default=1, resolution=None):

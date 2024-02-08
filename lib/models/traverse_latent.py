@@ -53,7 +53,7 @@ class DeepSDFSNNLatentTraversal(LatentOptimizer):
 
         self.metainfo = MetaInfo(data_dir)
         transform = SketchTransform()
-        sketch = self.metainfo.load_image(prior_idx, 11, 0)
+        sketch = self.metainfo.load_image(prior_idx, 11, 1)
         sketch = transform(sketch)[None, ...]
         self.register_buffer("sketch", sketch)
 
@@ -70,7 +70,7 @@ class DeepSDFSNNLatentTraversal(LatentOptimizer):
         latent_end = self.model.get_latent(prior_idx)
         self.register_buffer("latent_end", latent_end)
 
-        self.model.lat_vecs = None
+        # self.model.lat_vecs = None
 
     def validation_step(self, batch, batch_idx):
         self.siamese.eval()
@@ -78,14 +78,16 @@ class DeepSDFSNNLatentTraversal(LatentOptimizer):
         t = batch[0]  # t = [0, 1]
         self.latent = (1 - t) * self.latent_start + t * self.latent_end  # interpolate
 
+        image = self.normal_to_image(self.sketch)
+        self.log_image("sketch", image)
         sketch_emb = self.siamese(self.sketch)
-        sketch_norm = torch.linalg.norm(sketch_emb, dim=-1)
+        sketch_norm = torch.norm(sketch_emb, dim=-1)
         self.log("optimize/sketch_norm", sketch_norm, on_step=True)
 
         normal = self.capture_video_frame().reshape(-1, 3, 256, 256)
         normal_emb = self.siamese(normal)
-        normal_norm = torch.linalg.norm(normal_emb, dim=-1)
+        normal_norm = torch.norm(normal_emb, dim=-1)
         self.log("optimize/normal_norm", normal_norm, on_step=True)
 
-        loss = l1_loss(sketch_emb, normal_emb)
+        loss = torch.norm(sketch_emb - normal_emb, dim=-1)
         self.log("optimize/l1_loss", loss, on_step=True)

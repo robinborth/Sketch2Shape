@@ -3,8 +3,9 @@ from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 from torch.utils.data import Dataset
-from torchvision.transforms import ToTensor
+from torchvision.transforms import v2
 
 from lib.data.metainfo import MetaInfo
 from lib.render.camera import Camera
@@ -129,7 +130,9 @@ class NormalLatentOptimizerDataset(Dataset):
         dist: float = 4.0,
     ):
         self.metainfo = MetaInfo(data_dir=data_dir)
-        self.transforms = ToTensor()
+        self.transforms = v2.Compose(
+            [v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]
+        )
         self.data = []
         label = 0
         for azim in azims:
@@ -140,7 +143,7 @@ class NormalLatentOptimizerDataset(Dataset):
                 data["points"], data["rays"], data["mask"] = points, rays, mask
                 data["camera_position"] = camera.camera_position()
                 normal = self.metainfo.load_normal(obj_id, f"{label:05}")
-                data["gt_image"] = self.transforms(normal).permute(1, 2, 0)
+                data["gt_image"] = self.transforms(normal)
                 data["gt_surface_mask"] = (data["gt_image"].sum(-1) < 2.95).reshape(-1)
                 label += 1
                 self.data.append(data)
@@ -160,21 +163,23 @@ class SketchLatentOptimizerDataset(Dataset):
         azims: list[int] = [],
         elevs: list[int] = [],
         dist: float = 4.0,
+        sketch_id: int = 11,
     ):
         self.metainfo = MetaInfo(data_dir=data_dir)
         self.data = []
-        self.transforms = ToTensor()
+        self.transforms = v2.Compose(
+            [v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]
+        )
         label = 0
         for azim in azims:
             for elev in elevs:
                 data = {}
-                camera = Camera(azim=azim, elev=-elev, dist=dist)
+                camera = Camera(azim=azim, elev=elev, dist=dist)
                 points, rays, mask = camera.unit_sphere_intersection_rays()
                 data["points"], data["rays"], data["mask"] = points, rays, mask
                 data["camera_position"] = camera.camera_position()
-                sketch = self.metainfo.load_sketch(obj_id, f"{label:05}")
-                # sketch = self.metainfo.load_sketch(obj_id, "00019")
-                data["sketch"] = self.transforms(sketch).permute(1, 2, 0)
+                sketch = self.metainfo.load_sketch(obj_id, f"{sketch_id:05}")
+                data["sketch"] = self.transforms(sketch)
                 label += 1
                 self.data.append(data)
 

@@ -128,5 +128,16 @@
             "console": "integratedTerminal",
             "justMyCode": false,
         },
+        {
+            "name": "Debug: Optimize SNN",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/optimize_sketch.py",
+            "args": [
+                "+experiment/optimize_sketch=couch_train_mean"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
     ]
 }

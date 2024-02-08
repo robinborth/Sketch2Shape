@@ -119,7 +119,7 @@ class PreprocessSiamese:
         return edges
 
     def normals_to_image(self, normals: np.ndarray, mask: np.ndarray):
-        normals = (normals + 1) / 2
+        normals = (normals * 0.5) + 0.5
         normals[~mask] = 1
         normals = normals.reshape(normals.shape[0], self.width, self.height, -1)
         normals = (normals * 255).astype(np.uint8)
