@@ -139,5 +139,16 @@
             "console": "integratedTerminal",
             "justMyCode": false,
         },
+        {
+            "name": "Debug: Debug SNN",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/traverse_latent.py",
+            "args": [
+                "+experiment/traverse_latent=debug_snn"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
     ]
 }

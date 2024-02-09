@@ -5,7 +5,8 @@ ckpt_path: ${ckpt_path}
 siamese_ckpt_path: ${siamese_ckpt_path}
 data_dir: ${data.data_dir}
 std: 1e-01
-prior_idx: -1
+prior_idx_start: -1
+prior_idx_end: -1
 create_video: ${create_video}
 image_resolution: 256
 mesh_resolution: 128
