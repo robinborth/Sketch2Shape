@@ -11,11 +11,11 @@ class SiameseDataset(Dataset):
         self,
         data_dir: str = "data/",
         split: Optional[str] = None,
-        sketch_transforms: Optional[Callable] = None,
-        image_transforms: Optional[Callable] = None,
+        sketch_transform: Optional[Callable] = None,
+        normal_transform: Optional[Callable] = None,
     ):
-        self.sketch_transforms = sketch_transforms
-        self.image_transforms = image_transforms
+        self.sketch_transform = sketch_transform
+        self.normal_transform = normal_transform
         self.metainfo = MetaInfo(data_dir=data_dir, split=split)
         self.metainfo.load_snn()
 
@@ -31,13 +31,13 @@ class SiameseDataset(Dataset):
 
         if image_type == "sketch":
             image = self.metainfo.load_sketch(obj_id, image_id)
-            if self.sketch_transforms is not None:
-                image = self.sketch_transforms(image)
+            if self.sketch_transform is not None:
+                image = self.sketch_transform(image)
 
         if image_type == "normal":
             image = self.metainfo.load_normal(obj_id, image_id)
-            if self.image_transforms is not None:
-                image = self.image_transforms(image)
+            if self.normal_transform is not None:
+                image = self.normal_transform(image)
 
         return {
             "image": image,
@@ -52,11 +52,11 @@ class SiameseBatchDataset(Dataset):
         self,
         data_dir: str = "data/",
         split: Optional[str] = None,
-        sketch_transforms: Optional[Callable] = None,
-        image_transforms: Optional[Callable] = None,
+        sketch_transform: Optional[Callable] = None,
+        normal_transform: Optional[Callable] = None,
     ):
-        self.sketch_transforms = sketch_transforms
-        self.image_transforms = image_transforms
+        self.sketch_transform = sketch_transform
+        self.normal_transform = normal_transform
         self.metainfo = MetaInfo(data_dir=data_dir, split=split)
         self.metainfo.load_snn()
         self.labels = np.unique(self.metainfo.snn_labels, return_inverse=True)[1]
@@ -79,13 +79,13 @@ class SiameseBatchDataset(Dataset):
 
             if image_type == "sketch":
                 image = self.metainfo.load_sketch(obj_id, image_id)
-                if self.sketch_transforms is not None:
-                    image = self.sketch_transforms(image)
+                if self.sketch_transform is not None:
+                    image = self.sketch_transform(image)
 
             if image_type == "normal":
                 image = self.metainfo.load_normal(obj_id, image_id)
-                if self.image_transforms is not None:
-                    image = self.image_transforms(image)
+                if self.normal_transform is not None:
+                    image = self.normal_transform(image)
 
             data.append(
                 {

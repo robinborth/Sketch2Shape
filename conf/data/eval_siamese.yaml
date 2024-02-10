@@ -14,17 +14,11 @@ shuffle: False
 dataset: 
   _target_: lib.data.siamese_dataset.SiameseBatchDataset
   _partial_: True
-sketch_transforms:
-  _target_: torchvision.transforms.Compose
-  transforms:
-    - _target_: torchvision.transforms.ToTensor
-    - _target_: torchvision.transforms.Normalize
-      mean: 0.5 
-      std: 0.5
-image_transforms:
-  _target_: torchvision.transforms.Compose
-  transforms:
-    - _target_: torchvision.transforms.ToTensor
-    - _target_: torchvision.transforms.Normalize
-      mean: 0.5 
-      std: 0.5
+sketch_transform:
+  _target_: lib.data.transforms.SiameseTransform
+  mean: 0.5 
+  std: 0.5
+normal_transform:
+  _target_: lib.data.transforms.SiameseTransform
+  mean: 0.5 
+  std: 0.5

@@ -24,11 +24,18 @@ eval_sampler:
 dataset: 
   _target_: lib.data.siamese_dataset.SiameseDataset
   _partial_: True
-sketch_transforms:
+sketch_transform:
   _target_: lib.data.transforms.SketchTransform
+  size: [64, 128, 256]
+  size_weight: [0.3, 0.3, 0.4]
+  sharpness: [0.5, 1, 2, 5]
+  sharpness_weight: [0.1, 0.3, 0.3, 0.3]
+  rotation: int = 5,
   mean: 0.5
   std: 0.5
-image_transforms:
+normal_transform:
   _target_: lib.data.transforms.NormalTransform
+  size: [64, 128, 256]
+  size_weight: [0.3, 0.3, 0.4]
   mean: 0.5
   std: 0.5

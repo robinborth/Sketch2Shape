@@ -24,8 +24,8 @@ class SiameseDataModule(LightningDataModule):
         train_sampler: Optional[Sampler] = None,
         eval_sampler: Optional[Sampler] = None,
         dataset: Optional[SiameseDataset] = None,
-        sketch_transforms: Optional[Callable] = None,
-        image_transforms: Optional[Callable] = None,
+        sketch_transform: Optional[Callable] = None,
+        normal_transform: Optional[Callable] = None,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -38,24 +38,24 @@ class SiameseDataModule(LightningDataModule):
             self.train_dataset = self.hparams["dataset"](
                 data_dir=data_dir,
                 split="train",
-                sketch_transforms=self.hparams["sketch_transforms"],
-                image_transforms=self.hparams["image_transforms"],
+                sketch_transform=self.hparams["sketch_transform"],
+                normal_transform=self.hparams["normal_transform"],
             )
         if stage in ["validate", "fit", "all"]:
             self.val_metainfo = MetaInfo(data_dir=data_dir, split="val")
             self.val_dataset = self.hparams["dataset"](
                 data_dir=data_dir,
                 split="val",
-                sketch_transforms=self.hparams["sketch_transforms"],
-                image_transforms=self.hparams["image_transforms"],
+                sketch_transform=self.hparams["sketch_transform"],
+                normal_transform=self.hparams["normal_transform"],
             )
         if stage in ["test", "all"]:
             self.test_metainfo = MetaInfo(data_dir=data_dir, split="test")
             self.test_dataset = self.hparams["dataset"](
                 data_dir=data_dir,
                 split="test",
-                sketch_transforms=self.hparams["sketch_transforms"],
-                image_transforms=self.hparams["image_transforms"],
+                sketch_transform=self.hparams["sketch_transform"],
+                normal_transform=self.hparams["normal_transform"],
             )
 
     def build_sampler(self, metainfo: MetaInfo):
@@ -123,8 +123,8 @@ class SiameseTesterDataModule(LightningDataModule):
         shuffle: bool = True,
         # dataset
         dataset: Optional[SiameseDataset] = None,
-        sketch_transforms: Optional[Callable] = None,
-        image_transforms: Optional[Callable] = None,
+        sketch_transform: Optional[Callable] = None,
+        normal_transform: Optional[Callable] = None,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -134,20 +134,20 @@ class SiameseTesterDataModule(LightningDataModule):
         self.train_dataset = self.hparams["dataset"](
             data_dir=self.hparams["data_dir"],
             split="train",
-            sketch_transforms=self.hparams["sketch_transforms"],
-            image_transforms=self.hparams["image_transforms"],
+            sketch_transform=self.hparams["sketch_transform"],
+            normal_transform=self.hparams["normal_transform"],
         )
         self.val_dataset = self.hparams["dataset"](
             data_dir=self.hparams["data_dir"],
             split="val",
-            sketch_transforms=self.hparams["sketch_transforms"],
-            image_transforms=self.hparams["image_transforms"],
+            sketch_transform=self.hparams["sketch_transform"],
+            normal_transform=self.hparams["normal_transform"],
         )
         self.test_dataset = self.hparams["dataset"](
             data_dir=self.hparams["data_dir"],
             split="test",
-            sketch_transforms=self.hparams["sketch_transforms"],
-            image_transforms=self.hparams["image_transforms"],
+            sketch_transform=self.hparams["sketch_transform"],
+            normal_transform=self.hparams["normal_transform"],
         )
 
     @staticmethod
