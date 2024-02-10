@@ -1,6 +1,7 @@
 import open3d as o3d
 import torch
 from lightning import LightningModule
+from lightning.pytorch.loggers import WandbLogger
 
 from lib.eval.chamfer_distance import ChamferDistanceMetric
 from lib.eval.clip_score import CLIPScoreMetric
@@ -110,5 +111,10 @@ class LatentOptimizer(LightningModule):
 
     def capture_camera_frame(self):
         image = self.model.capture_camera_frame(self.latent)
-        self.model.log_image("video_frame", image)
+        self.log_image("camera_frame", image)
         return image
+
+    def log_image(self, key: str, image: torch.Tensor):
+        image = image.detach().cpu().numpy()
+        if isinstance(self.logger, WandbLogger):
+            self.logger.log_image(key, [image])  # type: ignore

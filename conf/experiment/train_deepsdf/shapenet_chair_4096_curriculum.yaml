@@ -34,5 +34,5 @@ callbacks:
     patience: 2000
   model_checkpoint:
     save_top_k: -1
-    every_n_epochs: 1
+    every_n_epochs: 100
     save_last: True

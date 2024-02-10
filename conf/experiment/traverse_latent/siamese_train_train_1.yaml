@@ -1,0 +1,16 @@
+# @package _global_
+
+defaults:
+  - override /data: shapenet_chair_4096
+  - override /logger: wandb
+
+ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
+tags: ["traverse_latent", "shapenet_chair_4096", "siamese_train_train_1"]
+create_mesh: False
+create_video: True
+traversal_steps: 50
+
+model:
+  compute_snn_loss: True
+  prior_idx_start: 0 
+  prior_idx_end: 3

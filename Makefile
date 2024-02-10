@@ -28,7 +28,7 @@ eval_siamese:
 	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese
 
 train_deepsdf:
-	python scripts/train_deepsdf.py +experiment/train_deepsdf=shapenet_chair_4096
+	python scripts/train_deepsdf.py +experiment/train_deepsdf=shapenet_chair_4096_curriculum
 
 traverse_latent:
 	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_1
@@ -43,6 +43,7 @@ traverse_latent:
 	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_2
 	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_3
 	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_4
+	python scripts/traverse_latent.py +experiment/traverse_latent=siamese_train_train_1
 
 optimize_deepsdf:
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=baseline

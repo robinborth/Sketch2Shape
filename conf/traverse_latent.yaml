@@ -17,7 +17,7 @@ tags: ["traverse_latent"]
 create_mesh: True
 create_video: True
 ckpt_path: ???
-siamese_ckpt_path: ${paths.checkpoints}/siamese.ckpt
+siamese_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
 traversal_steps: 20
 
 trainer:

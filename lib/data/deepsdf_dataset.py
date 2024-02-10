@@ -143,7 +143,7 @@ class NormalLatentOptimizerDataset(Dataset):
                 data["points"], data["rays"], data["mask"] = points, rays, mask
                 data["camera_position"] = camera.camera_position()
                 normal = self.metainfo.load_normal(obj_id, f"{label:05}")
-                data["gt_image"] = self.transforms(normal)
+                data["gt_image"] = self.transforms(normal)  # (3, W, H)
                 data["gt_surface_mask"] = (data["gt_image"].sum(-1) < 2.95).reshape(-1)
                 label += 1
                 self.data.append(data)
@@ -179,7 +179,7 @@ class SketchLatentOptimizerDataset(Dataset):
                 data["points"], data["rays"], data["mask"] = points, rays, mask
                 data["camera_position"] = camera.camera_position()
                 sketch = self.metainfo.load_sketch(obj_id, f"{sketch_id:05}")
-                data["sketch"] = self.transforms(sketch)
+                data["sketch"] = self.transforms(sketch)  # (3, W, H)
                 label += 1
                 self.data.append(data)
 

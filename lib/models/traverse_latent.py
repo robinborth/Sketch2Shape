@@ -1,7 +1,9 @@
 import torch
 
 from lib.data.metainfo import MetaInfo
+from lib.data.transforms import SiameseTransform
 from lib.models.optimize_latent import LatentOptimizer
+from lib.models.siamese import Siamese
 
 
 class DeepSDFLatentTraversal(LatentOptimizer):
@@ -30,19 +32,22 @@ class DeepSDFLatentTraversal(LatentOptimizer):
 
         self.compute_snn_loss = compute_snn_loss
         if compute_snn_loss:
+            # load sketch
             self.metainfo = MetaInfo(data_dir)
-            # TODO think about how to load the image
+            transform = SiameseTransform(mean=0.5, std=0.5)
             sketch = self.metainfo.load_image(prior_idx_end, 11, 0)
-            self.register_buffer("sketch", sketch)
-            ...
+            sketch = transform(sketch)[None, ...]
+            self.register_buffer("sketch", sketch)  # (3, H, W)
+            # load snn
+            self.siamese = Siamese.load_from_checkpoint(siamese_ckpt_path)
+            self.siamese.freeze()
 
     def on_validation_start(self) -> None:
         if self.compute_snn_loss:
             self.siamese.eval()
             self.sketch_emb = self.siamese(self.sketch)
             sketch_norm = torch.norm(self.sketch_emb, dim=-1)
-            self.log("optimize/sketch_norm", sketch_norm, on_step=True)
-            self.log_image("sketch", self.sketch)
+            self.log("optimize/sketch_norm", sketch_norm)
 
     def validation_step(self, batch, batch_idx):
         t = batch[0]  # t = [0, 1]
@@ -56,11 +61,17 @@ class DeepSDFLatentTraversal(LatentOptimizer):
             self.capture_camera_frame()
 
         if self.compute_snn_loss:
-            rendered_normals = self.capture_camera_frame()
-            normals = rendered_normals.permute(2, 0, 1)[None, ...]
-            normal_emb = self.siamese(normals)
+            # calculate the normal embedding
+            rendered_normal = self.capture_camera_frame()  # (H, W, 3)
+            normal = self.model.normal_to_siamese(rendered_normal)  # (1, 3, H, W)
+            normal_emb = self.siamese(normal)
             normal_norm = torch.norm(normal_emb, dim=-1)
             self.log("optimize/normal_norm", normal_norm, on_step=True)
 
+            # calculate the siamese loss
             loss = torch.norm(self.sketch_emb - normal_emb, dim=-1)
             self.log("optimize/siamese_loss", loss, on_step=True)
+
+            # visualize sketch and the current normal image
+            self.log_image("normal", self.model.siamese_input_to_image(normal))
+            self.log_image("sketch", self.model.siamese_input_to_image(self.sketch))

@@ -122,7 +122,7 @@
             "request": "launch",
             "program": "scripts/traverse_latent.py",
             "args": [
-                "+experiment/traverse_latent=debug_snn"
+                "+experiment/traverse_latent=siamese_train_train_1"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

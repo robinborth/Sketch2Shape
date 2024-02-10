@@ -225,6 +225,7 @@ class DeepSDF(LightningModule):
         )
 
     def capture_camera_frame(self, latent: torch.Tensor) -> torch.Tensor:
+        self.eval()
         with torch.no_grad():
             points, surface_mask = self.sphere_tracing(
                 latent=latent,
@@ -247,6 +248,33 @@ class DeepSDF(LightningModule):
     ############################################################
     # Rendering Utils
     ############################################################
+
+    def normal_to_siamese(self, normal: torch.Tensor) -> torch.Tensor:
+        """Transforms the normal after render_normals to siamese input."
+
+        Args:
+            normal (torch.Tensor): The normal image of dim: (H, W, 3) and range (0, 1)
+
+        Returns:
+            torch.Tensor: The input for the siamese network of dim (1, 3, H, W)
+        """
+        normal = normal.permute(2, 0, 1)  # (3, H, W)
+        normal = (normal - 0.5) / 0.5  # scale from (0, 1) -> (-1, 1) with mean,std=0.5
+        return normal[None, ...]  # (1, 3, H, W)
+
+    def siamese_input_to_image(self, siamese_input: torch.Tensor) -> torch.Tensor:
+        """Transforms a siamese_input to a image that can be plotted."
+
+        Args:
+            siamese_input (torch.Tensor): The input of dim: (1, 3, H, W); range: (-1, 1)
+
+        Returns:
+            torch.Tensor: The transformed image of dim (H, W, 3).
+        """
+        siamese_input = siamese_input.squeeze(0)  # (3, H, W)
+        assert siamese_input.dim() == 3
+        siamese_input = (siamese_input * 0.5) + 0.5  # (-1, 1) -> (0, 1)
+        return siamese_input.permute(1, 2, 0)  # (H, W, 3)
 
     def render_normals(
         self,
@@ -346,7 +374,7 @@ class DeepSDF(LightningModule):
     ############################################################
 
     def to_mesh(self, latent: torch.Tensor) -> o3d.geometry.TriangleMesh:
-        self.model.eval()
+        self.eval()
         resolution = self.hparams["mesh_resolution"]
         chunk_size = self.hparams["mesh_chunk_size"]
         min_val, max_val = -1, 1
@@ -358,7 +386,7 @@ class DeepSDF(LightningModule):
         loader = DataLoader(points, batch_size=chunk_size)  # type: ignore
         sd = []
         for points in tqdm(iter(loader), total=len(loader)):
-            points = points.to(self.model.device)
+            points = points.to(self.device)
             sd_out = self.forward(points, latent=latent).detach().cpu().numpy()
             sd.append(sd_out)
         sd_cube = np.concatenate(sd).reshape(resolution, resolution, resolution)
