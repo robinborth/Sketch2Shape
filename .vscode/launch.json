@@ -29,7 +29,7 @@
             "request": "launch",
             "program": "scripts/train_deepsdf.py",
             "args": [
-                "+experiment/train_deepsdf=shapenet_chair_1"
+                "+experiment/train_deepsdf=shapenet_chair_4096_curriculum"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
@@ -73,8 +73,7 @@
             "request": "launch",
             "program": "scripts/preprocess_data.py",
             "args": [
-                "data=shapenet_chair_16",
-                "data.preprocess_siamese.skip=False"
+                "+experiment/preprocess_data=shapenet_chair_4096_siamese"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

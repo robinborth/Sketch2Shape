@@ -41,7 +41,7 @@ model:
   _target_: lib.models.optimize_sketch.DeepSDFSketchRender
   siamese_ckpt_path: ${siamese_ckpt_path} 
   siamese_weight: 1.0
-  video_capture_rate: 8
+  capture_rate: 8
   reg_weight: 2e-03
   optimizer:
     lr: 1e-02

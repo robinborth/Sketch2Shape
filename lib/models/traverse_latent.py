@@ -30,4 +30,4 @@ class DeepSDFLatentTraversal(LatentOptimizer):
             self.meshes.append(mesh)
 
         if self.hparams["create_video"]:
-            self.capture_video_frame()
+            self.capture_camera_frame()

@@ -6,9 +6,13 @@ defaults:
       - train_deepsdf
   - override /logger: wandb
 
-tags: ["train_deepsdf", "shapenet_chair_4096"]
+tags: ["train_deepsdf", "shapenet_chair_4096", "curriculum_deepsdf"]
 
 model:
+  decoder_lr: 32e-05 # num batch size * 1e-05; see curriculum deepsdf
+  adaptive_sample_strategy: True
+  adaptive_mining_strategy: True
+  reg_loss: True
   scheduler:
     _partial_: True
     _target_: torch.optim.lr_scheduler.StepLR
@@ -30,5 +34,5 @@ callbacks:
     patience: 2000
   model_checkpoint:
     save_top_k: -1
-    every_n_epochs: 100
+    every_n_epochs: 1
     save_last: True

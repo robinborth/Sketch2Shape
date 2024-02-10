@@ -39,7 +39,7 @@ data:
 model:
   _target_: lib.models.optimize_normals.DeepSDFNormalRender
   reg_weight: 1e-01
-  video_capture_rate: 8
+  capture_rate: 8
   optimizer:
     lr: 5e-03
   scheduler:
@@ -47,6 +47,6 @@ model:
     gamma: 0.5
   c2f_scheduler:
     _target_: lib.data.scheduler.Coarse2FineScheduler
-    resolution: ${model.image_resolution}
+    resolution: 256
     max_epochs: ${trainer.max_epochs}
     milestones: [5, 10] 

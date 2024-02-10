@@ -2,11 +2,16 @@
 
 _target_: lib.models.traverse_latent.DeepSDFLatentTraversal
 ckpt_path: ${ckpt_path} 
-prior_idx: -1
 prior_idx_start: -1
 prior_idx_end: -1
-image_resolution: 256
+# mesh settings
 mesh_resolution: 128
 mesh_chunk_size: 65536
-video_azim: 40 
-video_elev: -30
+# rendering settings
+capture_rate: 30
+n_render_steps: 100
+clamp_sdf: 0.1
+step_scale: 1.0
+surface_eps: 1e-03
+sphere_eps: 1e-01
+normal_eps: 5e-03
