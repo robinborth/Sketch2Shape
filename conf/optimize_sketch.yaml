@@ -22,8 +22,8 @@ prior_idx: mean  # random(-2), mean(-1), prior, prior(idx)
 eval: False
 save_mesh: True
 create_video: True
-ckpt_path: ???
-siamese_ckpt_path: ???
+ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
+siamese_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
 
 trainer:
   num_sanity_val_steps: 0

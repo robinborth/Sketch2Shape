@@ -14,7 +14,7 @@ defaults:
 
 task_name: eval_siamese
 tags: ["eval_siamese"]
-ckpt_path: ??? 
+ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt 
 seed: 123
 
 trainer:

@@ -22,7 +22,7 @@ prior_idx: mean  # random(-2), mean(-1), prior, prior(idx)
 eval: True
 save_mesh: True
 create_video: True
-ckpt_path: ???
+ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 
 trainer:
   num_sanity_val_steps: 0

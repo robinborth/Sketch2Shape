@@ -10,8 +10,8 @@ tags: ["train_deepsdf", "shapenet_chair_4096"]
 
 model:
   scheduler:
-    _partial_: True
     _target_: torch.optim.lr_scheduler.StepLR
+    _partial_: True
     step_size: 500
     gamma: 0.5
 

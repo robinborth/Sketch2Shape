@@ -14,8 +14,8 @@ model:
   adaptive_mining_strategy: True
   reg_loss: True
   scheduler:
-    _partial_: True
     _target_: torch.optim.lr_scheduler.StepLR
+    _partial_: True
     step_size: 500
     gamma: 0.5
 
