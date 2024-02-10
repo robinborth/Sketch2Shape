@@ -8,6 +8,7 @@ from torch.utils.data import Dataset
 from torchvision.transforms import v2
 
 from lib.data.metainfo import MetaInfo
+from lib.data.transforms import SiameseTransform
 from lib.render.camera import Camera
 
 ############################################################
@@ -128,22 +129,33 @@ class NormalLatentOptimizerDataset(Dataset):
         azims: list[int] = [],
         elevs: list[int] = [],
         dist: float = 4.0,
+        size: int = 256,
     ):
         self.metainfo = MetaInfo(data_dir=data_dir)
-        self.transforms = v2.Compose(
-            [v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]
+        self.transforms = SiameseTransform(
+            to_image=False,
+            normalize=False,
+            size=size,
+            sharpness=1.0,
         )
         self.data = []
         label = 0
         for azim in azims:
             for elev in elevs:
                 data = {}
-                camera = Camera(azim=azim, elev=elev, dist=dist)
+                camera = Camera(
+                    azim=azim,
+                    elev=elev,
+                    dist=dist,
+                    height=size,
+                    width=size,
+                    focal=size * 2,
+                )
                 points, rays, mask = camera.unit_sphere_intersection_rays()
                 data["points"], data["rays"], data["mask"] = points, rays, mask
                 data["camera_position"] = camera.camera_position()
                 normal = self.metainfo.load_normal(obj_id, f"{label:05}")
-                data["gt_image"] = self.transforms(normal)  # (3, W, H)
+                data["gt_image"] = self.transforms(normal)  # (H, W, 3)
                 data["gt_surface_mask"] = (data["gt_image"].sum(-1) < 2.95).reshape(-1)
                 label += 1
                 self.data.append(data)
@@ -164,17 +176,28 @@ class SketchLatentOptimizerDataset(Dataset):
         elevs: list[int] = [],
         dist: float = 4.0,
         sketch_id: int = 11,
+        size: int = 256,
     ):
         self.metainfo = MetaInfo(data_dir=data_dir)
         self.data = []
-        self.transforms = v2.Compose(
-            [v2.ToImage(), v2.ToDtype(torch.float32, scale=True)]
+        self.transforms = SiameseTransform(
+            to_image=True,
+            normalize=True,
+            size=size,
+            sharpness=1.0,
         )
         label = 0
         for azim in azims:
             for elev in elevs:
                 data = {}
-                camera = Camera(azim=azim, elev=elev, dist=dist)
+                camera = Camera(
+                    azim=azim,
+                    elev=elev,
+                    dist=dist,
+                    height=size,
+                    width=size,
+                    focal=size * 2,
+                )
                 points, rays, mask = camera.unit_sphere_intersection_rays()
                 data["points"], data["rays"], data["mask"] = points, rays, mask
                 data["camera_position"] = camera.camera_position()

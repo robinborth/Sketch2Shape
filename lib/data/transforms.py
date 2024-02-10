@@ -5,16 +5,26 @@ from torchvision.transforms import v2
 class SiameseTransform:
     def __init__(
         self,
+        normalize: bool = True,
+        to_image: bool = True,
+        size: int = 256,
+        sharpness: float = 1.0,
         mean: float = 0.5,
         std: float = 0.5,
     ):
-        self.transform = v2.Compose(
-            [
-                v2.ToImage(),
-                v2.ToDtype(torch.float32, scale=True),
-                v2.Normalize(mean=[mean], std=[std]),
-            ]
-        )
+
+        transforms = []
+        if to_image:
+            transforms += v2.ToImage()
+        transforms += [
+            v2.ToDtype(torch.float32, scale=True),
+            v2.Resize(size=(size, size), antialias=True),
+            v2.RandomAdjustSharpness(sharpness, p=1.0),
+        ]
+        if normalize:
+            transforms += v2.Normalize(mean=[mean], std=[std])
+
+        self.transform = v2.Compose(transforms)
 
     def __call__(self, image):
         return self.transform(image)

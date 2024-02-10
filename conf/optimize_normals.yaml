@@ -34,6 +34,7 @@ data:
     _target_: lib.data.deepsdf_dataset.NormalLatentOptimizerDataset
     azims: ${data.preprocess_siamese.azims}
     elevs: ${data.preprocess_siamese.elevs}
+    size: 256
   shuffle: True
 
 model:
@@ -45,8 +46,3 @@ model:
   scheduler:
     step_size: 5
     gamma: 0.5
-  c2f_scheduler:
-    _target_: lib.data.scheduler.Coarse2FineScheduler
-    resolution: 256
-    max_epochs: ${trainer.max_epochs}
-    milestones: [5, 10] 
