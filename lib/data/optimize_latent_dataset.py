@@ -1,11 +1,5 @@
-import glob
-from typing import Optional
-
-import matplotlib.pyplot as plt
 import numpy as np
-import torch
 from torch.utils.data import Dataset
-from torchvision.transforms import v2
 
 from lib.data.metainfo import MetaInfo
 from lib.data.transforms import SiameseTransform

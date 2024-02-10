@@ -26,15 +26,17 @@ ckpt_path: ???
 
 trainer:
   num_sanity_val_steps: 0
+  reload_dataloaders_every_epoch: True
   max_epochs: 20 
   accumulate_grad_batches: 4
 
 data:
+  size: 256
+  milestones: []
   train_dataset:
     _target_: lib.data.optimize_latent_dataset.NormalLatentOptimizerDataset
     azims: ${data.preprocess_siamese.azims}
     elevs: ${data.preprocess_siamese.elevs}
-    size: 256
   shuffle: True
 
 model:

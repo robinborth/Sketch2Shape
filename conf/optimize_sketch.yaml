@@ -27,16 +27,19 @@ siamese_ckpt_path: ???
 
 trainer:
   num_sanity_val_steps: 0
+  reload_dataloaders_every_epoch: True
   max_epochs: 20
   accumulate_grad_batches: 8
 
 data:
+  size: 256
+  milestones: []
   train_dataset:
     _target_: lib.data.optimize_latent_dataset.SketchLatentOptimizerDataset
     azims: ${data.preprocess_siamese.azims}
     elevs: ${data.preprocess_siamese.elevs}
-    size: 256
   shuffle: True
+
 
 model:
   _target_: lib.models.optimize_sketch.DeepSDFSketchRender
