@@ -17,6 +17,14 @@ def preprocess(cfg: DictConfig) -> None:
         normalized_mesh = mesh.preprocess(obj_id=obj_id)
         mesh.metainfo.save_normalized_mesh(obj_id=obj_id, mesh=normalized_mesh)
 
+    logger.debug("==> initializing sdf ...")
+    sdf: PreprocessSDF = hydra.utils.instantiate(cfg.data.preprocess_sdf)
+    logger.debug("==> start preprocessing sdf ...")
+    for obj_id in tqdm(list(sdf.obj_ids_iter())):
+        sdf_samples, surface_samples = sdf.preprocess(obj_id=obj_id)
+        sdf.metainfo.save_sdf_samples(obj_id=obj_id, samples=sdf_samples)
+        sdf.metainfo.save_surface_samples(obj_id=obj_id, samples=surface_samples)
+
     logger.debug("==> initializing siamese ...")
     siamese: PreprocessSiamese = hydra.utils.instantiate(cfg.data.preprocess_siamese)
     logger.debug("==> start preprocessing siamese ...")
@@ -25,14 +33,6 @@ def preprocess(cfg: DictConfig) -> None:
         for idx, (normal, sketch) in enumerate(zip(normals, sketches)):
             siamese.metainfo.save_normal(normal, obj_id=obj_id, image_id=f"{idx:05}")
             siamese.metainfo.save_sketch(sketch, obj_id=obj_id, image_id=f"{idx:05}")
-
-    logger.debug("==> initializing sdf ...")
-    sdf: PreprocessSDF = hydra.utils.instantiate(cfg.data.preprocess_sdf)
-    logger.debug("==> start preprocessing sdf ...")
-    for obj_id in tqdm(list(sdf.obj_ids_iter())):
-        sdf_samples, surface_samples = sdf.preprocess(obj_id=obj_id)
-        sdf.metainfo.save_sdf_samples(obj_id=obj_id, samples=sdf_samples)
-        sdf.metainfo.save_surface_samples(obj_id=obj_id, samples=surface_samples)
 
 
 if __name__ == "__main__":

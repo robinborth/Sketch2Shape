@@ -4,13 +4,13 @@ defaults:
   - preprocess_data
   - _self_
 
-dataset_name: shapenet_chair_1024
+dataset_name: shapenet_airplane_3072
 data_dir: ${paths.data_dir}/${data.dataset_name}
 
 ########################################################################
 # Training Splits 
 ########################################################################
 
-num_obj_train: 1024
-num_obj_val: 32
-num_obj_test: 128
+num_obj_train: 3072
+num_obj_val: 128
+num_obj_test: 256

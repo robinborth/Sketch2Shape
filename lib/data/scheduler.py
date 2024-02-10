@@ -15,7 +15,7 @@ class Coarse2FineScheduler:
     ):
         self.reducer = {
             "max": torch.nn.MaxPool2d(2),
-            "avg": torch.nn.MaxPool2d(2),
+            "avg": torch.nn.AvgPool2d(2),
         }
         self.current_epoch = 0
         self.milestones = milestones
@@ -42,7 +42,7 @@ class Coarse2FineScheduler:
         if not (num_downsample := self.num_downsample(current_epoch)):
             return x
         # apply the downsampling
-        channel = x.shape[-1]
+        channel = x.shape[-1]  # (B, H, W, C)
         x = x.reshape(self._resolution, self._resolution, -1).transpose(0, 2)
         for _ in range(num_downsample):
             x = self.reducer[reducer](x)

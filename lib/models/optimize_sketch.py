@@ -15,6 +15,8 @@ class DeepSDFSketchRender(LatentOptimizer):
         super().__init__(**kwargs)
         self.siamese = Siamese.load_from_checkpoint(siamese_ckpt_path)
         self.siamese.freeze()
+        self.siamese.eval()
+
         self.model.lat_vecs = None
 
     def training_step(self, batch, batch_idx):
@@ -35,14 +37,16 @@ class DeepSDFSketchRender(LatentOptimizer):
         rendered_normals_image = self.normal_to_image(rendered_normals, surface_mask)
 
         # calculate the embeddings
-        sketch_input = sketch.reshape(-1, 3, 256, 256)
-        sketch_emb = self.siamese.decoder(sketch_input)
-        rendered_normals_input = rendered_normals.reshape(-1, 3, 256, 256)
-        rendered_normals_emb = self.siamese.decoder(rendered_normals_input)
+        sketch_emb = self.siamese(sketch.reshape(1, 3, 256, 256))
+        rendered_normals_input = self.to_image(rendered_normals).permute(2, 0, 1)
+        rendered_normals_emb = self.siamese(rendered_normals_input[None, ...])
 
-        siamese_loss = l1_loss(sketch_emb, rendered_normals_emb)
+        siamese_loss = torch.nn.functional.mse_loss(sketch_emb, rendered_normals_emb)
         siamese_loss *= self.hparams["siamese_weight"]
         self.log("optimize/siamese_loss", siamese_loss)
+
+        _siamese_loss = torch.linalg.vector_norm(sketch_emb - rendered_normals_emb)
+        self.log("optimize/snn_loss", _siamese_loss)
 
         latent_norm = torch.linalg.norm(self.latent, dim=-1)
         self.log("optimize/latent_norm", latent_norm)
@@ -59,7 +63,54 @@ class DeepSDFSketchRender(LatentOptimizer):
         self.log("optimize/mem_allocated", mem_allocated)
 
         # visualize the different images
-        self.log_image("sketch_image", sketch_image)
+        self.log_image("sketch_image", sketch_image.permute(1, 2, 0))
         self.log_image("rendered_normals_image", rendered_normals_image)
 
         return loss
+
+    # def training_step(self, batch, batch_idx):
+    #     self.siamese.eval()
+
+    #     # get the gt image and normals
+    #     sketch_image = batch["sketch"].squeeze(0)
+    #     sketch = self.image_to_normal(sketch_image)
+    #     unit_sphere_mask = batch["mask"].squeeze()
+
+    #     # calculate the normals map
+    #     points, surface_mask = self.sphere_tracing(
+    #         points=batch["points"].squeeze(),
+    #         rays=batch["rays"].squeeze(),
+    #         mask=unit_sphere_mask,
+    #     )
+    #     rendered_normals = self.render_normals(points=points, mask=surface_mask)
+    #     rendered_normals_image = self.normal_to_image(rendered_normals, surface_mask)
+
+    #     # calculate the embeddings
+    #     sketch_input = sketch.reshape(-1, 3, 256, 256)
+    #     sketch_emb = self.siamese(sketch_input)
+    #     rendered_normals_input = rendered_normals.reshape(-1, 3, 256, 256)
+    #     rendered_normals_emb = self.siamese(rendered_normals_input)
+
+    #     siamese_loss = l1_loss(sketch_emb, rendered_normals_emb)
+    #     siamese_loss *= self.hparams["siamese_weight"]
+    #     self.log("optimize/siamese_loss", siamese_loss)
+
+    #     latent_norm = torch.linalg.norm(self.latent, dim=-1)
+    #     self.log("optimize/latent_norm", latent_norm)
+
+    #     reg_loss = torch.tensor(0).to(siamese_loss)
+    #     if self.hparams["reg_loss"]:
+    #         reg_loss = latent_norm * self.hparams["reg_weight"]
+    #         self.log("optimize/reg_loss", reg_loss)
+
+    #     loss = reg_loss + siamese_loss
+    #     self.log("optimize/loss", loss)
+
+    #     mem_allocated = torch.cuda.memory_allocated() / 1024**2  # convert to MIB
+    #     self.log("optimize/mem_allocated", mem_allocated)
+
+    #     # visualize the different images
+    #     # self.log_image("sketch_image", sketch_image)
+    #     # self.log_image("rendered_normals_image", rendered_normals_image)
+
+    #     return loss

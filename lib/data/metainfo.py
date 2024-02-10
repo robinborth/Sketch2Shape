@@ -21,14 +21,14 @@ class MetaInfo:
             if split is not None:
                 metainfo = metainfo[metainfo["split"] == split]
             self._obj_ids = metainfo["obj_id"].to_list()
-            self._metainfo = metainfo
+            self._labels = metainfo["label"].to_list()
+            self._obj_id_to_label = {o: l for o, l in zip(self._obj_ids, self._labels)}
+            self._label_to_obj_id = {l: o for o, l in zip(self._obj_ids, self._labels)}
         except Exception as e:
             logger.error("Not able to load dataset_splits file.")
 
         self.image_type_2_type_idx = {"sketch": 0, "normal": 1}
-        self.type_idx_2_image_type = {
-            v: k for k, v in self.image_type_2_type_idx.items()
-        }
+        self.type_idx_2_image_type = {0: "sketch", 1: "normal"}
 
     #################################################################
     # SNN pairs loader utils
@@ -36,8 +36,7 @@ class MetaInfo:
 
     def load_snn(self):
         data = []
-        for _, row in self._metainfo.iterrows():
-            obj_id, label = row["obj_id"], row["label"]
+        for obj_id, label in self._obj_id_to_label.items():
             images_path = self.data_dir / "shapes" / obj_id / "sketches"
             assert images_path.exists()
             for file_name in sorted(images_path.iterdir()):
@@ -77,15 +76,10 @@ class MetaInfo:
         return len(self.obj_ids)
 
     def label_to_obj_id(self, label: int) -> str:
-        df = self._metainfo
-        return df.loc[df["label"] == label].iloc[0]["obj_id"]
+        return self._label_to_obj_id.get(label, None)
 
     def obj_id_to_label(self, obj_id: str) -> int:
-        df = self._metainfo
-        filtered = df.loc[df["obj_id"] == obj_id]
-        if not len(filtered):
-            return -1
-        return int(filtered.iloc[0]["label"])
+        return self._obj_id_to_label.get(obj_id, -1)
 
     #################################################################
     # Mesh: Loading and Storing Utils
@@ -184,3 +178,16 @@ class MetaInfo:
     def load_sketch(self, obj_id: str, image_id: str) -> Path:
         path = self.sketches_dir_path(obj_id) / f"{image_id}.png"
         return Image.open(path)
+
+    #################################################################
+    # General: Loading and Storing Utils
+    #################################################################
+
+    def load_image(self, label: int, image_id: int, type_idx: int):
+        obj_id = self.label_to_obj_id(label)
+        image_type = self.type_idx_2_image_type[type_idx]
+        if image_type == "sketch":
+            return self.load_sketch(obj_id, f"{image_id:05}")
+        if image_type == "normal":
+            return self.load_normal(obj_id, f"{image_id:05}")
+        raise ValueError(f"Please provide an {image_type=} that is correct!")

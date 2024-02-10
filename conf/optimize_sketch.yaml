@@ -19,7 +19,7 @@ split: val
 obj_ids: ???
 train: True
 prior_idx: mean  # random(-2), mean(-1), prior, prior(idx)
-eval: True
+eval: False
 save_mesh: True
 create_video: True
 ckpt_path: ???
@@ -27,8 +27,9 @@ siamese_ckpt_path: ???
 
 trainer:
   num_sanity_val_steps: 0
-  max_epochs: 15
+  max_epochs: 20
   accumulate_grad_batches: 8
+
 
 data:
   train_dataset:

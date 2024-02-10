@@ -8,7 +8,7 @@ defaults:
 
 tags: ["train_deepsdf", "shapenet_chair_4096", "ckpt"]
 
-ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt
+ckpt_path: /home/borth/sketch2shape/logs/train_deepsdf/runs/2024-01-28_18-50-57/checkpoints/epoch_2999.ckpt
 model:
   decoder_scheduler:
     _partial_: True
@@ -22,7 +22,7 @@ model:
     gamma: 0.9
 
 trainer:
-  max_epochs: 3000
+  max_epochs: 5000 
   precision: 16-mixed
 
 data:
@@ -33,7 +33,7 @@ data:
 
 callbacks:
   early_stopping:
-    patience: 3000
+    patience: 5000 
   model_checkpoint:
     save_top_k: -1
     every_n_epochs: 100

@@ -25,17 +25,10 @@ dataset:
   _target_: lib.data.siamese_dataset.SiameseDataset
   _partial_: True
 sketch_transforms:
-  _target_: torchvision.transforms.Compose
-  transforms:
-    - _target_: torchvision.transforms.ToTensor
-    - _target_: torchvision.transforms.Normalize
-      mean: 0.5 
-      std: 0.5
+  _target_: lib.data.transforms.SketchTransform
+  mean: 0.5
+  std: 0.5
 image_transforms:
-  _target_: torchvision.transforms.Compose
-  transforms:
-    - _target_: torchvision.transforms.ToTensor
-    - _target_: torchvision.transforms.Normalize
-      mean: 0.5 
-      std: 0.5
-
+  _target_: lib.data.transforms.NormalTransform
+  mean: 0.5
+  std: 0.5
