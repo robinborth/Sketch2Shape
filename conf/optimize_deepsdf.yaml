@@ -30,7 +30,7 @@ trainer:
 
 data:
   train_dataset:
-    _target_: lib.data.deepsdf_dataset.DeepSDFLatentOptimizerDataset
+    _target_: lib.data.optimize_latent_dataset.DeepSDFLatentOptimizerDataset
     chunk_size: 250000 
     half: True
 

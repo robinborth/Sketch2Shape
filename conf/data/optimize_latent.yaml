@@ -1,6 +1,6 @@
 # @package data
 
-_target_: lib.data.deepsdf_datamodule.DeepSDFLatentOptimizationDataModule
+_target_: lib.data.optimize_latent_datamodule.LatentOptimizationDataModule
 # paths
 obj_id: ???
 # training
@@ -16,6 +16,6 @@ train_dataset:
   _partial_: True
   data_dir: ${data.data_dir} 
 eval_dataset:
-  _target_: lib.data.deepsdf_dataset.SurfaceSamplesDataset
+  _target_: lib.data.optimize_latent_dataset.SurfaceSamplesDataset
   _partial_: True
   data_dir: ${data.data_dir} 

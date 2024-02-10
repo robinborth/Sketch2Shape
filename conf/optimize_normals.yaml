@@ -31,7 +31,7 @@ trainer:
 
 data:
   train_dataset:
-    _target_: lib.data.deepsdf_dataset.NormalLatentOptimizerDataset
+    _target_: lib.data.optimize_latent_dataset.NormalLatentOptimizerDataset
     azims: ${data.preprocess_siamese.azims}
     elevs: ${data.preprocess_siamese.elevs}
     size: 256

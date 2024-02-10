@@ -32,7 +32,7 @@ trainer:
 
 data:
   train_dataset:
-    _target_: lib.data.deepsdf_dataset.SketchLatentOptimizerDataset
+    _target_: lib.data.optimize_latent_dataset.SketchLatentOptimizerDataset
     azims: ${data.preprocess_siamese.azims}
     elevs: ${data.preprocess_siamese.elevs}
     size: 256
