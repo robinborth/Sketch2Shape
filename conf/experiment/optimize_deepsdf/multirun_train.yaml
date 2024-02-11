@@ -26,4 +26,4 @@ obj_ids:
 - 38d623b46d07a93fb7d9d23574a480ae
 
 model:
-  mesh_resolution: 256
+  mesh_resolution: 128
