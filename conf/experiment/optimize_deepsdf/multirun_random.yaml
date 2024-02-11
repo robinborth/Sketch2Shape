@@ -4,15 +4,18 @@ defaults:
   - override /data:
     - shapenet_chair_4096
     - optimize_latent
+  - override /logger: wandb
 
 ckpt_path: /home/borth/sketch2shape/logs/train_deepsdf/runs/2024-01-26_20-39-50/checkpoints/last.ckpt
-tags: ["optimize_deepsdf", "shapenet_chair_4096", "baseline"]
-split: train
+tags: ["optimize_deepsdf", "shapenet_chair_4096", "multirun_random"]
+split: train 
+prior_idx: random 
+seed: 1
 train: False
 create_video: False
-create_mesh: False
-save_mesh: False
-prior_idx: prior 
+save_mesh: True
+obj_ids:
+  - 2948af0b6a12f1c7ad484915511ccff6
 
 model:
-  mesh_resolution: 128
+  mesh_resolution: 256
