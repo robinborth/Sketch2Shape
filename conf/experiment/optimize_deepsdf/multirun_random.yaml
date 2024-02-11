@@ -1,0 +1,21 @@
+# @package _global_
+
+defaults:
+  - override /data:
+    - shapenet_chair_4096
+    - optimize_latent
+  - override /logger: wandb
+
+ckpt_path: /home/borth/sketch2shape/checkpoints/curriculum_deepsdf.ckpt 
+tags: ["optimize_deepsdf", "shapenet_chair_4096", "multirun_random"]
+split: train 
+prior_idx: random 
+seed: 1
+train: False
+create_video: False
+save_mesh: True
+obj_ids:
+  - 2948af0b6a12f1c7ad484915511ccff6
+
+model:
+  mesh_resolution: 256

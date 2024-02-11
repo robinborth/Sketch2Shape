@@ -1,0 +1,29 @@
+# @package _global_
+
+defaults:
+  - override /data:
+    - shapenet_chair_4096
+    - optimize_latent
+  - override /logger: wandb
+
+ckpt_path: /home/borth/sketch2shape/checkpoints/curriculum_deepsdf.ckpt 
+tags: ["optimize_deepsdf", "shapenet_chair_4096", "multirun_train"]
+split: train 
+prior_idx: prior 
+train: False
+create_video: False
+save_mesh: True
+obj_ids:
+- 52310bca00e6a3671201d487ecde379e
+- 2948af0b6a12f1c7ad484915511ccff6
+- 92e2317fd0d0129bb910025244eec99a
+- 1459c329e2123d4fe5b03ab845ae95c
+- dada2389e96606307aa7cd663df90f18
+- 1eab4c4c55b8a0f48162e1d15342e13b
+- 30378faa6bf5b245fdef1c01cbd4ae0c
+- d0fa70e45dee680fa45b742ddc5add59
+- e7aa94a2dd59a5ed492d9da2668ec34c
+- 38d623b46d07a93fb7d9d23574a480ae
+
+model:
+  mesh_resolution: 256
