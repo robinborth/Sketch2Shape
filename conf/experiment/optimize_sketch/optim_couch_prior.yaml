@@ -8,24 +8,31 @@ defaults:
 
 ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
 siamese_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
-tags: ["optimize_sketch", "shapenet_chair_4096", "couch_1_train_mean"]
+tags: ["optimize_sketch", "shapenet_chair_4096", "optim_couch_prior"]
 split: train 
-prior_idx: mean 
+eval: False
+prior_idx: prior(5)
 obj_ids:
   - 1459c329e2123d4fe5b03ab845ae95c
 
 
 trainer:
-  max_epochs: 20
-  accumulate_grad_batches: 8
+  max_epochs: 2000
+  accumulate_grad_batches: 1
+  reload_dataloaders_every_n_epochs: False
+
+data:
+  size: 256
+  milestones: []
+  train_dataset:
+    azims: [40]
+    elevs: [-30]
 
 model:
   siamese_weight: 1.0
-  video_capture_rate: 8
-  reg_loss: False
-  reg_weight: 1e-04
+  capture_rate: 8
+  reg_loss: True 
+  reg_weight: 0.5
   optimizer:
     lr: 1e-02
-  scheduler:
-    step_size: 5
-    gamma: 0.5
+  scheduler: null

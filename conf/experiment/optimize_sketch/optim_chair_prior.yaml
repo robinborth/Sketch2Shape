@@ -1,0 +1,38 @@
+# @package _global_
+
+defaults:
+  - override /data:
+    - shapenet_chair_4096
+    - optimize_latent
+  - override /logger: wandb
+
+ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
+siamese_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
+tags: ["optimize_sketch", "shapenet_chair_4096", "optim_couch_prior"]
+split: train 
+eval: False
+prior_idx: prior(5)
+obj_ids:
+  - 52310bca00e6a3671201d487ecde379e
+
+
+trainer:
+  max_epochs: 2000
+  accumulate_grad_batches: 1
+  reload_dataloaders_every_n_epochs: False
+
+data:
+  size: 256
+  milestones: []
+  train_dataset:
+    azims: [40]
+    elevs: [-30]
+
+model:
+  siamese_weight: 1.0
+  capture_rate: 8
+  reg_loss: True 
+  reg_weight: 0.1
+  optimizer:
+    lr: 1e-02
+  scheduler: null

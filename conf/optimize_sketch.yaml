@@ -27,7 +27,7 @@ siamese_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
 
 trainer:
   num_sanity_val_steps: 0
-  reload_dataloaders_every_epoch: True
+  reload_dataloaders_every_n_epochs: True
   max_epochs: 20
   accumulate_grad_batches: 8
 

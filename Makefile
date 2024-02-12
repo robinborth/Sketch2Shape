@@ -63,7 +63,7 @@ optimize_normals:
 	python scripts/optimize_normals.py +experiment/optimize_normals=mean_train
 
 optimize_sketch:
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=mean_train
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=optim_chair_prior
 
 optimize_chair:
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=chair_train_prior
@@ -103,24 +103,24 @@ optimize_couch_1:
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=optim_chair_1
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=optim_chair_1 model.reg_loss=True
 
-# siamese_ckpt: 
-# 	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_099.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_099"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_199.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_199"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_299.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_299"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_399.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_399"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_499.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_499"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_599.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_599"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_699.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_699"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_799.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_799"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_899.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_899"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_999.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_999"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_1099.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1099"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_1199.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1199"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_1299.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1299"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_1399.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1399"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_1499.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1499"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_1599.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1599"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_1699.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1699"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_1799.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1799"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_1899.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1899"]
-# 	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-07_21-40-40/checkpoints/epoch_1999.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1999"]
+siamese_ckpt: 
+	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_099.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_099"]
+	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_199.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_199"]
+	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_299.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_299"]
+	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_399.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_399"]
+	python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_499.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_499"]
+	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_599.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_599"]
+	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_699.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_699"]
+	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_799.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_799"]
+	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_899.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_899"]
+	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_999.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_999"]
+	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_1099.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1099"]
+	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_1199.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1199"]
+	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_1299.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1299"]
+	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_1399.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1399"]
+	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_1499.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1499"]
+	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_1599.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1599"]
+	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_1699.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1699"]
+	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_1799.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1799"]
+	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_1899.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1899"]
+	# python scripts/eval_siamese.py +experiment/eval_siamese=siamese ckpt_path=/home/borth/sketch2shape/logs/train_siamese/runs/2024-02-11_17-41-22/checkpoints/epoch_1999.ckpt  tags=["eval_siamese","shapenet_chair_4096","siamese_1999"]

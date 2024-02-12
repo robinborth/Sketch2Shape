@@ -47,7 +47,6 @@ class DeepSDF(LightningModule):
     ):
         super().__init__()
         self.save_hyperparameters(logger=False)
-        self.create_camera()
 
         # inital layers and first input layer
         layers = []  # type: ignore
@@ -107,6 +106,9 @@ class DeepSDF(LightningModule):
             out = layer(out)
 
         return out.squeeze(-1)
+
+    def on_train_start(self) -> None:
+        self.create_camera()
 
     def training_step(self, batch, batch_idx):
         gt_sdf = batch["sdf"]  # (B, N)
@@ -218,11 +220,9 @@ class DeepSDF(LightningModule):
     def create_camera(self, azim: float = 40.0, elev: float = -30.0, dist: float = 4.0):
         camera = Camera(azim=azim, elev=elev, dist=dist)
         points, rays, mask = camera.unit_sphere_intersection_rays()
-        self.register_buffer("camera_points", torch.tensor(points, device=self.device))
-        self.register_buffer("camera_rays", torch.tensor(rays, device=self.device))
-        self.register_buffer(
-            "camera_mask", torch.tensor(mask, dtype=torch.bool, device=self.device)
-        )
+        self.camera_points = torch.tensor(points, device=self.device)
+        self.camera_rays = torch.tensor(rays, device=self.device)
+        self.camera_mask = torch.tensor(mask, dtype=torch.bool, device=self.device)
 
     def capture_camera_frame(self, latent: torch.Tensor) -> torch.Tensor:
         self.eval()

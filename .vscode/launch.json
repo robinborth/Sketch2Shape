@@ -95,7 +95,7 @@
             "request": "launch",
             "program": "scripts/optimize_sketch.py",
             "args": [
-                "+experiment/optimize_sketch=val_optimization"
+                "+experiment/optimize_sketch=optim_couch_prior"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

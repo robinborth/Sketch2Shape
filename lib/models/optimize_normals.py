@@ -7,7 +7,7 @@ from lib.models.optimize_latent import LatentOptimizer
 class DeepSDFNormalRender(LatentOptimizer):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
-        self.model.lat_vecs = None
+        self.deepsdf.lat_vecs = None
 
     def training_step(self, batch, batch_idx):
         normal = batch["normal"].squeeze(0)  # dim (H, W, 3) and values are (0, 1)

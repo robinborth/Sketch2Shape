@@ -22,13 +22,11 @@ class DeepSDFLatentTraversal(LatentOptimizer):
         super().__init__(**kwargs)
         self.meshes: list[dict] = []
 
-        latent_start = self.model.get_latent(prior_idx_start)
+        latent_start = self.deepsdf.get_latent(prior_idx_start)
         self.register_buffer("latent_start", latent_start)
 
-        latent_end = self.model.get_latent(prior_idx_end)
+        latent_end = self.deepsdf.get_latent(prior_idx_end)
         self.register_buffer("latent_end", latent_end)
-
-        self.model.lat_vecs = None
 
         self.compute_snn_loss = compute_snn_loss
         if compute_snn_loss:
@@ -63,7 +61,7 @@ class DeepSDFLatentTraversal(LatentOptimizer):
         if self.compute_snn_loss:
             # calculate the normal embedding
             rendered_normal = self.capture_camera_frame()  # (H, W, 3)
-            normal = self.model.normal_to_siamese(rendered_normal)  # (1, 3, H, W)
+            normal = self.deepsdf.normal_to_siamese(rendered_normal)  # (1, 3, H, W)
             normal_emb = self.siamese(normal)
             normal_norm = torch.norm(normal_emb, dim=-1)
             self.log("optimize/normal_norm", normal_norm, on_step=True)
@@ -73,5 +71,5 @@ class DeepSDFLatentTraversal(LatentOptimizer):
             self.log("optimize/siamese_loss", loss, on_step=True)
 
             # visualize sketch and the current normal image
-            self.log_image("normal", self.model.siamese_input_to_image(normal))
-            self.log_image("sketch", self.model.siamese_input_to_image(self.sketch))
+            self.log_image("normal", self.deepsdf.siamese_input_to_image(normal))
+            self.log_image("sketch", self.deepsdf.siamese_input_to_image(self.sketch))

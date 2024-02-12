@@ -14,7 +14,7 @@ class LatentOptimizer(LightningModule):
     def __init__(
         self,
         # latent optimization settings
-        ckpt_path: str = "best.ckpt",
+        ckpt_path: str = "deepsdf.ckpt",
         prior_idx: int = -1,  # random(-2), mean(-1), prior(idx)
         reg_loss: bool = True,
         reg_weight: float = 1e-05,
@@ -38,9 +38,9 @@ class LatentOptimizer(LightningModule):
         self.save_hyperparameters(logger=False)
 
         # init model
-        self.model = DeepSDF.load_from_checkpoint(
+        self.deepsdf = DeepSDF.load_from_checkpoint(
             ckpt_path,
-            strict=False,
+            strict=True,
             # mesh settings
             mesh_resolution=mesh_resolution,
             mesh_chunk_size=mesh_chunk_size,
@@ -52,11 +52,11 @@ class LatentOptimizer(LightningModule):
             sphere_eps=sphere_eps,
             normal_eps=normal_eps,
         )
-        self.model.freeze()
-        self.model.create_camera()
+        self.deepsdf.freeze()
+        self.deepsdf.create_camera()
 
         # init latent either by pretrained, mean or random
-        latent = self.model.get_latent(prior_idx)
+        latent = self.deepsdf.get_latent(prior_idx)
         self.register_buffer("latent", latent)
 
         # mesh
@@ -67,13 +67,13 @@ class LatentOptimizer(LightningModule):
         # TODO add the other metrics here
 
     def forward(self, points: torch.Tensor, mask=None):
-        return self.model(points=points, latent=self.latent, mask=mask)
+        return self.deepsdf(points=points, latent=self.latent, mask=mask)
 
     def training_step(self, batch, batch_idx):
         raise NotImplementedError("Please provide the optimization implementation.")
 
     def on_train_epoch_start(self):
-        self.model.eval()
+        self.deepsdf.eval()
 
     def on_train_batch_end(self, outputs, batch, batch_idx):
         if batch_idx % self.hparams["capture_rate"] == 0:
@@ -86,7 +86,7 @@ class LatentOptimizer(LightningModule):
         self.log("val/chamfer", chamfer)
 
     def on_test_epoch_start(self):
-        self.model.eval()
+        self.deepsdf.eval()
 
     def on_before_optimizer_step(self, optimizer):
         """
@@ -106,11 +106,11 @@ class LatentOptimizer(LightningModule):
         return optimizer
 
     def to_mesh(self) -> o3d.geometry.TriangleMesh:
-        self.mesh = self.model.to_mesh(self.latent)
+        self.mesh = self.deepsdf.to_mesh(self.latent)
         return self.mesh
 
     def capture_camera_frame(self):
-        image = self.model.capture_camera_frame(self.latent)
+        image = self.deepsdf.capture_camera_frame(self.latent)
         self.log_image("camera_frame", image)
         return image
 

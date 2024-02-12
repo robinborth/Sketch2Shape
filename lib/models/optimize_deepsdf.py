@@ -17,7 +17,7 @@ class DeepSDFLatentOptimizer(LatentOptimizer):
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
-        self.model.lat_vecs = None
+        self.deepsdf.lat_vecs = None
 
     def training_step(self, batch, batch_idx):
         gt_sdf = batch["sdf"].squeeze()  # (N)
