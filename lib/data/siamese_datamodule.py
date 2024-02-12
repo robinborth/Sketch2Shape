@@ -58,13 +58,6 @@ class SiameseDataModule(LightningDataModule):
                 normal_transform=self.hparams["normal_transform"],
             )
 
-    def build_sampler(self, metainfo: MetaInfo):
-        sampler = None
-        metainfo.load_snn()
-        if self.hparams["sampler"]:
-            sampler = self.hparams["sampler"](labels=metainfo.snn_labels)
-        return sampler
-
     def train_dataloader(self) -> DataLoader:
         self.train_metainfo.load_snn()
         labels = self.train_metainfo.snn_labels

@@ -15,14 +15,14 @@ class SiameseTransform:
 
         transforms = []
         if to_image:
-            transforms += v2.ToImage()
+            transforms.append(v2.ToImage())
         transforms += [
             v2.ToDtype(torch.float32, scale=True),
             v2.Resize(size=(size, size), antialias=True),
             v2.RandomAdjustSharpness(sharpness, p=1.0),
         ]
         if normalize:
-            transforms += v2.Normalize(mean=[mean], std=[std])
+            transforms.append(v2.Normalize(mean=[mean], std=[std]))
 
         self.transform = v2.Compose(transforms)
 
