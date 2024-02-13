@@ -29,22 +29,22 @@ class DeepSDFSketchRender(LatentOptimizer):
         device = self.siamese.device
         if shape_init:
             metainfo = MetaInfo(data_dir=data_dir)
-            label = int(metainfo.obj_id_to_label(self.hparams["obj_id"]))
-            sketch = metainfo.load_image(label, shape_view_id, 0)  # sketch
+            obj_id_label = int(metainfo.obj_id_to_label(self.hparams["obj_id"]))
+            sketch = metainfo.load_image(obj_id_label, shape_view_id, 0)  # sketch
             sketch_emb = self.siamese(transforms(sketch)[None, ...].to(device))
 
             metainfo = MetaInfo(data_dir=data_dir, split="train")
             _loss = []
             for obj_id in tqdm(metainfo.obj_ids):
-                if obj_id == self.hparams["obj_id"]:  # same object don't include
-                    continue
                 label = int(metainfo.obj_id_to_label(obj_id))
                 normal = metainfo.load_image(label, shape_view_id, 1)  # normal
                 normal_emb = self.siamese(transforms(normal)[None, ...].to(device))
                 snn_loss = 1 - cosine_similarity(sketch_emb, normal_emb)
                 _loss.append(snn_loss)
             self.shape_loss = torch.concatenate(_loss)
-            self.shape_idx = torch.argsort(self.shape_loss)[:shape_k]
+            # don't include the latent code that we want to optimize for
+            idx = torch.argsort(self.shape_loss)
+            self.shape_idx = idx[idx != obj_id_label][:shape_k]
 
             shape_latents = self.deepsdf.lat_vecs.weight[self.shape_idx]
             self.register_buffer("shape_latents", shape_latents)
