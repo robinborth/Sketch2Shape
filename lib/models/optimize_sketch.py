@@ -49,8 +49,9 @@ class DeepSDFSketchRender(LatentOptimizer):
             shape_latents = self.deepsdf.lat_vecs.weight[self.shape_idx]
             self.register_buffer("shape_latents", shape_latents)
 
-            latent = shape_latents.mean(0)
-            self.register_buffer("latent", latent)
+            if shape_init:
+                latent = shape_latents.mean(0)
+                self.register_buffer("latent", latent)
 
     def training_step(self, batch, batch_idx):
         self.siamese.eval()
