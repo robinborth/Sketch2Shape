@@ -1,0 +1,8 @@
+# @package model
+_target_: lib.models.siamese.BarlowTwins
+gamma: 5e-03
+embedding_size: 128
+pretrained: True 
+lr_head: 1e-03
+lr_backbone: 1e-05
+scheduler: null

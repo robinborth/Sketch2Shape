@@ -5,12 +5,17 @@ defaults:
   - override /logger: wandb
 
 ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
+siamese_ckpt_path: /home/borth/sketch2shape/checkpoints/siamese_.ckpt 
 tags: ["traverse_latent", "shapenet_chair_4096", "siamese_train_train_1"]
 create_mesh: False
 create_video: True
 traversal_steps: 50
 
 model:
+  data_dir: ${data.data_dir}
+  siamese_ckpt_path: ${siamese_ckpt_path}
+  shape_k: 16
+  shape_init: True
   compute_snn_loss: True
   prior_idx_start: 0 
   prior_idx_end: 3

@@ -44,6 +44,7 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
     for obj_id in obj_ids:
         log.info(f"==> optimize {obj_id=} ...")
         cfg.data.obj_id = obj_id
+        cfg.model.obj_id = obj_id
 
         log.info(f"==> initializing datamodule <{cfg.data._target_}>")
         datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)

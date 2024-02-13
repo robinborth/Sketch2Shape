@@ -43,8 +43,12 @@ data:
 
 model:
   _target_: lib.models.optimize_sketch.DeepSDFSketchRender
+  data_dir: ${data.data_dir}
   siamese_ckpt_path: ${siamese_ckpt_path} 
   siamese_weight: 1.0
+  shape_init: True
+  shape_view_id: 11
+  shape_k: 16
   capture_rate: 8
   reg_weight: 2e-03
   optimizer:

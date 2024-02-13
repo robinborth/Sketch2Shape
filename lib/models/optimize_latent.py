@@ -4,9 +4,6 @@ from lightning import LightningModule
 from lightning.pytorch.loggers import WandbLogger
 
 from lib.eval.chamfer_distance import ChamferDistanceMetric
-from lib.eval.clip_score import CLIPScoreMetric
-from lib.eval.earth_movers_distance import EarthMoversDistanceMetric
-from lib.eval.frechet_inception_distance import FrechetInceptionDistanceMetric
 from lib.models.deepsdf import DeepSDF
 
 
@@ -16,6 +13,7 @@ class LatentOptimizer(LightningModule):
         # latent optimization settings
         ckpt_path: str = "deepsdf.ckpt",
         prior_idx: int = -1,  # random(-2), mean(-1), prior(idx)
+        obj_id: str = "",
         reg_loss: bool = True,
         reg_weight: float = 1e-05,
         optimizer=None,
@@ -33,11 +31,12 @@ class LatentOptimizer(LightningModule):
         # image logger settings
         log_images: bool = True,
         capture_rate: int = 30,
-    ) -> None:
+        **kwargs,
+    ):
         super().__init__()
         self.save_hyperparameters(logger=False)
 
-        # init model
+        # init deepsdf
         self.deepsdf = DeepSDF.load_from_checkpoint(
             ckpt_path,
             strict=True,
@@ -55,16 +54,11 @@ class LatentOptimizer(LightningModule):
         self.deepsdf.freeze()
         self.deepsdf.create_camera()
 
-        # init latent either by pretrained, mean or random
         latent = self.deepsdf.get_latent(prior_idx)
         self.register_buffer("latent", latent)
 
-        # mesh
-        self.mesh: o3d.geometry.TriangleMesh = None
-
-        #  metrics
+        self.mesh = None
         self.chamfer_distance = ChamferDistanceMetric()
-        # TODO add the other metrics here
 
     def forward(self, points: torch.Tensor, mask=None):
         return self.deepsdf(points=points, latent=self.latent, mask=mask)

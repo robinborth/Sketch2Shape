@@ -15,7 +15,6 @@ prior_idx: prior(5)
 obj_ids:
   - 52310bca00e6a3671201d487ecde379e
 
-
 trainer:
   max_epochs: 2000
   accumulate_grad_batches: 1

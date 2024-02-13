@@ -1,6 +1,9 @@
 import torch
 from torch.nn.functional import cosine_similarity
+from tqdm import tqdm
 
+from lib.data.metainfo import MetaInfo
+from lib.data.transforms import SiameseTransform
 from lib.models.optimize_latent import LatentOptimizer
 from lib.models.siamese import Siamese
 
@@ -8,8 +11,13 @@ from lib.models.siamese import Siamese
 class DeepSDFSketchRender(LatentOptimizer):
     def __init__(
         self,
-        siamese_ckpt_path: str,
+        data_dir: str = "/data",
+        siamese_ckpt_path: str = "siamese.ckpt",
+        shape_k: int = 16,
+        shape_view_id: int = 11,  # this should be the same as in the dataset
+        shape_init: bool = False,
         siamese_weight: float = 1.0,
+        shape_prior: bool = False,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -17,155 +25,32 @@ class DeepSDFSketchRender(LatentOptimizer):
         self.siamese.freeze()
         self.siamese.eval()
 
-        self.chair_0_idx = [
-            2930,
-            189,
-            94,
-            2946,
-            1604,
-            2844,
-            2543,
-            2086,
-            2556,
-            1431,
-            940,
-            837,
-            177,
-            1129,
-            934,
-            2627,
-            502,
-            2536,
-            2317,
-            3732,
-            2595,
-            623,
-            126,
-            1264,
-            2733,
-            1070,
-            4020,
-            2144,
-            2785,
-            2013,
-            4023,
-            1225,
-            2124,
-            3928,
-            3868,
-            713,
-            3021,
-            1370,
-            3252,
-            742,
-            364,
-            3093,
-            4047,
-            2650,
-            1486,
-            2597,
-            1162,
-            1138,
-            2749,
-            1198,
-            1532,
-            2730,
-            3687,
-            3433,
-            2686,
-            1868,
-            2306,
-            2326,
-            2427,
-            1726,
-            3722,
-            893,
-            231,
-            2900,
-            485,
-            1186,
-            1353,
-            2793,
-            2846,
-            2168,
-            3276,
-            389,
-            524,
-            627,
-            3400,
-            1019,
-            3062,
-            1511,
-            2295,
-            165,
-            527,
-            3476,
-            2206,
-            2628,
-            3074,
-            572,
-            3793,
-            846,
-            1320,
-            2362,
-            2473,
-            3360,
-            3805,
-            2906,
-            2532,
-            855,
-            1705,
-            1755,
-            810,
-            3769,
-            3539,
-            3058,
-            2039,
-            3491,
-            949,
-            2257,
-            422,
-            3136,
-            2504,
-            1374,
-            3410,
-            112,
-            2933,
-            2828,
-            1034,
-            777,
-            3576,
-            1065,
-            2015,
-            1516,
-            3688,
-            3176,
-            3002,
-            932,
-            274,
-            825,
-            3996,
-            1622,
-        ]
-        self.couch_3_idx = [
-            755,
-            1898,
-            782,
-            3863,
-            1962,
-            962,
-            2801,
-            3385,
-            1383,
-            3196,
-            1058,
-            1637,
-            2633,
-            1248,
-            667,
-            3094,
-        ]
-        self.latent = self.deepsdf.lat_vecs.weight[self.chair_0_idx].mean(0)
+        transforms = SiameseTransform(mean=0.5, std=0.5)
+        device = self.siamese.device
+        if shape_init:
+            metainfo = MetaInfo(data_dir=data_dir)
+            label = int(metainfo.obj_id_to_label(self.hparams["obj_id"]))
+            sketch = metainfo.load_image(label, shape_view_id, 0)  # sketch
+            sketch_emb = self.siamese(transforms(sketch)[None, ...].to(device))
+
+            metainfo = MetaInfo(data_dir=data_dir, split="train")
+            _loss = []
+            for obj_id in tqdm(metainfo.obj_ids):
+                if obj_id == self.hparams["obj_id"]:  # same object don't include
+                    continue
+                label = int(metainfo.obj_id_to_label(obj_id))
+                normal = metainfo.load_image(label, shape_view_id, 1)  # normal
+                normal_emb = self.siamese(transforms(normal)[None, ...].to(device))
+                snn_loss = 1 - cosine_similarity(sketch_emb, normal_emb)
+                _loss.append(snn_loss)
+            self.shape_loss = torch.concatenate(_loss)
+            self.shape_idx = torch.argsort(self.shape_loss)[:shape_k]
+
+            shape_latents = self.deepsdf.lat_vecs.weight[self.shape_idx]
+            self.register_buffer("shape_latents", shape_latents)
+
+            latent = shape_latents.mean(0)
+            self.register_buffer("latent", latent)
 
     def training_step(self, batch, batch_idx):
         self.siamese.eval()
@@ -195,9 +80,14 @@ class DeepSDFSketchRender(LatentOptimizer):
 
         reg_loss = torch.tensor(0).to(siamese_loss)
         if self.hparams["reg_loss"]:
-            std = self.deepsdf.lat_vecs.weight[self.chair_0_idx].std(0)
-            mean = self.deepsdf.lat_vecs.weight[self.chair_0_idx].mean(0)
-            reg_loss = ((self.latent.clone() - mean) / std).pow(2)
+            if self.hparams["shape_prior"]:
+                std = self.shape_latents.std(0)
+                mean = self.shape_latents.mean(0)
+                reg_loss = ((self.latent.clone() - mean) / std).pow(2)
+            else:
+                std = self.deepsdf.lat_vecs.weight.std(0)
+                mean = self.deepsdf.lat_vecs.weight.mean(0)
+                reg_loss = ((self.latent.clone() - mean) / std).pow(2)
             self.log("optimize/reg_loss_abs_max", torch.abs(reg_loss).max())
 
             # reg_loss = torch.norm(self.latent, dim=-1).clone()
