@@ -11,17 +11,20 @@ siamese_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
 tags: ["optimize_sketch", "shapenet_chair_4096", "optim_couch_prior"]
 split: train 
 eval: False
-prior_idx: prior(5)
+prior_idx: mean
 obj_ids:
   - 1459c329e2123d4fe5b03ab845ae95c
 
 
 trainer:
-  max_epochs: 2000
+  max_epochs: 500
   accumulate_grad_batches: 1
-  reload_dataloaders_every_n_epochs: False
+  # reload_dataloaders_every_n_epochs: 100
 
 data:
+  num_workers: 0
+  pin_memory: False
+  persistent_workers: False
   size: 256
   milestones: []
   train_dataset:
@@ -35,7 +38,7 @@ model:
   shape_k: 16
   capture_rate: 8
   reg_loss: True 
-  reg_weight: 0.5
+  reg_weight: 0.1
   optimizer:
     lr: 1e-02
   scheduler: null

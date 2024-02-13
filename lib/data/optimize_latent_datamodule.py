@@ -29,9 +29,7 @@ class LatentOptimizationDataModule(LightningDataModule):
         self.milestones = milestones
 
     def get_sizes(self):
-        if self.milestones:
-            return [self.size // (2**n) for n in range(len(self.milestones))]
-        return [self.size]
+        return [self.size // (2**n) for n in range(len(self.milestones) + 1)]
 
     def get_train_dataset(self):
         current_epoch = self.trainer.current_epoch
