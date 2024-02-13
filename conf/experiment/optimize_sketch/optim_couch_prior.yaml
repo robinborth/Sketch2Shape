@@ -34,8 +34,8 @@ data:
 model:
   siamese_weight: 1.0
   shape_init: False
-  shape_prior: False
-  shape_k: 16
+  shape_prior: True 
+  shape_k: 32
   capture_rate: 8
   reg_loss: True 
   reg_weight: 0.1

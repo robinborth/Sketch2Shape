@@ -27,7 +27,7 @@ class DeepSDFSketchRender(LatentOptimizer):
 
         transforms = SiameseTransform(mean=0.5, std=0.5)
         device = self.siamese.device
-        if shape_init:
+        if shape_init or shape_prior:
             metainfo = MetaInfo(data_dir=data_dir)
             obj_id_label = int(metainfo.obj_id_to_label(self.hparams["obj_id"]))
             sketch = metainfo.load_image(obj_id_label, shape_view_id, 0)  # sketch
