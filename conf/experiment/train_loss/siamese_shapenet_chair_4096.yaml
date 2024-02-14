@@ -12,8 +12,8 @@ task_name: train_siamese
 tags: ["train_siamese", "shapenet_chair_4096"]
 
 trainer:
-  max_epochs: 2
-  check_val_every_n_epoch: 1
+  max_epochs: 500
+  check_val_every_n_epoch: 10
 
 model:
   reg_weight: 1e-01
@@ -31,10 +31,10 @@ data:
   batch_size: 256 
   
 callbacks:
-  # model_checkpoint:
-  #   save_top_k: -1
-  #   every_n_epochs: 1
-  #   save_last: True
+  model_checkpoint:
+    save_top_k: -1
+    every_n_epochs: 100
+    save_last: True
   early_stopping:
     monitor: val/loss
     patience: 2000 
