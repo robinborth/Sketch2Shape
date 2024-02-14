@@ -1,8 +1,8 @@
 # @package _global_
 
 defaults:
-  - data:
-    - optimize_latent
+  - data: optimize_latent
+  - dataset: shapenet_chair_4096 
   - model: optimize_latent
   - trainer: default
   - logger: default
@@ -23,7 +23,7 @@ eval: False
 save_mesh: True
 create_video: True
 ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
-siamese_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
+loss_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
 
 trainer:
   num_sanity_val_steps: 0
@@ -35,17 +35,17 @@ data:
   size: 256
   milestones: []
   train_dataset:
-    _target_: lib.data.optimize_latent_dataset.SketchLatentOptimizerDataset
+    _target_: lib.data.dataset.optimize_latent.SketchLatentOptimizerDataset
     azims: ${data.preprocess_siamese.azims}
     elevs: ${data.preprocess_siamese.elevs}
   shuffle: True
 
 
 model:
-  _target_: lib.models.optimize_sketch.DeepSDFSketchRender
+  _target_: lib.optimize.sketch.SketchOptimizer
   data_dir: ${data.data_dir}
-  siamese_ckpt_path: ${siamese_ckpt_path} 
-  siamese_weight: 1.0
+  loss_ckpt_path: ${loss_ckpt_path} 
+  loss_weight: 1.0
   shape_init: False
   shape_prior: False
   shape_view_id: 11

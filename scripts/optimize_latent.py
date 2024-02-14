@@ -14,7 +14,7 @@ from omegaconf import DictConfig
 
 from lib.data.metainfo import MetaInfo
 from lib.render.utils import create_video
-from lib.utils import instantiate_callbacks, log_hyperparameters
+from lib.utils.config import instantiate_callbacks, log_hyperparameters
 
 
 def optimize_latent(cfg: DictConfig, log: Logger) -> None:

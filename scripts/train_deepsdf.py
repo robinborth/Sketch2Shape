@@ -6,7 +6,8 @@ from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 
-from lib.utils import create_logger, instantiate_callbacks, log_hyperparameters
+from lib.utils.config import instantiate_callbacks, log_hyperparameters
+from lib.utils.logger import create_logger
 
 log = create_logger("train_deepsdf")
 

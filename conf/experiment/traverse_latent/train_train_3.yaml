@@ -4,7 +4,7 @@ defaults:
   - override /data: shapenet_chair_4096
   - override /logger: wandb
 
-ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
+ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 tags: ["traverse_latent", "shapenet_chair_4096", "train_train_3"]
 create_mesh: False
 create_video: True

@@ -1,8 +1,8 @@
 # @package _global_
 
 defaults:
-  - data:
-    - optimize_latent 
+  - data: optimize_latent
+  - dataset: shapenet_chair_4096 
   - model: optimize_latent
   - trainer: default
   - logger: default
@@ -30,12 +30,12 @@ trainer:
 
 data:
   train_dataset:
-    _target_: lib.data.optimize_latent_dataset.DeepSDFLatentOptimizerDataset
+    _target_: lib.data.dataset.optimize_latent.DeepSDFLatentOptimizerDataset
     chunk_size: 16384 
     half: True
 
 model:
-  _target_: lib.models.optimize_deepsdf.DeepSDFLatentOptimizer
+  _target_: lib.optimize.deepsdf.DeepSDFLatentOptimizer
   adaptive_sample_strategy: True
   adaptive_mining_strategy: True
   reg_loss: True

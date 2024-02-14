@@ -2,7 +2,7 @@ import torch
 from torchvision.transforms import v2
 
 
-class SiameseTransform:
+class BaseTransform:
     def __init__(
         self,
         normalize: bool = True,
@@ -84,3 +84,8 @@ class NormalTransform:
 
     def __call__(self, image):
         return self.transform(image)
+
+
+# Artifact from refactoring is required for old ckpts
+class SiameseTransform:
+    pass

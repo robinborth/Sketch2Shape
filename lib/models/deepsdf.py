@@ -312,6 +312,14 @@ class DeepSDF(LightningModule):
         normals = normals.reshape(resolution, resolution, -1)
         return normals
 
+    def render_grayscale(
+        self,
+        points: torch.Tensor,
+        latent: torch.Tensor,
+        mask: torch.Tensor,
+    ):
+        rendered_normal = self.render_normals(points=points, latent=latent, mask=mask)
+
     ############################################################
     # Sphere Tracing Variants
     ############################################################

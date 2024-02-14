@@ -3,7 +3,7 @@ from omegaconf import DictConfig
 from tqdm import tqdm
 
 from lib.data.preprocess import PreprocessMesh, PreprocessSDF, PreprocessSiamese
-from lib.utils import create_logger
+from lib.utils.logger import create_logger
 
 logger = create_logger("preprocess_data")
 

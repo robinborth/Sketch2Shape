@@ -6,7 +6,7 @@
     "configurations": [
         {
             "name": "Python: Current File",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
@@ -14,40 +14,40 @@
         },
         {
             "name": "Debug: Training Siamese",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
-            "program": "scripts/train_siamese.py",
+            "program": "scripts/train_loss.py",
             "args": [
-                "+experiment/train_siamese=barlow_twins",
+                "+experiment/train_loss=siamese_shapenet_chair_4096",
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
         },
         {
             "name": "Debug: Training DeepSDF",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "scripts/train_deepsdf.py",
             "args": [
-                "+experiment/train_deepsdf=shapenet_chair_4096_curriculum"
+                "+experiment/train_deepsdf=shapenet_chair_4096"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
         },
         {
             "name": "Debug: Eval Siamese",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
-            "program": "scripts/eval_siamese.py",
+            "program": "scripts/eval_loss.py",
             "console": "integratedTerminal",
             "args": [
-                "+experiment/eval_siamese=siamese"
+                "+experiment/eval_loss=siamese"
             ],
             "justMyCode": true,
         },
         {
             "name": "Debug: Eval DeepSDF",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "scripts/eval_deepsdf.py",
             "args": [
@@ -58,7 +58,7 @@
         },
         {
             "name": "Debug: Copy Shapenet",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "scripts/copy_shapenet.py",
             "args": [
@@ -69,7 +69,7 @@
         },
         {
             "name": "Debug: Preprocessing",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "scripts/preprocess_data.py",
             "args": [
@@ -80,7 +80,7 @@
         },
         {
             "name": "Debug: Optimize Normal",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "scripts/optimize_normals.py",
             "args": [
@@ -91,18 +91,18 @@
         },
         {
             "name": "Debug: Optimize Sketch",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "scripts/optimize_sketch.py",
             "args": [
-                "+experiment/optimize_sketch=optim_couch_prior"
+                "+experiment/optimize_sketch=optim_chair_prior"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
         },
         {
             "name": "Debug: Optimize DeepSDF",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "scripts/optimize_deepsdf.py",
             "args": [
@@ -118,7 +118,7 @@
         },
         {
             "name": "Debug: Traverse Latent",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "scripts/traverse_latent.py",
             "args": [
@@ -129,7 +129,7 @@
         },
         {
             "name": "Debug: Optimize SNN",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "scripts/optimize_sketch.py",
             "args": [
@@ -140,7 +140,7 @@
         },
         {
             "name": "Debug: Debug SNN",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "scripts/traverse_latent.py",
             "args": [

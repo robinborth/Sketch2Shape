@@ -1,9 +1,8 @@
 # @package _global_
 
 defaults:
-  - override /data:
-    - shapenet_chair_1
-    - train_deepsdf
+  - override /data: train_deepsdf
+  - override /dataset: shapenet_chair_1
   - override /logger: wandb
 
 tags: ["train_deepsdf", "overfit_1"]

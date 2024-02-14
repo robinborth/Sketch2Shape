@@ -6,7 +6,7 @@ defaults:
     - optimize_latent
   - override /logger: wandb
 
-ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
+ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 tags: ["optimize_deepsdf", "shapenet_chair_4096", "mean_train"]
 split: train
 prior_idx: mean 

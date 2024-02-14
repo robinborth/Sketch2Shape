@@ -1,15 +1,15 @@
 # @package _global_
 
 defaults:
-  - override /data:
-    - shapenet_chair_4096
-    - optimize_latent
+  - override /data: optimize_latent
+  - override /dataset: shapenet_chair_4096
   - override /logger: wandb
 
-ckpt_path: /home/borth/sketch2shape/checkpoints/deepsdf.ckpt 
-siamese_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
+ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
+loss_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
 tags: ["optimize_sketch", "shapenet_chair_4096", "optim_couch_prior"]
 split: train 
+train: True
 eval: False
 prior_idx: mean
 obj_ids:
@@ -32,8 +32,8 @@ data:
     elevs: [-30]
 
 model:
-  siamese_weight: 1.0
-  shape_init: False
+  loss_weight: 1.0
+  shape_init: True 
   shape_prior: True 
   shape_k: 32
   capture_rate: 8
