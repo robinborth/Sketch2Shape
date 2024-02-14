@@ -84,8 +84,3 @@ class NormalTransform:
 
     def __call__(self, image):
         return self.transform(image)
-
-
-# Artifact from refactoring is required for old ckpts
-class SiameseTransform:
-    pass
