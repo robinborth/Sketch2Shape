@@ -1,0 +1,35 @@
+# @package data
+
+_target_: lib.data.datamodule.latent_encoder.LatentEncoderDataModule
+# paths
+data_dir: ${paths.data_dir}/${data.dataset_name}
+# training
+batch_size: 128
+num_workers: 7
+pin_memory: True
+drop_last: True
+shuffle: False
+persistent_workers: True
+# dataset 
+train_sampler:
+  _target_: lib.data.sampler.ChunkSampler 
+  _partial_: True
+  chunk_size: 2
+  sample_steps: 1 
+eval_sampler:
+  _target_: lib.data.sampler.ChunkSampler 
+  _partial_: True
+  chunk_size: 2
+  sample_steps: -1  # full dataset
+dataset: 
+  _target_: lib.data.dataset.latent_encoder.LatentEncoderDataset
+  _partial_: True
+  deepsdf_ckpt_path: ${deepsdf_ckpt_path}
+  sketch_transform:
+    _target_: lib.data.transforms.BaseTransform
+    mean: 0.5
+    std: 0.5
+  normal_transform:
+    _target_: lib.data.transforms.BaseTransform
+    mean: 0.5
+    std: 0.5

@@ -23,7 +23,7 @@ train_deepsdf:
 	python scripts/train_deepsdf.py +experiment/train_deepsdf=shapenet_chair_4096
 
 train_loss:
-	python scripts/train_loss.py +experiment/train_loss=siamese_shapenet_chair_4096
+	python scripts/train_loss.py +experiment/train_loss=latent_encoder_shapenet_chair_4096
 
 eval_loss:
 	python scripts/eval_loss.py +experiment/eval_loss=resnet18

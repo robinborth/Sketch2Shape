@@ -24,6 +24,17 @@
             "justMyCode": false,
         },
         {
+            "name": "Debug: Training Latent Encoder",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "scripts/train_loss.py",
+            "args": [
+                "+experiment/train_loss=latent_encoder_shapenet_chair_4096",
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
             "name": "Debug: Training DeepSDF",
             "type": "debugpy",
             "request": "launch",
