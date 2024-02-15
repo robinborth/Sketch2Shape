@@ -7,7 +7,7 @@ import open3d as o3d
 import pandas as pd
 from PIL import Image
 
-from lib.utils import create_logger
+from lib.utils.logger import create_logger
 
 logger = create_logger("metainfo")
 
@@ -19,7 +19,16 @@ class MetaInfo:
         try:
             metainfo = pd.read_csv(self.metainfo_path)
             if split is not None:
-                metainfo = metainfo[metainfo["split"] == split]
+                if split in ["train_latent", "val_latent"]:  # optimize direct latent
+                    val_count = (metainfo["split"] == "val").sum()
+                    metainfo = metainfo[metainfo["split"] == "train"]
+                    split_idx = len(metainfo) - val_count
+                    if split == "train_latent":
+                        metainfo = metainfo[:split_idx]
+                    else:
+                        metainfo = metainfo[split_idx:]
+                else:
+                    metainfo = metainfo[metainfo["split"] == split]
             self._obj_ids = metainfo["obj_id"].to_list()
             self._labels = metainfo["label"].to_list()
             self._obj_id_to_label = {o: l for o, l in zip(self._obj_ids, self._labels)}

@@ -50,12 +50,12 @@ def create_video(video_dir: Path, obj_id: str, framerate: int = 30):
     image_folder = video_dir.parent / "wandb/latest-run/files/media/images"
 
     # rename so that ffmpeg can extract the correct order
-    for video_frame_path in image_folder.glob("video_frame_*.png"):
+    for video_frame_path in image_folder.glob("camera_frame_*.png"):
         step = video_frame_path.name.split("_")[2].zfill(6)
-        new_video_frame_path = video_frame_path.parent / f"video_frame_{step}.png"
+        new_video_frame_path = video_frame_path.parent / f"camera_frame_{step}.png"
         video_frame_path.rename(new_video_frame_path)
 
-    image_folder_glob = (image_folder / "video_frame_*.png").as_posix()
+    image_folder_glob = (image_folder / "camera_frame_*.png").as_posix()
     video_path = video_dir / f"{obj_id}.mp4"
     args: list[str] = [
         f"ffmpeg -framerate {framerate}",

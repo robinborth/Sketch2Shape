@@ -2,7 +2,7 @@ import hydra
 from omegaconf import DictConfig
 from optimize_latent import optimize_latent
 
-from lib.utils import create_logger
+from lib.utils.logger import create_logger
 
 log = create_logger("optimize_normals")
 

@@ -11,7 +11,8 @@ from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
 from lib.render.utils import create_video
-from lib.utils import create_logger, log_hyperparameters
+from lib.utils.config import log_hyperparameters
+from lib.utils.logger import create_logger
 
 log = create_logger("traverse_latent")
 

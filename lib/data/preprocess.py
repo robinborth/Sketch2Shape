@@ -119,8 +119,10 @@ class PreprocessSiamese:
         return edges
 
     def normals_to_image(self, normals: np.ndarray, mask: np.ndarray):
+        normals[~mask] = 1.0
+        normals = normals / np.linalg.norm(normals, axis=-1)[..., None]
         normals = (normals * 0.5) + 0.5
-        normals[~mask] = 1
+        normals[~mask] = 1.0
         normals = normals.reshape(normals.shape[0], self.width, self.height, -1)
         normals = (normals * 255).astype(np.uint8)
         return normals

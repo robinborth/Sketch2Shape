@@ -1,14 +1,23 @@
 # @package model
 
-_target_: lib.models.traverse_latent.DeepSDFLatentTraversal
+_target_: lib.models.traverse_latent.LatentTraversal
 ckpt_path: ${ckpt_path} 
-prior_idx: -1
 prior_idx_start: -1
 prior_idx_end: 0
 create_mesh: ${create_mesh}
 create_video: ${create_video}
-image_resolution: 256
+# snn loss
+compute_snn_loss: False
+loss_ckpt_path: ${loss_ckpt_path} 
+data_dir: ${data.data_dir}
+# mesh settings
 mesh_resolution: 128
 mesh_chunk_size: 65536
-video_azim: 40 
-video_elev: -30
+# rendering settings
+capture_rate: 30
+n_render_steps: 100
+clamp_sdf: 0.1
+step_scale: 1.0
+surface_eps: 1e-03
+sphere_eps: 1e-01
+normal_eps: 5e-03

@@ -1,0 +1,32 @@
+# @package _global_
+
+defaults:
+  - data:
+    - train_siamese
+    - eval_siamese
+  - dataset: shapenet_chair_4096
+  - model: siamese 
+  - callbacks: default
+  - logger: default 
+  - trainer: default
+  - hydra: default
+  - paths: default
+  - optional local: default
+  - experiement: null
+  - debug: null
+  - _self_
+
+seed: 123
+task_name: train_loss
+tags: ["train_loss"]
+train: True
+eval: True
+ckpt_path: null
+
+trainer:
+  max_epochs: 10
+
+callbacks:
+  early_stopping:
+    monitor: val/loss
+    patience: 40

@@ -1,6 +1,6 @@
 # @package data
 
-_target_: lib.data.deepsdf_datamodule.DeepSDFDataModule
+_target_: lib.data.datamodule.deepsdf.DeepSDFDataModule
 # paths
 data_dir: ${paths.data_dir}/${data.dataset_name}
 # training
@@ -14,5 +14,5 @@ persistent_workers: True
 shuffle: True 
 # dataset 
 dataset:
-  _target_: lib.data.deepsdf_dataset.DeepSDFMemoryDataset
+  _target_: lib.data.dataset.deepsdf.DeepSDFMemoryDataset
   _partial_: True

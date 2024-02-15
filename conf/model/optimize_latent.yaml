@@ -1,17 +1,11 @@
 # @package model
 
-_target_: lib.models.optimize_deepsdf.DeepSDFLatentOptimizer
+_target_: lib.optimizer.deepsdf.DeepSDFLatentOptimizer
 ckpt_path: ${ckpt_path} 
 prior_idx: -1
+obj_id: "" 
 reg_loss: True
 reg_weight: 1e-05
-step_scale: 1.0
-image_resolution: 256
-mesh_resolution: 256
-mesh_chunk_size: 65536
-video_capture_rate: 30
-video_azim: 40 
-video_elev: -30
 optimizer:
   _target_: torch.optim.Adam
   _partial_: true
@@ -21,3 +15,14 @@ scheduler:
   _target_: torch.optim.lr_scheduler.StepLR
   step_size: 100
   gamma: 0.5
+# mesh settings
+mesh_resolution: 128
+mesh_chunk_size: 65536
+# rendering settings
+capture_rate: 30
+n_render_steps: 100
+clamp_sdf: 0.1
+step_scale: 1.0
+surface_eps: 1e-03
+sphere_eps: 1e-01
+normal_eps: 5e-03

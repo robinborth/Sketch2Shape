@@ -1,8 +1,8 @@
 # @package _global_
 
 defaults:
-  - data:
-    - optimize_latent
+  - data: optimize_latent
+  - dataset: shapenet_chair_4096 
   - model: optimize_latent
   - trainer: default
   - logger: default
@@ -22,29 +22,36 @@ prior_idx: mean  # random(-2), mean(-1), prior, prior(idx)
 eval: False
 save_mesh: True
 create_video: True
-ckpt_path: ???
-siamese_ckpt_path: ???
+ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
+loss_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
 
 trainer:
   num_sanity_val_steps: 0
+  reload_dataloaders_every_n_epochs: True
   max_epochs: 20
   accumulate_grad_batches: 8
 
-
 data:
+  size: 256
+  milestones: []
   train_dataset:
-    _target_: lib.data.deepsdf_dataset.SketchLatentOptimizerDataset
+    _target_: lib.data.dataset.optimize_latent.SketchLatentOptimizerDataset
     azims: ${data.preprocess_siamese.azims}
     elevs: ${data.preprocess_siamese.elevs}
   shuffle: True
 
+
 model:
-  _target_: lib.models.optimize_sketch.DeepSDFSketchRender
-  siamese_ckpt_path: ${siamese_ckpt_path} 
-  siamese_weight: 1.0
-  video_capture_rate: 8
-  reg_loss: False
-  reg_weight: 1e-04
+  _target_: lib.optimizer.sketch.SketchOptimizer
+  data_dir: ${data.data_dir}
+  loss_ckpt_path: ${loss_ckpt_path} 
+  loss_weight: 1.0
+  shape_init: False
+  shape_prior: False
+  shape_view_id: 11
+  shape_k: 16
+  capture_rate: 8
+  reg_weight: 2e-03
   optimizer:
     lr: 1e-02
   scheduler:

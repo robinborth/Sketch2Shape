@@ -6,7 +6,7 @@ defaults:
     - optimize_latent
   - override /logger: wandb
 
-ckpt_path: /home/borth/sketch2shape/logs/train_deepsdf/runs/2024-01-26_20-39-50/checkpoints/last.ckpt
+ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 tags: ["optimize_deepsdf", "shapenet_chair_4096", "multirun_train"]
 split: train 
 prior_idx: prior 
@@ -26,4 +26,4 @@ obj_ids:
 - 38d623b46d07a93fb7d9d23574a480ae
 
 model:
-  mesh_resolution: 256
+  mesh_resolution: 128

@@ -1,11 +1,10 @@
 # @package _global_
 
 defaults:
-  - override /data:
-    - shapenet_chair_4096
-    - optimize_latent
+  - override /data: optimize_latent
+  - override /dataset: shapenet_chair_4096
 
-ckpt_path: /home/borth/sketch2shape/logs/train_deepsdf/runs/2024-01-26_20-39-50/checkpoints/last.ckpt
+ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 tags: ["optimize_deepsdf", "shapenet_chair_4096", "baseline"]
 split: train
 train: False

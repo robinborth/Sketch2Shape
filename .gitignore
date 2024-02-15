@@ -165,4 +165,4 @@ data/*
 logs/*
 temp
 conf/local/*
-checkpoints/*
+checkpoints/*.ckpt

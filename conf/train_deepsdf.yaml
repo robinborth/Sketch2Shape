@@ -1,8 +1,8 @@
 # @package _global_
 
 defaults:
-  - data:
-    - train_deepsdf 
+  - data: train_deepsdf 
+  - dataset: shapenet_chair_4096
   - model: deepsdf
   - callbacks: default
   - logger: default 

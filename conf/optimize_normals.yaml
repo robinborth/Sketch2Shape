@@ -1,8 +1,8 @@
 # @package _global_
 
 defaults:
-  - data:
-    - optimize_latent
+  - data: optimize_latent
+  - dataset: shapenet_chair_4096 
   - model: optimize_latent
   - trainer: default
   - logger: default
@@ -22,31 +22,29 @@ prior_idx: mean  # random(-2), mean(-1), prior, prior(idx)
 eval: True
 save_mesh: True
 create_video: True
-ckpt_path: ???
+ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 
 trainer:
   num_sanity_val_steps: 0
+  reload_dataloaders_every_epoch: True
   max_epochs: 20 
   accumulate_grad_batches: 4
 
 data:
+  size: 256
+  milestones: []
   train_dataset:
-    _target_: lib.data.deepsdf_dataset.NormalLatentOptimizerDataset
+    _target_: lib.data.dataset.optimize_latent.NormalLatentOptimizerDataset
     azims: ${data.preprocess_siamese.azims}
     elevs: ${data.preprocess_siamese.elevs}
   shuffle: True
 
 model:
-  _target_: lib.models.optimize_normals.DeepSDFNormalRender
+  _target_: lib.optimizer.normals.NormalsOptimizer
   reg_weight: 1e-01
-  video_capture_rate: 8
+  capture_rate: 8
   optimizer:
     lr: 5e-03
   scheduler:
     step_size: 5
     gamma: 0.5
-  c2f_scheduler:
-    _target_: lib.data.scheduler.Coarse2FineScheduler
-    resolution: ${model.image_resolution}
-    max_epochs: ${trainer.max_epochs}
-    milestones: [5, 10] 

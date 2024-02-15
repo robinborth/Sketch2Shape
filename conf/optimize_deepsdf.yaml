@@ -1,8 +1,8 @@
 # @package _global_
 
 defaults:
-  - data:
-    - optimize_latent 
+  - data: optimize_latent
+  - dataset: shapenet_chair_4096 
   - model: optimize_latent
   - trainer: default
   - logger: default
@@ -22,32 +22,32 @@ prior_idx: mean  # random(-2), mean(-1), prior, prior(idx)
 eval: True
 save_mesh: True  # only if eval == True
 create_video: True 
-ckpt_path: ???
+ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 
 trainer:
   num_sanity_val_steps: 0
-  max_epochs: 1000 
+  max_epochs: 2000 
 
 data:
   train_dataset:
-    _target_: lib.data.deepsdf_dataset.DeepSDFLatentOptimizerDataset
-    chunk_size: 250000 
+    _target_: lib.data.dataset.optimize_latent.DeepSDFLatentOptimizerDataset
+    chunk_size: 16384 
     half: True
 
 model:
-  _target_: lib.models.optimize_deepsdf.DeepSDFLatentOptimizer
+  _target_: lib.optimizer.deepsdf.DeepSDFLatentOptimizer
+  adaptive_sample_strategy: True
+  adaptive_mining_strategy: True
+  reg_loss: True
   reg_weight: 1e-04
-  video_capture_rate: 30
-  loss:
-    _target_: torch.nn.L1Loss
-    _partial_: true
-    reduction: mean
-  optimizer:
-    lr: 1e-03
+  latents_lr: 1e-03
+  capture_rate: 30
   scheduler:
-    step_size: 50 
-    gamma: 0.9
+    _partial_: True
+    _target_: torch.optim.lr_scheduler.StepLR
+    step_size: 500
+    gamma: 0.5
   
 callbacks:
   early_stopping:
-    patience: 200
+    patience: 2000

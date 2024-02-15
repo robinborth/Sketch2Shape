@@ -14,7 +14,7 @@ from omegaconf import DictConfig
 
 from lib.data.metainfo import MetaInfo
 from lib.render.utils import create_video
-from lib.utils import instantiate_callbacks, log_hyperparameters
+from lib.utils.config import instantiate_callbacks, log_hyperparameters
 
 
 def optimize_latent(cfg: DictConfig, log: Logger) -> None:
@@ -44,6 +44,7 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
     for obj_id in obj_ids:
         log.info(f"==> optimize {obj_id=} ...")
         cfg.data.obj_id = obj_id
+        cfg.model.obj_id = obj_id
 
         log.info(f"==> initializing datamodule <{cfg.data._target_}>")
         datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)

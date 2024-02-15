@@ -1,6 +1,6 @@
 # @package data
 
-_target_: lib.data.siamese_datamodule.SiameseDataModule
+_target_: lib.data.datamodule.siamese.SiameseDataModule
 # paths
 data_dir: ${paths.data_dir}/${data.dataset_name}
 # training
@@ -22,13 +22,23 @@ eval_sampler:
   chunk_size: 2
   sample_steps: -1  # full dataset
 dataset: 
-  _target_: lib.data.siamese_dataset.SiameseDataset
+  _target_: lib.data.dataset.siamese.SiameseDataset
   _partial_: True
-sketch_transforms:
-  _target_: lib.data.transforms.SketchTransform
+
+sketch_transform:
+  _target_: lib.data.transforms.BaseTransform
+  # _target_: lib.data.transforms.SketchTransform
+  # size: [64, 128, 256]
+  # size_weight: [0.3, 0.3, 0.4]
+  # sharpness: [0.5, 1, 2, 5]
+  # sharpness_weight: [0.1, 0.3, 0.3, 0.3]
+  # rotation: 5
   mean: 0.5
   std: 0.5
-image_transforms:
-  _target_: lib.data.transforms.NormalTransform
+normal_transform:
+  _target_: lib.data.transforms.BaseTransform
+  # _target_: lib.data.transforms.NormalTransform
+  # size: [64, 128, 256]
+  # size_weight: [0.3, 0.3, 0.4]
   mean: 0.5
   std: 0.5
