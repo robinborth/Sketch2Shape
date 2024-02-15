@@ -42,7 +42,7 @@ data:
 
 
 model:
-  _target_: lib.optimize.sketch.SketchOptimizer
+  _target_: lib.optimizer.sketch.SketchOptimizer
   data_dir: ${data.data_dir}
   loss_ckpt_path: ${loss_ckpt_path} 
   loss_weight: 1.0

@@ -35,7 +35,7 @@ data:
     half: True
 
 model:
-  _target_: lib.optimize.deepsdf.DeepSDFLatentOptimizer
+  _target_: lib.optimizer.deepsdf.DeepSDFLatentOptimizer
   adaptive_sample_strategy: True
   adaptive_mining_strategy: True
   reg_loss: True

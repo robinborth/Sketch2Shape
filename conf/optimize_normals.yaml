@@ -40,7 +40,7 @@ data:
   shuffle: True
 
 model:
-  _target_: lib.optimize.normals.NormalsOptimizer
+  _target_: lib.optimizer.normals.NormalsOptimizer
   reg_weight: 1e-01
   capture_rate: 8
   optimizer:

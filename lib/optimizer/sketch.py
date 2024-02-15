@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 from lib.data.metainfo import MetaInfo
 from lib.data.transforms import BaseTransform
-from lib.optimize.latent import LatentOptimizer
+from lib.optimizer.latent import LatentOptimizer
 from lib.utils.checkpoint import load_model
 
 

@@ -1,6 +1,5 @@
 from typing import List
 
-import torch.nn as nn
 from hydra import compose, initialize
 from hydra.utils import instantiate
 from lightning import Callback
@@ -35,7 +34,7 @@ def load_config(config_name: str, overrides: list = []) -> DictConfig:
     Returns:
         DictConfig: The initialized config.
     """
-    with initialize(config_path="../conf", version_base=None):
+    with initialize(config_path="../../conf", version_base=None):
         return compose(config_name=config_name, overrides=overrides)
 
 

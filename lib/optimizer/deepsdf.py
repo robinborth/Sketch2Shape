@@ -1,6 +1,6 @@
 import torch
 
-from lib.optimize.latent import LatentOptimizer
+from lib.optimizer.latent import LatentOptimizer
 
 
 class DeepSDFLatentOptimizer(LatentOptimizer):

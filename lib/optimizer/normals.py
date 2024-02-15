@@ -1,7 +1,7 @@
 import torch
 from torch.nn.functional import l1_loss
 
-from lib.optimize.latent import LatentOptimizer
+from lib.optimizer.latent import LatentOptimizer
 
 
 class NormalsOptimizer(LatentOptimizer):
