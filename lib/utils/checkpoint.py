@@ -5,6 +5,7 @@ from lightning import LightningModule
 from lib.models.barlow_twins import BarlowTwins
 from lib.models.clip import CLIP
 from lib.models.deepsdf import DeepSDF
+from lib.models.latent_encoder import LatentEncoder
 from lib.models.resnet import ResNet18
 from lib.models.siamese import Siamese
 
@@ -21,6 +22,8 @@ def load_model(ckpt_path: str) -> LightningModule:
         return Siamese.load_from_checkpoint(path)
     if path.stem == "barlow_twins" or "train_barlow_twins" in ckpt_path:
         return BarlowTwins.load_from_checkpoint(path)
+    if path.stem == "latent_encoder" or "train_latent_encoder" in ckpt_path:
+        return LatentEncoder.load_from_checkpoint(path)
     if path.stem == "deepsdf" or "train_deepsdf" in ckpt_path:
         return DeepSDF.load_from_checkpoint(path)
 
@@ -32,6 +35,11 @@ def load_model(ckpt_path: str) -> LightningModule:
 
     try:
         return BarlowTwins.load_from_checkpoint(path)
+    except Exception:
+        pass
+
+    try:
+        return LatentEncoder.load_from_checkpoint(path)
     except Exception:
         pass
 
