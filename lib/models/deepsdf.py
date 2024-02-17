@@ -217,8 +217,25 @@ class DeepSDF(LightningModule):
     # Logging Utils
     ############################################################
 
-    def create_camera(self, azim: float = 40.0, elev: float = -30.0, dist: float = 4.0):
-        camera = Camera(azim=azim, elev=elev, dist=dist)
+    def create_camera(
+        self,
+        azim: float = 40.0,
+        elev: float = -30.0,
+        dist: float = 4.0,
+        width: int = 256,
+        height: int = 256,
+        focal: int = 512,
+        sphere_eps: float = 1e-01,
+    ):
+        camera = Camera(
+            azim=azim,
+            elev=elev,
+            dist=dist,
+            width=width,
+            height=height,
+            focal=focal,
+            sphere_eps=sphere_eps,
+        )
         points, rays, mask = camera.unit_sphere_intersection_rays()
         self.camera_points = torch.tensor(points, device=self.device)
         self.camera_rays = torch.tensor(rays, device=self.device)
@@ -339,11 +356,10 @@ class DeepSDF(LightningModule):
         mask = mask.clone()
 
         total_points = (points.shape[0],)
-        depth = torch.zeros(total_points, device=self.device)
         sdf = torch.ones(total_points, device=self.device)
 
         # sphere tracing
-        for step in range(self.hparams["n_render_steps"]):
+        for _ in range(self.hparams["n_render_steps"]):
             # get the deepsdf values from the model
             with torch.no_grad():
                 sdf_out = self.forward(
@@ -354,12 +370,9 @@ class DeepSDF(LightningModule):
 
             # transform the sdf value
             sdf_out = torch.clamp(sdf_out, -clamp_sdf, clamp_sdf)
-            if step > 50:
-                sdf_out = sdf_out * 0.5
             sdf_out = sdf_out * step_scale
 
             # update the depth and the sdf values
-            depth[mask] += sdf_out
             sdf[mask] = sdf_out
 
             # check if the rays converged

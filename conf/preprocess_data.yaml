@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
-  - data: shapenet_chair_4096 
+  - dataset: shapenet_chair_4096 
   - hydra: default
   - paths: default
   - optional local: default
@@ -9,4 +9,5 @@ defaults:
 
 seed: 123
 task_name: preprocess_data
+deepsdf_ckpt_path: ???
 source: ???  # e.g. /shared/data/ShapeNetCore/03001627

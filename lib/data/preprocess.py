@@ -3,9 +3,12 @@ from dataclasses import dataclass, field
 import cv2 as cv
 import numpy as np
 import open3d as o3d
+import pandas as pd
 import point_cloud_utils as pcu
+import torch
 
 from lib.data.metainfo import MetaInfo
+from lib.models.deepsdf import DeepSDF
 from lib.render.mesh import render_normals
 
 o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)
@@ -142,6 +145,112 @@ class PreprocessSiamese:
         normals = self.normals_to_image(normals=normals, mask=masks)
         sketches = self.image_to_sketch(normals)
         return normals, sketches
+
+
+@dataclass
+class PreprocessRenderings:
+    # processing settings
+    data_dir: str = "/data"
+    deepsdf_ckpt_path: str = "deepsdf.ckpt"
+    skip: bool = True
+    # traversal settings
+    n_renderings: int = 100
+    t_mean: float = 0.25
+    t_std: float = 0.1
+    # camera settings
+    azim_mean: float = 30
+    azim_std: float = 5
+    elev_mean: float = -20
+    elev_std: float = 5
+    dist: float = 4.0
+    width: int = 256
+    height: int = 256
+    focal: int = 512
+    sphere_eps: float = 1e-1
+    # sketch settings
+    t_lower: int = 100
+    t_upper: int = 150
+    aperture_size: int = 3  # 3, 5, 7
+    l2_gradient: bool = True
+
+    def __post_init__(self):
+        self.metainfo = MetaInfo(data_dir=self.data_dir, split="train_latent")
+        self.deepsdf = DeepSDF.load_from_checkpoint(self.deepsdf_ckpt_path)
+        self.deepsdf.freeze()
+        self.deepsdf.eval()
+
+    def obj_ids_iter(self):
+        if not self.skip:
+            yield from self.metainfo.obj_ids
+        for obj_id in self.metainfo.obj_ids:
+            config_path = self.metainfo.rendered_config_path(obj_id=obj_id)
+            if not config_path.exists():
+                yield obj_id
+
+    def image_to_sketch(self, image: np.ndarray):
+        edge = cv.Canny(
+            image,
+            self.t_lower,
+            self.t_upper,
+            L2gradient=self.l2_gradient,
+        )
+        edge = cv.bitwise_not(edge)
+        return np.stack([edge] * 3, axis=-1)
+
+    def preprocess(self, obj_id: str):
+        source_label = self.metainfo.obj_id_to_label(obj_id)
+        source_latent = self.deepsdf.lat_vecs.weight[source_label]
+
+        permutation = np.random.permutation(len(self.metainfo.obj_ids))
+        target_idxs = permutation[permutation != source_label][: self.n_renderings]
+
+        normals = []
+        sketches = []
+        configs = []
+        for idx, target_idx in enumerate(target_idxs):
+            # get the latent from the target obj_id
+            target_obj_id = self.metainfo.obj_ids[target_idx]
+            target_label = self.metainfo.obj_id_to_label(target_obj_id)
+            target_latent = self.deepsdf.lat_vecs.weight[target_label]
+
+            # set the camera settings
+            azim = np.random.normal(self.azim_mean, self.azim_std)
+            elev = np.random.normal(self.elev_mean, self.elev_std)
+            camera_config = dict(
+                azim=azim,
+                elev=elev,
+                dist=self.dist,
+                width=self.width,
+                height=self.height,
+                focal=self.focal,
+                sphere_eps=self.sphere_eps,
+            )
+            self.deepsdf.create_camera(**camera_config)
+
+            # interpolate between the source latent and the target
+            t = torch.normal(torch.tensor(self.t_mean), torch.tensor(self.t_std))
+            t = torch.clamp(t, 0.0, 0.5)
+            interpolated_latent = (1 - t) * source_latent + t * target_latent
+
+            # render the normals and the sketch
+            rendered_normal = self.deepsdf.capture_camera_frame(interpolated_latent)
+            normal = (rendered_normal.detach().cpu().numpy() * 255).astype(np.uint8)
+            sketch = self.image_to_sketch(normal)
+
+            # update the images
+            normals.append(normal)
+            sketches.append(sketch)
+            # update the configs
+            config = {
+                "image_id": f"{idx:05}",
+                "source_obj_id": obj_id,
+                "target_obj_id": target_obj_id,
+                "t": t.item(),
+            }
+            config.update(camera_config)
+            configs.append(config)
+        configs = pd.DataFrame(configs)
+        return normals, sketches, configs
 
 
 @dataclass

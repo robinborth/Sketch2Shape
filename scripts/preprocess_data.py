@@ -34,6 +34,25 @@ def preprocess(cfg: DictConfig) -> None:
             siamese.metainfo.save_normal(normal, obj_id=obj_id, image_id=f"{idx:05}")
             siamese.metainfo.save_sketch(sketch, obj_id=obj_id, image_id=f"{idx:05}")
 
+    if cfg.get("deepsdf_ckpt_path"):
+        logger.debug("==> initializing renderings ...")
+        renderings = hydra.utils.instantiate(cfg.data.preprocess_renderings)
+        logger.debug("==> start preprocessing renderings ...")
+        for obj_id in tqdm(list(renderings.obj_ids_iter())):
+            normals, sketches, config = renderings.preprocess(obj_id=obj_id)
+            for idx, (normal, sketch) in enumerate(zip(normals, sketches)):
+                renderings.metainfo.save_rendered_normal(
+                    normal,
+                    obj_id=obj_id,
+                    image_id=f"{idx:05}",
+                )
+                renderings.metainfo.save_rendered_sketch(
+                    sketch,
+                    obj_id=obj_id,
+                    image_id=f"{idx:05}",
+                )
+            renderings.metainfo.save_rendered_config(obj_id=obj_id, config=config)
+
 
 if __name__ == "__main__":
     preprocess()

@@ -45,6 +45,36 @@ preprocess_siamese:
   l2_gradient: True
 
 ########################################################################
+# Preprocessing Renderings
+########################################################################
+
+preprocess_renderings:
+  _target_: lib.data.preprocess.PreprocessRenderings
+  # processing settings
+  data_dir: ${data.data_dir}
+  deepsdf_ckpt_path: ${deepsdf_ckpt_path} 
+  skip: True
+  # traversal settings
+  n_renderings: 100
+  t_mean: 0.25
+  t_std: 0.1
+  # camera settings
+  azim_mean: 30.0
+  azim_std: 5.0
+  elev_mean: -20.0
+  elev_std: 5.0
+  dist: ${data.camera_dist} 
+  width: ${data.camera_width} 
+  height: ${data.camera_height} 
+  focal: ${data.camera_focal} 
+  sphere_eps: ${data.camera_sphere_eps} 
+  # sketch settings
+  t_lower: 100
+  t_upper: 150
+  aperture_size: 3  # 3, 5, 7
+  l2_gradient: True
+
+########################################################################
 # Preprocessing SDF
 ########################################################################
 

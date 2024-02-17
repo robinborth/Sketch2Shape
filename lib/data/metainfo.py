@@ -36,8 +36,18 @@ class MetaInfo:
         except Exception as e:
             logger.error("Not able to load dataset_splits file.")
 
-        self.image_type_2_type_idx = {"sketch": 0, "normal": 1}
-        self.type_idx_2_image_type = {0: "sketch", 1: "normal"}
+        self.image_type_2_type_idx = {
+            "sketch": 0,
+            "normal": 1,
+            "rendered_sketch": 2,
+            "rendered_normal": 3,
+        }
+        self.type_idx_2_image_type = {
+            0: "sketch",
+            1: "normal",
+            2: "rendered_sketch",
+            3: "rendered_normal",
+        }
 
     #################################################################
     # SNN pairs loader utils
@@ -173,7 +183,23 @@ class MetaInfo:
         return Image.open(path)
 
     #################################################################
-    # Normals: Loading and Storing Utils
+    # Rendered Normals: Loading and Storing Utils
+    #################################################################
+
+    def rendered_normals_dir_path(self, obj_id: str) -> Path:
+        return self.data_dir / "shapes" / obj_id / "rendered_normals"
+
+    def save_rendered_normal(self, normals: np.ndarray, obj_id: str, image_id: str):
+        path = self.rendered_normals_dir_path(obj_id) / f"{image_id}.png"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        Image.fromarray(normals).save(path)
+
+    def load_rendered_normal(self, obj_id: str, image_id: str) -> Path:
+        path = self.rendered_normals_dir_path(obj_id) / f"{image_id}.png"
+        return Image.open(path)
+
+    #################################################################
+    # Sketches: Loading and Storing Utils
     #################################################################
 
     def sketches_dir_path(self, obj_id: str) -> Path:
@@ -189,6 +215,38 @@ class MetaInfo:
         return Image.open(path)
 
     #################################################################
+    # Rendered Sketches: Loading and Storing Utils
+    #################################################################
+
+    def rendered_sketches_dir_path(self, obj_id: str) -> Path:
+        return self.data_dir / "shapes" / obj_id / "rendered_sketches"
+
+    def save_rendered_sketch(self, normals: np.ndarray, obj_id: str, image_id: str):
+        path = self.rendered_sketches_dir_path(obj_id) / f"{image_id}.png"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        Image.fromarray(normals).save(path)
+
+    def load_rendered_sketch(self, obj_id: str, image_id: str) -> Path:
+        path = self.rendered_sketches_dir_path(obj_id) / f"{image_id}.png"
+        return Image.open(path)
+
+    #################################################################
+    # Rendered Config: Loading and Storing Utils
+    #################################################################
+
+    def rendered_config_path(self, obj_id: str) -> Path:
+        return self.data_dir / "shapes" / obj_id / "rendered_config.csv"
+
+    def save_rendered_config(self, obj_id: str, config: pd.DataFrame):
+        path = self.rendered_config_path(obj_id)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        config.to_csv(path, index=False)
+
+    def load_rendered_config(self, obj_id: str) -> pd.DataFrame:
+        path = self.rendered_config_path(obj_id)
+        return pd.read_csv(path)
+
+    #################################################################
     # General: Loading and Storing Utils
     #################################################################
 
@@ -199,4 +257,8 @@ class MetaInfo:
             return self.load_sketch(obj_id, f"{image_id:05}")
         if image_type == "normal":
             return self.load_normal(obj_id, f"{image_id:05}")
+        if image_type == "rendered_normal":
+            return self.load_rendered_normal(obj_id, f"{image_id:05}")
+        if image_type == "rendered_sketch":
+            return self.load_rendered_sketch(obj_id, f"{image_id:05}")
         raise ValueError(f"Please provide an {image_type=} that is correct!")

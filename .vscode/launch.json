@@ -83,8 +83,12 @@
             "type": "debugpy",
             "request": "launch",
             "program": "scripts/preprocess_data.py",
+            // "args": [
+            //     "+experiment/preprocess_data=shapenet_chair_4096_siamese"
+            // ],
             "args": [
-                "+experiment/preprocess_data=shapenet_chair_4096_siamese"
+                "dataset=shapenet_chair_16",
+                "deepsdf_ckpt_path=checkpoints/deepsdf.ckpt"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
