@@ -247,6 +247,22 @@ class MetaInfo:
         return pd.read_csv(path)
 
     #################################################################
+    # Rendered Latents: Loading and Storing Utils
+    #################################################################
+
+    def rendered_latents_path(self, obj_id: str) -> Path:
+        return self.data_dir / "shapes" / obj_id / "rendered_latents.npy"
+
+    def save_rendered_latents(self, obj_id: str, latents: np.ndarray):
+        path = self.rendered_latents_path(obj_id)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        np.save(path, latents.astype(np.float32))
+
+    def load_rendered_latents(self, obj_id: str) -> pd.DataFrame:
+        path = self.rendered_latents_path(obj_id)
+        return np.load(path).astype(np.float32)
+
+    #################################################################
     # General: Loading and Storing Utils
     #################################################################
 

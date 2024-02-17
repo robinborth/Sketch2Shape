@@ -39,7 +39,7 @@ def preprocess(cfg: DictConfig) -> None:
         renderings = hydra.utils.instantiate(cfg.data.preprocess_renderings)
         logger.debug("==> start preprocessing renderings ...")
         for obj_id in tqdm(list(renderings.obj_ids_iter())):
-            normals, sketches, config = renderings.preprocess(obj_id=obj_id)
+            normals, sketches, latents, config = renderings.preprocess(obj_id=obj_id)
             for idx, (normal, sketch) in enumerate(zip(normals, sketches)):
                 renderings.metainfo.save_rendered_normal(
                     normal,
@@ -52,6 +52,7 @@ def preprocess(cfg: DictConfig) -> None:
                     image_id=f"{idx:05}",
                 )
             renderings.metainfo.save_rendered_config(obj_id=obj_id, config=config)
+            renderings.metainfo.save_rendered_latents(obj_id=obj_id, latents=latents)
 
 
 if __name__ == "__main__":

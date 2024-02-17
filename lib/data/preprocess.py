@@ -206,6 +206,7 @@ class PreprocessRenderings:
 
         normals = []
         sketches = []
+        latents = []
         configs = []
         for idx, target_idx in enumerate(target_idxs):
             # get the latent from the target obj_id
@@ -231,6 +232,7 @@ class PreprocessRenderings:
             t = torch.normal(torch.tensor(self.t_mean), torch.tensor(self.t_std))
             t = torch.clamp(t, 0.0, 0.5)
             interpolated_latent = (1 - t) * source_latent + t * target_latent
+            latents.append(interpolated_latent.detach().cpu().numpy())
 
             # render the normals and the sketch
             rendered_normal = self.deepsdf.capture_camera_frame(interpolated_latent)
@@ -249,8 +251,9 @@ class PreprocessRenderings:
             }
             config.update(camera_config)
             configs.append(config)
+        latents = np.stack(latents)
         configs = pd.DataFrame(configs)
-        return normals, sketches, configs
+        return normals, sketches, latents, configs
 
 
 @dataclass
