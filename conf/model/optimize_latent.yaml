@@ -1,11 +1,9 @@
 # @package model
 
 _target_: lib.optimizer.deepsdf.DeepSDFLatentOptimizer
-ckpt_path: ${ckpt_path} 
+deepsdf_ckpt_path: ${deepsdf_ckpt_path} 
 prior_idx: -1
 obj_id: "" 
-reg_loss: True
-reg_weight: 1e-05
 optimizer:
   _target_: torch.optim.Adam
   _partial_: true

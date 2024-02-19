@@ -1,3 +1,7 @@
+from dataclasses import dataclass
+
+import cv2 as cv
+import numpy as np
 import torch
 from torchvision.transforms import v2
 
@@ -84,3 +88,58 @@ class NormalTransform:
 
     def __call__(self, image):
         return self.transform(image)
+
+
+@dataclass
+class ToSketch(object):
+    """Convert the image to an edge map.
+
+    The input of the edge maps needs to be of dim 3xHxW and the output
+    """
+
+    t_lower: int = 100
+    t_upper: int = 150
+    aperture_size: int = 3  # 3, 5, 7
+    l2_gradient: bool = True
+
+    def __call__(self, image):
+        edge = cv.Canny(
+            image,
+            threshold1=self.t_lower,
+            threshold2=self.t_upper,
+            apertureSize=self.aperture_size,
+            L2gradient=self.l2_gradient,
+        )
+        edge = cv.bitwise_not(edge)
+        return np.stack((np.stack(edge),) * 3, axis=-1)
+
+
+@dataclass
+class DilateSketch(object):
+    def __init__(self, kernel_size: int = 1):
+        self.conv = torch.nn.Conv2d(
+            in_channels=3,
+            out_channels=3,
+            kernel_size=kernel_size,
+            padding="same",
+            stride=1,
+            bias=False,
+        )
+        self.conv.weight = torch.nn.Parameter(torch.ones_like(self.conv.weight))
+        self.padding = (kernel_size - 1) * 2
+
+    def __call__(self, image):
+        _, H, W = image.shape
+        img = 1.0 - image
+        img = v2.functional.pad(img, padding=self.padding)  # 3xH+PxW+P
+        img = self.conv(img)
+        img = 1.0 - torch.min(img, torch.tensor(1.0))
+        return v2.functional.resize(img, (H, W), antialias=True)
+
+
+@dataclass
+class ToSilhouette(object):
+    def __call__(self, image):
+        surface_maks = image.sum(0) < 2.95
+        image[:, surface_maks] = 0.0
+        return image

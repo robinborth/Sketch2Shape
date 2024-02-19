@@ -21,9 +21,6 @@ def visualize_pointcloud(points: np.ndarray, sdf=None) -> None:
     visualize_object(pcd)
 
 
-import open3d as o3d
-
-
 def visualize_sdf_slice(
     mesh: o3d.geometry.TriangleMesh,
     dim: str = "x",

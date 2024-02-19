@@ -5,7 +5,7 @@ defaults:
   - override /dataset: shapenet_chair_4096
   - override /logger: wandb
 
-ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
+deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 loss_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
 tags: ["optimize_sketch", "shapenet_chair_4096", "optim_couch_prior"]
 split: train 

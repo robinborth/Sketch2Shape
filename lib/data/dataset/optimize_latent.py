@@ -6,23 +6,6 @@ from lib.data.transforms import BaseTransform
 from lib.render.camera import Camera
 
 ############################################################
-# Evaluation Dataset
-############################################################
-
-
-class SurfaceSamplesDataset(Dataset):
-    def __init__(self, data_dir: str = "/data", obj_id: str = "obj_id"):
-        self.metainfo = MetaInfo(data_dir=data_dir)
-        self.gt_surface_samples = self.metainfo.load_surface_samples(obj_id=obj_id)
-
-    def __len__(self):
-        return 1
-
-    def __getitem__(self, idx: int):
-        return {"surface_samples": self.gt_surface_samples}
-
-
-############################################################
 # DeepSDF Optimization Datasets
 ############################################################
 

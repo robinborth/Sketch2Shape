@@ -26,4 +26,3 @@ video_dir: ${paths.output_dir}/video
 
 # the path of the metrics in the latent optimization
 metrics_path: ${paths.output_dir}/metrics.csv
-mean_metrics_path: ${paths.output_dir}/mean_metrics.csv

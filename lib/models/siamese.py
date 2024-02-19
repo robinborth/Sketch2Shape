@@ -1,5 +1,6 @@
 import torch
 from lightning import LightningModule
+from torch.nn.functional import cosine_similarity
 from torchvision.models import resnet18
 from torchvision.models.resnet import ResNet18_Weights
 
@@ -8,7 +9,6 @@ class Siamese(LightningModule):
     def __init__(
         self,
         margin: float = 0.2,
-        norm: int = 2,
         embedding_size: int = 128,
         pretrained: bool = True,
         reg_loss: bool = True,
@@ -21,13 +21,19 @@ class Siamese(LightningModule):
         self.save_hyperparameters(logger=False)
         self.lr_head = lr_head
         self.lr_backbone = lr_backbone
-        self.norm = norm
+        self.support_latent = False
 
         # load the resnet18 backbone
         weights = ResNet18_Weights.IMAGENET1K_V1 if pretrained else None
         self.backbone = resnet18(weights=weights)
         self.backbone.fc = torch.nn.Identity()
         self.head = torch.nn.Linear(in_features=512, out_features=embedding_size)
+
+    def embedding(self, batch):
+        return self.forward(batch)
+
+    def compute(self, emb1, emb2):
+        return 1 - cosine_similarity(emb1, emb2)
 
     def forward(self, batch):
         x = self.backbone(batch)
@@ -49,9 +55,9 @@ class Siamese(LightningModule):
         a_idx, p_idx, n_idx = self.get_all_triplets_indices(batch["label"])
 
         # calculate the triplet loss
-        d_ap = torch.linalg.vector_norm(emb[a_idx] - emb[p_idx], ord=self.norm, dim=-1)
+        d_ap = torch.linalg.vector_norm(emb[a_idx] - emb[p_idx], dim=-1)
         self.log(f"{split}/distance_anchor_positive", d_ap.mean())
-        d_an = torch.linalg.vector_norm(emb[a_idx] - emb[n_idx], ord=self.norm, dim=-1)
+        d_an = torch.linalg.vector_norm(emb[a_idx] - emb[n_idx], dim=-1)
         self.log(f"{split}/distance_anchor_negative", d_an.mean())
 
         # calculate how many pairs would be classified wrong
@@ -72,8 +78,7 @@ class Siamese(LightningModule):
         # calculate the reg loss based on the embeeddings
         reg_loss = torch.tensor(0).to(triplet_loss)
         if self.hparams["reg_loss"]:
-            # reg_loss = d_ap.mean()
-            reg_loss = torch.linalg.vector_norm(emb, ord=self.norm, dim=-1).mean()
+            reg_loss = torch.linalg.vector_norm(emb, dim=-1).mean()
             reg_loss *= self.hparams["reg_weight"]
             self.log(f"{split}/reg_loss", reg_loss)
 

@@ -1,5 +1,6 @@
 # dev
 lightning
+torchmetrics[image]
 torch
 torchvision
 open3d

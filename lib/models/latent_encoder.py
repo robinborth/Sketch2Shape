@@ -1,5 +1,6 @@
 import torch
 from lightning import LightningModule
+from torch.nn.functional import cosine_similarity
 from torchvision.models import resnet18
 from torchvision.models.resnet import ResNet18_Weights
 
@@ -15,6 +16,7 @@ class LatentEncoder(LightningModule):
     ) -> None:
         super().__init__()
         self.save_hyperparameters(logger=False)
+        self.support_latent = True
         self.lr_head = lr_head
         self.lr_backbone = lr_backbone
 
@@ -23,6 +25,12 @@ class LatentEncoder(LightningModule):
         self.backbone = resnet18(weights=weights)
         self.backbone.fc = torch.nn.Identity()
         self.head = torch.nn.Linear(in_features=512, out_features=embedding_size)
+
+    def embedding(self, batch):
+        return self.forward(batch)
+
+    def compute(self, emb1, emb2):
+        return 1 - cosine_similarity(emb1, emb2)
 
     def forward(self, batch):
         x = self.backbone(batch)

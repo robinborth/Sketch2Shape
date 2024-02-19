@@ -11,15 +11,16 @@ from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger as LightningLogger
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig
+from tqdm import tqdm
 
 from lib.data.metainfo import MetaInfo
+from lib.eval.chamfer_distance import ChamferDistance
+from lib.eval.earth_movers_distance import EarthMoversDistance
 from lib.render.utils import create_video
 from lib.utils.config import instantiate_callbacks, log_hyperparameters
 
 
 def optimize_latent(cfg: DictConfig, log: Logger) -> None:
-    metrics = []
-
     log.info("==> loading config ...")
     assert cfg.data.batch_size == 1  # make sure that the batch_size is 1
     L.seed_everything(cfg.seed)
@@ -41,24 +42,14 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
         log.info("==> Set eval=True ...>")
         cfg.eval = True
 
-    for obj_id in obj_ids:
-        log.info(f"==> optimize {obj_id=} ...")
-        cfg.data.obj_id = obj_id
-        cfg.model.obj_id = obj_id
-
+    latents = []
+    for obj_id in tqdm(obj_ids):
         log.info(f"==> initializing datamodule <{cfg.data._target_}>")
+        cfg.data.obj_id = obj_id
         datamodule: LightningDataModule = hydra.utils.instantiate(cfg.data)
 
         log.info(f"==> initializing model <{cfg.model._target_}>")
-        # set the prior_idx for the trained shapes
-        if cfg.prior_idx == "prior":
-            cfg.model.prior_idx = metainfo.obj_id_to_label(obj_id=obj_id)
-        if match := re.match(r"prior\((\d+)\)", cfg.prior_idx):
-            cfg.model.prior_idx = int(match.group(1))
-        if cfg.prior_idx == "mean":
-            cfg.model.prior_idx = -1
-        if cfg.prior_idx == "random":
-            cfg.model.prior_idx = -2
+        cfg.model.prior_obj_id = obj_id
         model: LightningModule = hydra.utils.instantiate(cfg.model)
 
         log.info("==> initializing callbacks ...")
@@ -87,26 +78,11 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
             log_hyperparameters(object_dict)
 
         if cfg.train:
-            log.info("==> start training ...")
+            log.info(f"==> optimize {obj_id=} ...")
             trainer.fit(model=model, datamodule=datamodule)
 
-        if cfg.eval:
-            log.info("==> start evalution ...")
-            metric = trainer.test(model=model, datamodule=datamodule)[0]
-            metric["obj_id"] = obj_id  # type: ignore
-            metrics.append(metric)
-
-        if cfg.save_mesh and (mesh := model.mesh):
-            log.info("==> save mesh ...")
-            path = Path(cfg.paths.mesh_dir, f"{obj_id}.obj")
-            path.parent.mkdir(parents=True, exist_ok=True)
-            o3d.io.write_triangle_mesh(
-                path.as_posix(),
-                mesh=mesh,
-                write_triangle_uvs=False,
-            )
-
         # finish the wandb run in order to track all the optimizations seperate
+        latents.append(model.latent)
         wandb.finish()
 
         if cfg.create_video and isinstance(logger, WandbLogger):
@@ -115,10 +91,40 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
             path.mkdir(parents=True, exist_ok=True)
             create_video(video_dir=path, obj_id=obj_id)
 
-    log.info("==> save metrics ...")
-    df = pd.DataFrame(metrics)
-    df.to_csv(cfg.paths.metrics_path, index=False)
+    # create the meshes
+    meshes = []
+    if cfg.eval or cfg.save_mesh:
+        log.info("==> create meshes ...")
+        for obj_id in obj_ids:
+            mesh = model.to_mesh()
+            meshes.append(mesh)
+            if cfg.save_mesh:
+                path = Path(cfg.paths.mesh_dir, f"{obj_id}.obj")
+                path.parent.mkdir(parents=True, exist_ok=True)
+                o3d.io.write_triangle_mesh(
+                    path.as_posix(),
+                    mesh=mesh,
+                    write_triangle_uvs=False,
+                )
 
-    log.info("==> save mean metrics ...")
-    mean_metric = df.loc[:, df.columns != "obj_id"].mean()
-    mean_metric.to_csv(cfg.paths.mean_metrics_path)
+    # evaluate the generated 3D shapes
+    if cfg.eval:
+        log.info("==> start evalution ...")
+        model.deepsdf.eval()
+        chamfer_distance = ChamferDistance(num_samples=2048)
+        earth_movers_distance = EarthMoversDistance(num_samples=2048)
+
+        # get the metric statistics for all of the objects
+        for latent, obj_id, mesh in tqdm(zip(latents, obj_ids, meshes)):
+            model.latent = latent
+            surface_samples = metainfo.load_surface_samples(obj_id=obj_id)
+            chamfer_distance.update(mesh, surface_samples)
+            earth_movers_distance.update(mesh, surface_samples)
+
+        log.info("==> save metrics ...")
+        metrics = {
+            "chamfer_distance": chamfer_distance.compute(),
+            "earth_movers_distance": earth_movers_distance.compute(),
+        }
+        df = pd.DataFrame([metrics])
+        df.to_csv(cfg.paths.metrics_path, index=False)
