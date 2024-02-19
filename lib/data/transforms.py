@@ -92,9 +92,9 @@ class NormalTransform:
 
 @dataclass
 class ToSketch(object):
-    """Convert the image to an edge map.
+    """Convert the image to an sketch.
 
-    The input of the edge maps needs to be of dim 3xHxW and the output
+    The input of the sketch needs to be of dim 3xHxW and the output
     """
 
     t_lower: int = 100
@@ -102,16 +102,27 @@ class ToSketch(object):
     aperture_size: int = 3  # 3, 5, 7
     l2_gradient: bool = True
 
-    def __call__(self, image):
-        edge = cv.Canny(
-            image,
+    def __call__(self, image: torch.Tensor):
+        """Transforms an image into an sketch.
+
+        Args:
+            image (torch.Tensor): An image of dimension 3xHxW with values between (0,1)
+
+        Returns:
+            torch.Tensor: The image as an sketch.
+        """
+
+        img = (image.permute(1, 2, 0).detach().cpu().numpy() * 255).astype(np.uint8)
+        sketch = cv.Canny(
+            img,
             threshold1=self.t_lower,
             threshold2=self.t_upper,
             apertureSize=self.aperture_size,
             L2gradient=self.l2_gradient,
         )
-        edge = cv.bitwise_not(edge)
-        return np.stack((np.stack(edge),) * 3, axis=-1)
+        sketch = cv.bitwise_not(sketch)
+        sketch = np.stack((np.stack(sketch),) * 3, axis=-1) / 255
+        return torch.tensor(sketch).to(image).permute(2, 0, 1)
 
 
 @dataclass
@@ -134,7 +145,8 @@ class DilateSketch(object):
         img = v2.functional.pad(img, padding=self.padding)  # 3xH+PxW+P
         img = self.conv(img)
         img = 1.0 - torch.min(img, torch.tensor(1.0))
-        return v2.functional.resize(img, (H, W), antialias=True)
+        img = v2.functional.resize(img, (H, W), antialias=True)
+        return torch.clip(img, 0, 1)
 
 
 @dataclass
@@ -143,3 +155,10 @@ class ToSilhouette(object):
         surface_maks = image.sum(0) < 2.95
         image[:, surface_maks] = 0.0
         return image
+
+
+@dataclass
+class ToGrayScale(object):
+    def __call__(self, image):
+        mean = image.mean(0)
+        return torch.stack([mean, mean, mean], dim=0)

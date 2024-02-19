@@ -11,6 +11,7 @@ from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger as LightningLogger
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig
+from torchmetrics.image.fid import FrechetInceptionDistance
 from tqdm import tqdm
 
 from lib.data.metainfo import MetaInfo
@@ -113,6 +114,7 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
         model.deepsdf.eval()
         chamfer_distance = ChamferDistance(num_samples=2048)
         earth_movers_distance = EarthMoversDistance(num_samples=2048)
+        fechet_inception_distance = FrechetInceptionDistance(feature=2048)
 
         # get the metric statistics for all of the objects
         for latent, obj_id, mesh in tqdm(zip(latents, obj_ids, meshes)):
