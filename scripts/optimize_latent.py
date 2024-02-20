@@ -1,4 +1,3 @@
-import re
 from logging import Logger
 from pathlib import Path
 
@@ -15,7 +14,9 @@ from torchmetrics.image.fid import FrechetInceptionDistance
 from tqdm import tqdm
 
 from lib.data.metainfo import MetaInfo
+from lib.data.transforms import BaseTransform, ToSketch
 from lib.eval.chamfer_distance import ChamferDistance
+from lib.eval.clip_score import CLIPScore
 from lib.eval.earth_movers_distance import EarthMoversDistance
 from lib.render.utils import create_video
 from lib.utils.config import instantiate_callbacks, log_hyperparameters
@@ -23,25 +24,18 @@ from lib.utils.config import instantiate_callbacks, log_hyperparameters
 
 def optimize_latent(cfg: DictConfig, log: Logger) -> None:
     log.info("==> loading config ...")
-    assert cfg.data.batch_size == 1  # make sure that the batch_size is 1
+    # make sure that the batch_size is 1
+    assert cfg.data.batch_size == 1
     L.seed_everything(cfg.seed)
-
     metainfo = MetaInfo(data_dir=cfg.data.data_dir, split=cfg.split)
-    if obj_ids := cfg.get("obj_ids"):  # specific obj_ids are selected
+
+    # specific obj_ids are selected
+    if obj_ids := cfg.get("obj_ids"):
         log.info(f"==> selecting specified obj_ids ({len(obj_ids)}) ...>")
-    if obj_ids is None:  # if there are specific obj_ids we use all from a split
+    # obj_ids from the selected split
+    if obj_ids is None:
         obj_ids = metainfo.obj_ids
         log.info(f"==> selecting obj_ids ({cfg.split}) ...>")
-
-    if cfg.split != "train" and cfg.prior_idx == "train":
-        log.info("WARNING! Only select prior_idx for split=train ...>")
-        log.info("==> Set prior_idx=False ...>")
-        cfg.prior_idx = "mean"
-
-    if not cfg.eval and cfg.save_mesh:
-        log.info("WARNING! The mesh is only created in the eval loop ...>")
-        log.info("==> Set eval=True ...>")
-        cfg.eval = True
 
     latents = []
     for obj_id in tqdm(obj_ids):
@@ -82,8 +76,7 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
             log.info(f"==> optimize {obj_id=} ...")
             trainer.fit(model=model, datamodule=datamodule)
 
-        # finish the wandb run in order to track all the optimizations seperate
-        latents.append(model.latent)
+        # finish the wandb run to track all the optimizations seperatly
         wandb.finish()
 
         if cfg.create_video and isinstance(logger, WandbLogger):
@@ -91,6 +84,9 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
             path = Path(cfg.paths.video_dir)
             path.mkdir(parents=True, exist_ok=True)
             create_video(video_dir=path, obj_id=obj_id)
+
+        # update the latents from the current obj_id
+        latents.append(model.latent)
 
     # create the meshes
     meshes = []
@@ -109,24 +105,47 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
                 )
 
     # evaluate the generated 3D shapes
+    eval_view_id: int = 11
+    eval_azim: float = 40
+    eval_elev: float = -30
     if cfg.eval:
-        log.info("==> start evalution ...")
         model.deepsdf.eval()
-        chamfer_distance = ChamferDistance(num_samples=2048)
-        earth_movers_distance = EarthMoversDistance(num_samples=2048)
-        fechet_inception_distance = FrechetInceptionDistance(feature=2048)
+        cd = ChamferDistance(num_samples=2048)
+        emd = EarthMoversDistance(num_samples=2048)
+        fid = FrechetInceptionDistance(feature=2048, normalize=True)
+        clip = CLIPScore()
 
-        # get the metric statistics for all of the objects
-        for latent, obj_id, mesh in tqdm(zip(latents, obj_ids, meshes)):
-            model.latent = latent
+        log.info("==> start evaluate CD and EMD ...")
+        for obj_id, mesh in tqdm(zip(obj_ids, meshes), total=len(obj_ids)):
             surface_samples = metainfo.load_surface_samples(obj_id=obj_id)
-            chamfer_distance.update(mesh, surface_samples)
-            earth_movers_distance.update(mesh, surface_samples)
+            cd.update(mesh, surface_samples)
+            emd.update(mesh, surface_samples)
+
+        # frechet inception distance and clip score
+        transform = BaseTransform(normalize=False)
+        to_sketch = ToSketch()
+        model.deepsdf.create_camera(azim=eval_azim, elev=eval_elev)
+        log.info("==> start evaluate FID and CLIPScore ...")
+        for latent, obj_id in tqdm(zip(latents, obj_ids), total=len(obj_ids)):
+            # gt sketch
+            gt_sketch = metainfo.load_sketch(obj_id, f"{eval_view_id:05}")
+            gt_sketch = transform(gt_sketch)[None, ...]
+            # rendered sketch
+            model.latent = latent
+            rendered_normal = model.capture_camera_frame().permute(2, 0, 1)
+            rendered_sketch = to_sketch(rendered_normal.detach().cpu())[None, ...]
+            # frechet inception distance
+            fid.update(gt_sketch, real=True)
+            fid.update(rendered_sketch, real=False)
+            # clip score
+            clip.update(gt_sketch, rendered_sketch)
 
         log.info("==> save metrics ...")
         metrics = {
-            "chamfer_distance": chamfer_distance.compute(),
-            "earth_movers_distance": earth_movers_distance.compute(),
+            "CD": cd.compute().item(),
+            "EMD": emd.compute().item(),
+            "FID": fid.compute().item(),
+            "CLIPScore": clip.compute().item(),
         }
         df = pd.DataFrame([metrics])
         df.to_csv(cfg.paths.metrics_path, index=False)

@@ -15,13 +15,12 @@ defaults:
 seed: 123
 task_name: optimize_sketch
 tags: ["optimize_sketch"]
-split: val
-obj_ids: ???
+split: val  # train, train_latent, val, val_latent, test
+obj_ids: ???  # overrids the split setting, make sure that obj_ids are only from the same split.
 train: True
-prior_idx: mean  # random(-2), mean(-1), prior, prior(idx)
-eval: False
+eval: True
 save_mesh: True
-create_video: True
+create_video: True 
 deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 loss_ckpt_path: ${paths.checkpoint_dir}/latent_encoder.ckpt
 
@@ -40,22 +39,20 @@ data:
     elevs: ${data.preprocess_siamese.elevs}
   shuffle: True
 
-
 model:
+  # custom settings
   _target_: lib.optimizer.sketch.SketchOptimizer
-  data_dir: ${data.data_dir}
-  loss_ckpt_path: ${loss_ckpt_path} 
-  deepsdf_ckpt_path: ${deepsdf_ckpt_path}
+  loss_weight: 1.0
+  # base settings
+  reg_loss: none
+  reg_weight: 2e-03
   optimizer:
     lr: 1e-02
   scheduler:
     step_size: 5
     gamma: 0.5
   latent_init: latent
-  reg_loss: none
-  reg_weight: 2e-03
-  prior_obj_id: ???
+  prior_obj_id: ""
   prior_view_id: 11
   retrieval_k: 16
   capture_rate: 8
-  loss_weight: 1.0

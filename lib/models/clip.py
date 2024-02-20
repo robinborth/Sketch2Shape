@@ -4,10 +4,10 @@ from transformers import CLIPModel, CLIPProcessor
 
 
 class CLIP(LightningModule):
-    def __init__(self):
+    def __init__(self, model_name: str = "openai/clip-vit-large-patch14"):
         super().__init__()
-        self.model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
-        self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+        self.model = CLIPModel.from_pretrained(model_name)
+        self.processor = CLIPProcessor.from_pretrained(model_name)
 
     def forward(self, batch):
         inputs = self.processor(

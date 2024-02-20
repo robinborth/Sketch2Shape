@@ -16,7 +16,7 @@ task_name: traverse_latent
 tags: ["traverse_latent"]
 create_mesh: True
 create_video: True
-ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
+deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 loss_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
 traversal_steps: 20
 

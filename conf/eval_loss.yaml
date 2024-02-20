@@ -12,10 +12,11 @@ defaults:
   - optional local: default
   - _self_
 
+seed: 123
 task_name: eval_siamese
 tags: ["eval_siamese"]
-ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt 
-seed: 123
+deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
+loss_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
 
 trainer:
   max_epochs: 1

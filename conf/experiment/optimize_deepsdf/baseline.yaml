@@ -4,15 +4,12 @@ defaults:
   - override /data: optimize_latent
   - override /dataset: shapenet_chair_4096
 
-deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 tags: ["optimize_deepsdf", "shapenet_chair_4096", "baseline"]
 split: train
 train: False
 eval: True
-create_video: False
-create_mesh: False
 save_mesh: False
-prior_idx: prior 
+create_video: False
 
 model:
   mesh_resolution: 128
@@ -22,31 +19,3 @@ obj_ids:
   - 2948af0b6a12f1c7ad484915511ccff6
   - 92e2317fd0d0129bb910025244eec99a
   - 1459c329e2123d4fe5b03ab845ae95c
-  # - dada2389e96606307aa7cd663df90f18
-  # - 1eab4c4c55b8a0f48162e1d15342e13b
-  # - 5609756359a6dd2c1933ffef19678834
-  # - 30378faa6bf5b245fdef1c01cbd4ae0c
-  # - d0fa70e45dee680fa45b742ddc5add59
-  # - 3022c71659584118c62a9d560fc45fe6
-  # - 21f2927b04e2f22830ddb6ead95f49cc
-  # - 1d6f4020cab4ec1962d6a66a1a314d66
-  # - e7aa94a2dd59a5ed492d9da2668ec34c
-  # - 85d0d147adcb6318b8e1b99345a5afd4
-  # - 5e907bb5204ec4a9a16baf954c1d99bc
-  # - 19861e56a952fe97b8230112437913fd
-  # - f2dae367e56200a7d9b53420a5458c53
-  # - 67fe832a22b91e6c54ddc93d2b7d3d65
-  # - 9b94592fe0fdcc34492d9da2668ec34c
-  # - 9dac39c51680daa2f71e06115e9c3b3e
-  # - d66fe5dc263064a2bc38fb3cb9934c71
-  # - 83d3b40a6ff6a04af4b6538438a0b930
-  # - e8eedd37cb054e37b59d74a7c956bd18
-  # - d2af105ee87bc66dae981a300c94a911
-  # - 70be8ecf5200fddd818fffcf4a59bbc9
-  # - 2182398f0f8fdd81af7c7ad2549a1b15
-  # - 483d22dbbee32ee54e5c7d89bdfc49a3
-  # - 6fde09bdd613f6e6492d9da2668ec34c
-  # - 2364d6cbee1425fdc3bd24f986301745
-  # - a54a6ee9263bc1eaf4b6538438a0b930
-  # - d4f38e40aedc67f779368d1198f406e7
-  # - b162f52f6a1ac00e519f3f3e6cd6d1a6

@@ -16,6 +16,7 @@ camera_sphere_eps: 1e-1
 
 preprocess_mesh:
   _target_: lib.data.preprocess.PreprocessMesh
+  _partial_: True
   data_dir: ${data.data_dir}
   skip: True
   resolution: 30000
@@ -27,6 +28,7 @@ preprocess_mesh:
 
 preprocess_siamese:
   _target_: lib.data.preprocess.PreprocessSiamese
+  _partial_: True
   # processing settings
   data_dir: ${data.data_dir}
   skip: True
@@ -50,6 +52,7 @@ preprocess_siamese:
 
 preprocess_renderings:
   _target_: lib.data.preprocess.PreprocessRenderings
+  _partial_: True
   # processing settings
   data_dir: ${data.data_dir}
   deepsdf_ckpt_path: ${deepsdf_ckpt_path} 
@@ -80,6 +83,7 @@ preprocess_renderings:
 
 preprocess_sdf:
   _target_: lib.data.preprocess.PreprocessSDF
+  _partial_: True
   # processing settings
   data_dir: ${data.data_dir}
   skip: True

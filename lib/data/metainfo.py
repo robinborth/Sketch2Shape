@@ -178,7 +178,7 @@ class MetaInfo:
         path.parent.mkdir(parents=True, exist_ok=True)
         Image.fromarray(normals).save(path)
 
-    def load_normal(self, obj_id: str, image_id: str) -> Path:
+    def load_normal(self, obj_id: str, image_id: str):
         path = self.normals_dir_path(obj_id) / f"{image_id}.png"
         return Image.open(path)
 
@@ -194,7 +194,7 @@ class MetaInfo:
         path.parent.mkdir(parents=True, exist_ok=True)
         Image.fromarray(normals).save(path)
 
-    def load_rendered_normal(self, obj_id: str, image_id: str) -> Path:
+    def load_rendered_normal(self, obj_id: str, image_id: str):
         path = self.rendered_normals_dir_path(obj_id) / f"{image_id}.png"
         return Image.open(path)
 
@@ -210,7 +210,7 @@ class MetaInfo:
         path.parent.mkdir(parents=True, exist_ok=True)
         Image.fromarray(normals).save(path)
 
-    def load_sketch(self, obj_id: str, image_id: str) -> Path:
+    def load_sketch(self, obj_id: str, image_id: str):
         path = self.sketches_dir_path(obj_id) / f"{image_id}.png"
         return Image.open(path)
 
@@ -226,7 +226,7 @@ class MetaInfo:
         path.parent.mkdir(parents=True, exist_ok=True)
         Image.fromarray(normals).save(path)
 
-    def load_rendered_sketch(self, obj_id: str, image_id: str) -> Path:
+    def load_rendered_sketch(self, obj_id: str, image_id: str):
         path = self.rendered_sketches_dir_path(obj_id) / f"{image_id}.png"
         return Image.open(path)
 

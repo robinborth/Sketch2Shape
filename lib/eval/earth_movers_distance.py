@@ -33,5 +33,5 @@ class EarthMoversDistance(Metric):
         self.emd += torch.tensor(emd).to(self.emd)
         self.total += 1
 
-    def compute(self) -> float:
-        return (self.emd / self.total).item()
+    def compute(self):
+        return self.emd / self.total

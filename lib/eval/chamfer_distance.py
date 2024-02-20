@@ -40,5 +40,5 @@ class ChamferDistance(Metric):
         self.cd += torch.tensor(cd).to(self.cd)
         self.total += 1
 
-    def compute(self) -> float:
-        return (self.cd / self.total).item()
+    def compute(self):
+        return self.cd / self.total

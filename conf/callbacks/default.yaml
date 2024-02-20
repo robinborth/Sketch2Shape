@@ -1,8 +1,9 @@
+# @package callbacks
+
 defaults:
   - model_checkpoint
   - model_summary
   - learning_rate_monitor
-  - early_stopping
   - rich_progress_bar
   - _self_
 
@@ -13,11 +14,6 @@ model_checkpoint:
   mode: "min"
   save_last: True
   auto_insert_metric_name: False
-
-early_stopping:
-  monitor: "train/loss"
-  patience: 1000
-  mode: "min"
 
 model_summary:
   max_depth: -1

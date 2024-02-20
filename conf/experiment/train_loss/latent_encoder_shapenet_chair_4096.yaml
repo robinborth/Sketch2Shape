@@ -10,7 +10,6 @@ defaults:
 
 task_name: train_latent_encoder
 tags: ["train_latent_encoder", "shapenet_chair_4096"]
-deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 
 trainer:
   max_epochs: 100

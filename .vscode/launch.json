@@ -1,7 +1,4 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -123,14 +120,6 @@
             "args": [
                 "+experiment/optimize_deepsdf=baseline"
             ],
-            // "args": [
-            //     "+data=shapenet_chair_1024",
-            //     "ckpt_path=/shared/logs/deepsdf.ckpt",
-            //     "split=train",
-            //     "train=False",
-            //     "obj_ids=[7139284dff5142d4593ebeeedbff73b]"
-            //     // "logger=wandb"
-            // ],
             "console": "integratedTerminal",
             "justMyCode": false,
         },

@@ -15,14 +15,14 @@ defaults:
 seed: 123
 task_name: optimize_deepsdf
 tags: ["optimize_deepsdf"]
-split: val  # train, val, test
+split: val  # train, train_latent, val, val_latent, test
 obj_ids: ???  # overrids the split setting, make sure that obj_ids are only from the same split.
 train: True
-prior_idx: mean  # random(-2), mean(-1), prior, prior(idx)
 eval: True
-save_mesh: True  # only if eval == True
+save_mesh: True
 create_video: True 
 deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
+loss_ckpt_path: ${paths.checkpoint_dir}/latent_encoder.ckpt
 
 trainer:
   num_sanity_val_steps: 0
@@ -35,19 +35,17 @@ data:
     half: True
 
 model:
+  # custom settings
   _target_: lib.optimizer.deepsdf.DeepSDFLatentOptimizer
   adaptive_sample_strategy: True
   adaptive_mining_strategy: True
-  reg_loss: True
+  reg_loss: prior 
   reg_weight: 1e-04
-  latents_lr: 1e-03
-  capture_rate: 30
+  # base settings
+  optimizer:
+    lr: 1e-03
   scheduler:
     _partial_: True
     _target_: torch.optim.lr_scheduler.StepLR
     step_size: 500
     gamma: 0.5
-  
-callbacks:
-  early_stopping:
-    patience: 2000

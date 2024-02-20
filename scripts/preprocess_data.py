@@ -11,14 +11,14 @@ logger = create_logger("preprocess_data")
 @hydra.main(version_base=None, config_path="../conf", config_name="preprocess_data")
 def preprocess(cfg: DictConfig) -> None:
     logger.debug("==> initializing mesh ...")
-    mesh: PreprocessMesh = hydra.utils.instantiate(cfg.data.preprocess_mesh)
+    mesh: PreprocessMesh = hydra.utils.instantiate(cfg.data.preprocess_mesh)()
     logger.debug("==> start preprocessing mesh ...")
     for obj_id in tqdm(list(mesh.obj_ids_iter())):
         normalized_mesh = mesh.preprocess(obj_id=obj_id)
         mesh.metainfo.save_normalized_mesh(obj_id=obj_id, mesh=normalized_mesh)
 
     logger.debug("==> initializing sdf ...")
-    sdf: PreprocessSDF = hydra.utils.instantiate(cfg.data.preprocess_sdf)
+    sdf: PreprocessSDF = hydra.utils.instantiate(cfg.data.preprocess_sdf)()
     logger.debug("==> start preprocessing sdf ...")
     for obj_id in tqdm(list(sdf.obj_ids_iter())):
         sdf_samples, surface_samples = sdf.preprocess(obj_id=obj_id)
@@ -26,7 +26,7 @@ def preprocess(cfg: DictConfig) -> None:
         sdf.metainfo.save_surface_samples(obj_id=obj_id, samples=surface_samples)
 
     logger.debug("==> initializing siamese ...")
-    siamese: PreprocessSiamese = hydra.utils.instantiate(cfg.data.preprocess_siamese)
+    siamese: PreprocessSiamese = hydra.utils.instantiate(cfg.data.preprocess_siamese)()
     logger.debug("==> start preprocessing siamese ...")
     for obj_id in tqdm(list(siamese.obj_ids_iter())):
         normals, sketches = siamese.preprocess(obj_id=obj_id)
@@ -36,7 +36,7 @@ def preprocess(cfg: DictConfig) -> None:
 
     if cfg.get("deepsdf_ckpt_path"):
         logger.debug("==> initializing renderings ...")
-        renderings = hydra.utils.instantiate(cfg.data.preprocess_renderings)
+        renderings = hydra.utils.instantiate(cfg.data.preprocess_renderings)()
         logger.debug("==> start preprocessing renderings ...")
         for obj_id in tqdm(list(renderings.obj_ids_iter())):
             normals, sketches, latents, config = renderings.preprocess(obj_id=obj_id)
