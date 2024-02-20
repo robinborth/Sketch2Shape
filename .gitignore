@@ -165,4 +165,5 @@ data/*
 logs/*
 temp
 conf/local/*
-checkpoints/*.ckpt
+checkpoints
+demo_video
