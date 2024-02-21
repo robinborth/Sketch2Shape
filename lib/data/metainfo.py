@@ -36,6 +36,7 @@ class MetaInfo:
         except Exception as e:
             logger.error("Not able to load dataset_splits file.")
 
+        # mappings for the twin loss network
         self.image_type_2_type_idx = {
             "sketch": 0,
             "normal": 1,
@@ -44,11 +45,18 @@ class MetaInfo:
             0: "sketch",
             1: "normal",
         }
+        # mappings for the different image datasets
         self.mode_2_image_type = {
             0: "sketch",
             1: "normal",
-            2: "sketch",
-            3: "normal",
+            2: "rendered_sketch",
+            3: "rendered_normal",
+        }
+        self.mode_2_type_idx = {
+            0: 0,
+            1: 1,
+            2: 0,
+            3: 1,
         }
         self.mode_2_image_dir = {
             0: "sketches",
@@ -81,7 +89,7 @@ class MetaInfo:
                     obj_id=obj_id,
                     image_id=file_name.stem,
                     label=label,
-                    image_type=self.mode_2_image_type[mode],
+                    mode=mode,
                 )
 
     def load_loss(self, modes: list[int] = [0, 1]):

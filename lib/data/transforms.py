@@ -1,106 +1,56 @@
-from dataclasses import dataclass
-
 import cv2 as cv
 import numpy as np
 import torch
 from torchvision.transforms import v2
+from torchvision.transforms.v2 import Transform
 
 
 class BaseTransform:
     def __init__(
         self,
-        normalize: bool = True,
         to_image: bool = True,
-        size: int = 256,
-        sharpness: float = 1.0,
+        to_dtype: bool = True,
+        normalize: bool = True,
         mean: float = 0.5,
         std: float = 0.5,
+        transforms: list = [],
     ):
-
-        transforms = []
+        transform = []
         if to_image:
-            transforms.append(v2.ToImage())
-        transforms += [
-            v2.ToDtype(torch.float32, scale=True),
-            v2.Resize(size=(size, size), antialias=True),
-            v2.RandomAdjustSharpness(sharpness, p=1.0),
-        ]
+            transform.append(v2.ToImage())
+        if to_dtype:
+            transform.append(v2.ToDtype(torch.float32, scale=True))
+
+        # add custom transformations
+        transform.extend(transforms)
+
         if normalize:
-            transforms.append(v2.Normalize(mean=[mean], std=[std]))
+            transform.append(v2.Normalize(mean=[mean], std=[std]))
 
-        self.transform = v2.Compose(transforms)
-
-    def __call__(self, image):
-        return self.transform(image)
-
-
-class SketchTransform:
-    def __init__(
-        self,
-        size: list[int] = [64, 128, 256],
-        size_weight: list[float] = [0.3, 0.3, 0.4],
-        sharpness: list[float] = [0.5, 1, 2, 5],
-        sharpness_weight: list[float] = [0.1, 0.3, 0.3, 0.3],
-        rotation: int = 5,
-        mean: float = 0.5,
-        std: float = 0.5,
-    ):
-        self.transform = v2.Compose(
-            [
-                v2.ToImage(),
-                v2.ToDtype(torch.float32, scale=True),
-                v2.RandomRotation(degrees=rotation, fill=1.0),
-                v2.RandomChoice(
-                    [v2.Resize(size=(s, s), antialias=True) for s in size],
-                    p=size_weight,
-                ),
-                v2.RandomChoice(
-                    [v2.RandomAdjustSharpness(d, p=1.0) for d in sharpness],
-                    p=sharpness_weight,
-                ),
-                v2.Normalize(mean=[mean], std=[std]),
-            ]
-        )
+        self.transform = v2.Compose(transform)
 
     def __call__(self, image):
         return self.transform(image)
 
 
-class NormalTransform:
-    def __init__(
-        self,
-        size: list[int] = [64, 128, 256],
-        size_weight: list[float] = [0.3, 0.3, 0.4],
-        mean: float = 0.5,
-        std: float = 0.5,
-    ):
-        self.transform = v2.Compose(
-            [
-                v2.ToImage(),
-                v2.ToDtype(torch.float32, scale=True),
-                v2.RandomChoice(
-                    [v2.Resize(size=(s, s), antialias=True) for s in size],
-                    p=size_weight,
-                ),
-                v2.Normalize(mean=[mean], std=[std]),
-            ]
-        )
-
-    def __call__(self, image):
-        return self.transform(image)
-
-
-@dataclass
-class ToSketch(object):
+class ToSketch(Transform):
     """Convert the image to an sketch.
 
     The input of the sketch needs to be of dim 3xHxW and the output
     """
 
-    t_lower: int = 100
-    t_upper: int = 150
-    aperture_size: int = 3  # 3, 5, 7
-    l2_gradient: bool = True
+    def __init__(
+        self,
+        t_lower: int = 100,
+        t_upper: int = 150,
+        aperture_size: int = 3,  # 3, 5, 7
+        l2_gradient: bool = True,
+    ):
+        super().__init__()
+        self.t_lower = t_lower
+        self.t_upper = t_upper
+        self.aperture_size = aperture_size
+        self.l2_gradient = l2_gradient
 
     def __call__(self, image: torch.Tensor):
         """Transforms an image into an sketch.
@@ -125,9 +75,9 @@ class ToSketch(object):
         return torch.tensor(sketch).to(image).permute(2, 0, 1)
 
 
-@dataclass
-class DilateSketch(object):
+class DilateSketch(Transform):
     def __init__(self, kernel_size: int = 1):
+        super().__init__()
         self.conv = torch.nn.Conv2d(
             in_channels=3,
             out_channels=3,
@@ -149,16 +99,20 @@ class DilateSketch(object):
         return torch.clip(img, 0, 1)
 
 
-@dataclass
-class ToSilhouette(object):
+class ToSilhouette(Transform):
+    def __init__(self):
+        super().__init__()
+
     def __call__(self, image):
         surface_maks = image.sum(0) < 2.95
         image[:, surface_maks] = 0.0
         return image
 
 
-@dataclass
-class ToGrayScale(object):
+class ToGrayScale(Transform):
+    def __init__(self):
+        super().__init__()
+
     def __call__(self, image):
         mean = image.mean(0)
         return torch.stack([mean, mean, mean], dim=0)

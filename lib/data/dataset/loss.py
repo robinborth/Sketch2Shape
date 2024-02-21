@@ -32,22 +32,33 @@ class BaseLossDataset(Dataset):
         obj_id = info["obj_id"]
         image_id = info["image_id"]
         label = info["label"]
-        image_type = info["image_type"]
+        image_type = self.metainfo.mode_2_image_type[info["mode"]]
+        type_idx = self.metainfo.mode_2_type_idx[info["mode"]]
 
-        if image_type in ["sketch", "rendered_sketch"]:
+        if image_type == "sketch":
             image = self.metainfo.load_sketch(obj_id, image_id)
             if self.sketch_transform is not None:
                 image = self.sketch_transform(image)
 
-        if image_type in ["normal", "rendered_normal"]:
+        if image_type == "rendered_sketch":
+            image = self.metainfo.load_rendered_sketch(obj_id, image_id)
+            if self.sketch_transform is not None:
+                image = self.sketch_transform(image)
+
+        if image_type == "normal":
             image = self.metainfo.load_normal(obj_id, image_id)
+            if self.normal_transform is not None:
+                image = self.normal_transform(image)
+
+        if image_type == "rendered_normal":
+            image = self.metainfo.load_rendered_normal(obj_id, image_id)
             if self.normal_transform is not None:
                 image = self.normal_transform(image)
 
         return {
             "image": image,
             "image_id": int(image_id),
-            "type_idx": self.metainfo.image_type_2_type_idx[image_type],
+            "type_idx": type_idx,
             "label": label,
         }
 

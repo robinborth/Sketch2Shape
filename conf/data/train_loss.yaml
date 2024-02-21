@@ -30,7 +30,9 @@ dataset:
     _target_: lib.data.transforms.BaseTransform
     mean: 0.5
     std: 0.5
+    transforms: []
   normal_transform:
     _target_: lib.data.transforms.BaseTransform
     mean: 0.5
     std: 0.5
+    transforms: []
