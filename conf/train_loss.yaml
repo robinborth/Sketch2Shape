@@ -27,24 +27,19 @@ ckpt_path: ???
 deepsdf_ckpt_path: ???
 loss_ckpt_path: ???
 
-trainer:
-  max_epochs: 1
-  check_val_every_n_epoch: 1
-
-data:
-  train_sampler:
-    sample_steps: 1
-
+# DEBUG Settings
 # trainer:
-#   max_epochs: 20
-#   val_check_interval: 0.25
+#   max_epochs: 1
+#   check_val_every_n_epoch: 1
+# data:
+#   train_sampler:
+#     sample_steps: 1
+# model:
+#   capture_rate: 1
 
-model:
-  scheduler:
-    _target_: torch.optim.lr_scheduler.StepLR
-    _partial_: True
-    step_size: 50
-    gamma: 0.5
+trainer:
+  max_epochs: 20
+  val_check_interval: 0.25
 
 callbacks:
   model_checkpoint:
