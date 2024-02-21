@@ -24,7 +24,7 @@ eval_sampler:
   chunk_size: 2
   sample_steps: -1  # full dataset
 dataset: 
-  _target_: lib.data.dataset.loss.SiameseDataset
+  _target_: lib.data.dataset.loss.BaseLossDataset
   _partial_: True
   sketch_transform:
     _target_: lib.data.transforms.BaseTransform

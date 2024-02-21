@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -7,14 +9,16 @@ from torchmetrics.aggregation import CatMetric, MeanMetric
 from torchvision.transforms import ToTensor
 
 from lib.data.metainfo import MetaInfo
-from lib.utils.checkpoint import load_model
+from lib.models.clip import CLIP
+from lib.models.loss import Loss
+from lib.models.resnet import ResNet18
 from lib.visualize.image import image_grid, plot_single_image, transform_to_plot
 
 
 class LossTester(LightningModule):
     def __init__(
         self,
-        ckpt_path: str = ".ckpt",
+        loss_ckpt_path: str = "loss.ckpt",
         data_dir: str = "/data",
         index_mode: str = "normal",  # normal, sketch
         query_mode: str = "sketch",  # normal, sketch
@@ -23,7 +27,7 @@ class LossTester(LightningModule):
     ):
         super().__init__()
 
-        self.model = load_model(ckpt_path=ckpt_path)
+        self.model = self.load_model(loss_ckpt_path)
         self.metainfo = MetaInfo(data_dir=data_dir)
 
         self._index: list = []
@@ -44,6 +48,18 @@ class LossTester(LightningModule):
         self.heatmap = CatMetric()
 
         self.transform = ToTensor()
+
+    def load_model(self, loss_ckpt_path: str) -> LightningModule:
+        path = Path(loss_ckpt_path)
+        if path.stem == "resnet18":
+            return ResNet18()
+        if path.stem == "clip":
+            return CLIP()
+        try:
+            return Loss.load_from_checkpoint(path)
+        except Exception:
+            pass
+        raise FileNotFoundError(f"The provided {loss_ckpt_path=} can not be found!")
 
     @property
     def max_k(self):
@@ -87,12 +103,15 @@ class LossTester(LightningModule):
         l2_distance = np.linalg.norm(embedding, axis=-1)
         return embedding / l2_distance.reshape(-1, 1)
 
-    def forward(self, batch):
-        return self.model(batch)
+    def forward(self, batch, type_idx: int):
+        index_mask = batch["type_idx"] == type_idx
+        image = batch["image"][index_mask]
+        type_idx = batch["type_idx"][index_mask]
+        emb = self.model(image, type_idx=type_idx).detach().cpu().numpy()
+        return emb, index_mask
 
     def validation_step(self, batch, batch_idx, dataloader_idx: int = 0):
-        index_mask = batch["type_idx"] == self.index_type_idx
-        index_emb = self.forward(batch["image"][index_mask]).detach().cpu().numpy()
+        index_emb, index_mask = self.forward(batch, type_idx=self.index_type_idx)
         self._index.append(index_emb)
         self._labels.extend(batch["label"][index_mask].detach().cpu().numpy())
         self._image_ids.extend(batch["image_id"][index_mask].detach().cpu().numpy())
@@ -120,16 +139,15 @@ class LossTester(LightningModule):
         self.index = torch.tensor(index).to(self.device)
 
     def test_step(self, batch, batch_idx):
-        # extract from the batch
-        query_mask = batch["type_idx"] == self.query_type_idx
-        gt_labels = batch["label"][query_mask].cpu().numpy()
-        gt_image_ids = batch["image_id"][query_mask].cpu().numpy()
-
         # get the distance
-        query_emb = self.forward(batch["image"][query_mask])
+        query_emb, query_mask = self.forward(batch, type_idx=self.query_type_idx)
         k_at_1_object = self.k_for_num_objects(num_objects=1)
         self.log("k_at_1_object", k_at_1_object)
         dist, idx = self.search(query_emb, k=self.max_k)
+
+        # extract from the batch
+        gt_labels = batch["label"][query_mask].cpu().numpy()
+        gt_image_ids = batch["image_id"][query_mask].cpu().numpy()
 
         # calculate the metrics
         for metric_name in [

@@ -22,13 +22,17 @@ format:
 train_deepsdf:
 	python scripts/train_deepsdf.py +experiment/train_deepsdf=shapenet_chair_4096
 
-train_loss:
-	python scripts/train_loss.py +experiment/train_loss=latent_encoder_shapenet_chair_4096
+train_latent_encoder:
+	python scripts/train_loss.py +experiment/train_loss=latent_encoder
+
+train_siamese:
+	python scripts/train_loss.py +experiment/train_loss=siamese
 
 eval_loss:
 	python scripts/eval_loss.py +experiment/eval_loss=resnet18
 	python scripts/eval_loss.py +experiment/eval_loss=clip
 	python scripts/eval_loss.py +experiment/eval_loss=siamese
+	python scripts/eval_loss.py +experiment/eval_loss=latent_encoder
 
 traverse_latent:
 	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_1

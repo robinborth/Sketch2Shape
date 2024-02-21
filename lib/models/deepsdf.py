@@ -279,19 +279,19 @@ class DeepSDF(LightningModule):
         normal = (normal - 0.5) / 0.5  # scale from (0, 1) -> (-1, 1) with mean,std=0.5
         return normal[None, ...]  # (1, 3, H, W)
 
-    def siamese_input_to_image(self, siamese_input: torch.Tensor) -> torch.Tensor:
-        """Transforms a siamese_input to a image that can be plotted."
+    def loss_input_to_image(self, loss_input: torch.Tensor) -> torch.Tensor:
+        """Transforms a loss_input to a image that can be plotted."
 
         Args:
-            siamese_input (torch.Tensor): The input of dim: (1, 3, H, W); range: (-1, 1)
+            loss_input (torch.Tensor): The input of dim: (1, 3, H, W); range: (-1, 1)
 
         Returns:
             torch.Tensor: The transformed image of dim (H, W, 3).
         """
-        siamese_input = siamese_input.squeeze(0)  # (3, H, W)
-        assert siamese_input.dim() == 3
-        siamese_input = (siamese_input * 0.5) + 0.5  # (-1, 1) -> (0, 1)
-        return siamese_input.permute(1, 2, 0)  # (H, W, 3)
+        loss_input = loss_input.squeeze(0)  # (3, H, W)
+        assert loss_input.dim() == 3
+        loss_input = (loss_input * 0.5) + 0.5  # (-1, 1) -> (0, 1)
+        return loss_input.permute(1, 2, 0)  # (H, W, 3)
 
     def render_normals(
         self,

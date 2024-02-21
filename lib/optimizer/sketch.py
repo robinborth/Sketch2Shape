@@ -1,11 +1,7 @@
 import torch
 from torch.nn.functional import cosine_similarity
-from tqdm import tqdm
 
-from lib.data.metainfo import MetaInfo
-from lib.data.transforms import BaseTransform
 from lib.optimizer.latent import LatentOptimizer
-from lib.utils.checkpoint import load_model
 
 
 class SketchOptimizer(LatentOptimizer):
@@ -65,7 +61,7 @@ class SketchOptimizer(LatentOptimizer):
         self.log("optimize/latent_norm", latent_norm)
 
         # visualize the different images
-        self.log_image("normal", self.deepsdf.siamese_input_to_image(normal))
-        self.log_image("sketch", self.deepsdf.siamese_input_to_image(sketch))
+        self.log_image("normal", self.deepsdf.loss_input_to_image(normal))
+        self.log_image("sketch", self.deepsdf.loss_input_to_image(sketch))
 
         return total_loss

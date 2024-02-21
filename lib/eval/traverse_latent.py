@@ -1,64 +1,51 @@
-from pathlib import Path
-
 import torch
 from torch.nn.functional import cosine_similarity
-from tqdm import tqdm
 
-from lib.data.metainfo import MetaInfo
-from lib.data.transforms import BaseTransform
 from lib.optimizer.latent import LatentOptimizer
-from lib.utils.checkpoint import load_model
 
 
 class LatentTraversal(LatentOptimizer):
     def __init__(
         self,
-        prior_idx_start: int = -1,
-        prior_idx_end: int = -1,
+        # init settings: random, mean, prior, prior(idx), retrieval, latent
+        source_latent_init: str = "random",
+        source_obj_id: str = "",
+        # init settings: random, mean, prior, prior(idx), retrieval, latent
+        target_latent_init: str = "random",
+        target_obj_id: str = "",
+        # video settings
         create_mesh: bool = True,
         create_video: bool = True,
-        # siamese settings (optional)
-        data_dir: str = "/data",
-        loss_ckpt_path: str = "siamese.ckpt",
-        shape_k: int = 16,
-        shape_view_id: int = 11,
-        shape_init: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.meshes: list[dict] = []
 
-        latent_start = None
-        if Path(loss_ckpt_path).exists():
-            self.loss = load_model(loss_ckpt_path)
-            self.loss.freeze()
-            self.loss.eval()
-            device = self.loss.device
-            metainfo = MetaInfo(data_dir=data_dir)
-            sketch = metainfo.load_image(prior_idx_start, shape_view_id, 0)
-            transforms = BaseTransform(mean=0.5, std=0.5)
-            self.sketch = transforms(sketch)[None, ...].to(device)
-            self.sketch_emb = self.loss(self.sketch)
-            if shape_init:
-                metainfo = MetaInfo(data_dir=data_dir, split="train")
-                _loss = []
-                for obj_id in tqdm(metainfo.obj_ids):
-                    label = int(metainfo.label_to_obj_id(obj_id))
-                    normal = metainfo.load_image(label, shape_view_id, 1)  # normal
-                    normal_emb = self.loss(transforms(normal)[None, ...].to(device))
-                    snn_loss = 1 - cosine_similarity(self.sketch_emb, normal_emb)
-                    _loss.append(snn_loss)
-                loss = torch.concatenate(_loss)
-                idx = torch.argsort(loss)[:shape_k]
-                shape_latents = self.deepsdf.lat_vecs.weight[idx].mean(0)
-                latent_start = shape_latents.mean(0)
+        # init the start latent code
+        if source_latent_init.startswith("retrieval"):
+            self.init_retrieval_latents(
+                obj_id=source_obj_id,
+                view_id=self.hparams["prior_view_id"],
+                k=self.hparams["retrieval_k"],
+            )
+        self.init_latent(
+            name="latent_start",
+            latent_init=source_latent_init,
+            obj_id=source_obj_id,
+        )
 
-        if latent_start is None:
-            latent_start = self.deepsdf.get_latent(prior_idx_start)
-        self.register_buffer("latent_start", latent_start)
-
-        latent_end = self.deepsdf.get_latent(prior_idx_end)
-        self.register_buffer("latent_end", latent_end)
+        # init the end latent code
+        if target_latent_init.startswith("retrieval"):
+            self.init_retrieval_latents(
+                obj_id=target_obj_id,
+                view_id=self.hparams["prior_view_id"],
+                k=self.hparams["retrieval_k"],
+            )
+        self.init_latent(
+            name="latent_end",
+            latent_init=target_latent_init,
+            obj_id=target_obj_id,
+        )
 
     def validation_step(self, batch, batch_idx):
         t = batch[0]  # t = [0, 1]
@@ -84,5 +71,5 @@ class LatentTraversal(LatentOptimizer):
             self.log("optimize/siamese_loss", loss, on_step=True)
 
             # visualize sketch and the current normal image
-            self.log_image("normal", self.deepsdf.siamese_input_to_image(normal))
-            self.log_image("sketch", self.deepsdf.siamese_input_to_image(self.sketch))
+            self.log_image("normal", self.deepsdf.loss_input_to_image(normal))
+            self.log_image("sketch", self.deepsdf.loss_input_to_image(self.sketch))

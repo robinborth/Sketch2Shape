@@ -8,7 +8,7 @@ from tqdm import tqdm
 from lib.data.metainfo import MetaInfo
 from lib.data.transforms import BaseTransform
 from lib.models.deepsdf import DeepSDF
-from lib.utils.checkpoint import load_model
+from lib.models.loss import Loss
 
 
 class LatentOptimizer(LightningModule):
@@ -68,7 +68,7 @@ class LatentOptimizer(LightningModule):
         self.deepsdf.eval()
         self.deepsdf.create_camera()
 
-        self.loss = load_model(loss_ckpt_path)
+        self.loss = Loss.load_from_checkpoint(loss_ckpt_path)
         self.loss.freeze()
         self.loss.eval()
 
@@ -79,7 +79,11 @@ class LatentOptimizer(LightningModule):
                 view_id=prior_view_id,
                 k=retrieval_k,
             )
-        self.init_latent(latent_init=latent_init, obj_id=prior_obj_id)
+        self.init_latent(
+            name="latent",
+            latent_init=latent_init,
+            obj_id=prior_obj_id,
+        )
 
     def get_latent(self, latent_init: str = "mean", obj_id: str = ""):
         if latent_init == "prior":
@@ -109,16 +113,26 @@ class LatentOptimizer(LightningModule):
 
         raise NotImplementedError("The current settings are not supported!")
 
-    def init_latent(self, latent_init: str = "mean", obj_id: str = ""):
+    def init_latent(
+        self,
+        latent_init: str = "mean",
+        obj_id: str = "",
+        name: str = "latent",
+    ):
         latent = self.get_latent(latent_init=latent_init, obj_id=obj_id)
-        self.register_buffer("latent", latent)
+        self.register_buffer(name, latent)
 
-    def init_retrieval_latents(self, obj_id: str, view_id: int = 11, k: int = 16):
+    def init_retrieval_latents(
+        self,
+        obj_id: str,
+        view_id: int = 11,
+        k: int = 16,
+    ):
         device = self.loss.device
         obj_id_label = int(self.metainfo.obj_id_to_label(obj_id))
         sketch = self.metainfo.load_image(obj_id_label, view_id, 0)  # sketch
         loss_input = self.transforms(sketch)[None, ...].to(device)
-        sketch_emb = self.loss.embedding(loss_input)
+        sketch_emb = self.loss.embedding(loss_input, mode="sketch")
 
         # get the loss from all objects in the train dataset
         metainfo = MetaInfo(data_dir=self.hparams["data_dir"], split="train_latent")
@@ -127,7 +141,7 @@ class LatentOptimizer(LightningModule):
             label = int(metainfo.obj_id_to_label(obj_id))
             normal = metainfo.load_image(label, view_id, 1)  # normal
             loss_input = self.transforms(normal)[None, ...].to(device)
-            normal_emb = self.loss.embedding(loss_input)
+            normal_emb = self.loss.embedding(loss_input, mode="normal")
             loss = self.loss.compute(sketch_emb, normal_emb)
             _loss.append(loss)
         self.shape_loss = torch.concatenate(_loss)

@@ -1,0 +1,13 @@
+# @package _global_
+
+defaults:
+  - override /data:
+    - train_latent_encoder
+    - eval_loss
+  - override /dataset: shapenet_chair_4096
+  - override /model: latent_encoder 
+  - override /logger: wandb
+
+loss_ckpt_path: ${paths.checkpoint_dir}/latent_encoder.ckpt
+tags: ["eval_loss", "shapenet_chair_4096", "latent_encoder"]
+

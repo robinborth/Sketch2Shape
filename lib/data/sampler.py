@@ -31,7 +31,7 @@ class ChunkSampler(Sampler):
         self.sample_steps = min(sample_steps, self.num_images // self.chunk_size)
         # check that the labels are correct and sorted
         assert np.all(counts == self.num_images)
-        assert np.all(self.labels[: self.num_images] == 0)
+        self.sorted_idx = np.argsort(self.labels)
 
     def __len__(self):
         return self.chunk_size * len(self.unique_labels) * self.sample_steps
@@ -56,4 +56,5 @@ class ChunkSampler(Sampler):
             _idx_list = (iter_labels * num_images) + iter_idxs
             idx_list.append(_idx_list)
         idx_list = np.concatenate(idx_list)
-        return iter(idx_list)
+        sorted_idx_list = self.sorted_idx[idx_list]
+        return iter(sorted_idx_list)

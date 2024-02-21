@@ -2,12 +2,12 @@
 
 defaults:
   - override /data:
-    - train_siamese
-    - eval_siamese
+    - train_loss 
+    - eval_loss
   - override /dataset: shapenet_chair_4096
   - override /model: siamese
   - override /logger: wandb
 
-ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
-tags: ["eval_siamese", "shapenet_chair_4096", "siamese"]
+loss_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
+tags: ["eval_loss", "shapenet_chair_4096", "siamese"]
 

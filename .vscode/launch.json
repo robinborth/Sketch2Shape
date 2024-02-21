@@ -26,7 +26,7 @@
             "request": "launch",
             "program": "scripts/train_loss.py",
             "args": [
-                "+experiment/train_loss=latent_encoder_shapenet_chair_4096",
+                "+experiment/train_loss=latent_encoder",
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
@@ -129,7 +129,7 @@
             "request": "launch",
             "program": "scripts/traverse_latent.py",
             "args": [
-                "+experiment/traverse_latent=siamese_train_train_1"
+                "+experiment/traverse_latent=train_train_1"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

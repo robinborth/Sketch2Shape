@@ -39,14 +39,22 @@ class MetaInfo:
         self.image_type_2_type_idx = {
             "sketch": 0,
             "normal": 1,
-            "rendered_sketch": 2,
-            "rendered_normal": 3,
         }
         self.type_idx_2_image_type = {
             0: "sketch",
             1: "normal",
-            2: "rendered_sketch",
-            3: "rendered_normal",
+        }
+        self.mode_2_image_type = {
+            0: "sketch",
+            1: "normal",
+            2: "sketch",
+            3: "normal",
+        }
+        self.mode_2_image_dir = {
+            0: "sketches",
+            1: "normals",
+            2: "rendered_sketches",
+            3: "rendered_normals",
         }
 
     #################################################################
@@ -64,22 +72,22 @@ class MetaInfo:
             return self.data_dir / "shapes" / obj_id / "rendered_normals"
         raise NotImplementedError()
 
-    def iterate_image_data(self, type_idx: int):
+    def iterate_image_data(self, mode: int):
         for obj_id, label in self._obj_id_to_label.items():
-            images_path = self.type_idx_2_image_dir(type_idx=type_idx, obj_id=obj_id)
-            assert images_path.exists()
-            for file_name in sorted(images_path.iterdir()):
+            image_dir = self.data_dir / "shapes" / obj_id / self.mode_2_image_dir[mode]
+            assert image_dir.exists()
+            for file_name in sorted(image_dir.iterdir()):
                 yield dict(
                     obj_id=obj_id,
                     image_id=file_name.stem,
                     label=label,
-                    image_type=self.type_idx_2_image_type[type_idx],
+                    image_type=self.mode_2_image_type[mode],
                 )
 
     def load_loss(self, modes: list[int] = [0, 1]):
         data = []
-        for type_idx in modes:
-            for image_data in self.iterate_image_data(type_idx=type_idx):
+        for mode in modes:
+            for image_data in self.iterate_image_data(mode=mode):
                 data.append(image_data)
         self._loss_data = pd.DataFrame(data)
 

@@ -34,12 +34,12 @@ class BaseLossDataset(Dataset):
         label = info["label"]
         image_type = info["image_type"]
 
-        if image_type == "sketch" or "rendered_sketch":
+        if image_type in ["sketch", "rendered_sketch"]:
             image = self.metainfo.load_sketch(obj_id, image_id)
             if self.sketch_transform is not None:
                 image = self.sketch_transform(image)
 
-        if image_type == "normal" or "rendered_normal":
+        if image_type in ["normal", "rendered_normal"]:
             image = self.metainfo.load_normal(obj_id, image_id)
             if self.normal_transform is not None:
                 image = self.normal_transform(image)
@@ -52,7 +52,7 @@ class BaseLossDataset(Dataset):
         }
 
     def __getitem__(self, index: int):
-        raise NotImplementedError()
+        return self.fetch(index)
 
 
 ############################################################
@@ -60,9 +60,9 @@ class BaseLossDataset(Dataset):
 ############################################################
 
 
-class LatentEncoderDataset(BaseLossDataset):
+class LatentLossDataset(BaseLossDataset):
     def __init__(self, deepsdf_ckpt_path: str = "deepsdf.ckpt", **kwargs):
-        super.__init__(**kwargs)
+        super().__init__(**kwargs)
         self.deepsdf = DeepSDF.load_from_checkpoint(
             checkpoint_path=deepsdf_ckpt_path,
             map_location="cpu",
@@ -74,8 +74,3 @@ class LatentEncoderDataset(BaseLossDataset):
         latent = self.deepsdf.lat_vecs.weight[label].detach().cpu().numpy().flatten()
         item["latent"] = latent
         return item
-
-
-class SiameseDataset(BaseLossDataset):
-    def __getitem__(self, index: int):
-        return self.fetch(index)

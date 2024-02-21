@@ -9,7 +9,7 @@ class CLIP(LightningModule):
         self.model = CLIPModel.from_pretrained(model_name)
         self.processor = CLIPProcessor.from_pretrained(model_name)
 
-    def forward(self, batch):
+    def forward(self, batch, *args, **kwargs):
         inputs = self.processor(
             text=[""],
             images=batch * 255,

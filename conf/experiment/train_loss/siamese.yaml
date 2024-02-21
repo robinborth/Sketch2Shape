@@ -2,23 +2,25 @@
 
 defaults:
   - override /data:
-    - train_siamese
-    - eval_siamese
+    - train_loss
+    - eval_loss
   - override /dataset: shapenet_chair_4096
   - override /logger: wandb
-  - override /model: barlow_twins
+  - override /model: siamese
 
-task_name: train_barlow_twins
-tags: ["train_barlow_twins", "shapenet_chair_4096"]
+task_name: train_siamese
+tags: ["train_loss", "shapenet_chair_4096", "siamese"]
 
 trainer:
-  max_epochs: 1000
+  max_epochs: 500
   check_val_every_n_epoch: 10
 
 model:
+  reg_weight: 1e-01
   lr_head: 1e-03
   lr_backbone: 1e-04
-  embedding_size: 256
+  embedding_size: 128
+  norm: 2
   scheduler:
     _target_: torch.optim.lr_scheduler.StepLR
     _partial_: True
@@ -27,8 +29,6 @@ model:
 
 data:
   batch_size: 256 
-  train_sampler:
-    chunk_size: 2
   
 callbacks:
   model_checkpoint:

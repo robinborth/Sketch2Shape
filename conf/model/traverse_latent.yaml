@@ -1,16 +1,20 @@
 # @package model
 
-_target_: lib.models.traverse_latent.LatentTraversal
-ckpt_path: ${ckpt_path} 
-prior_idx_start: -1
-prior_idx_end: 0
+_target_: lib.eval.traverse_latent.LatentTraversal
+# base settings
+data_dir: ${data.data_dir}
+loss_ckpt_path: ${loss_ckpt_path} 
+deepsdf_ckpt_path: ${deepsdf_ckpt_path}
+compute_snn_loss: False
+# init settings: random, mean, prior, prior(idx), retrieval, latent
+source_latent_init: random
+source_obj_id: ""
+# init settings: random, mean, prior, prior(idx), retrieval, latent
+target_latent_init: random
+target_obj_id: ""
+# mesh settings
 create_mesh: ${create_mesh}
 create_video: ${create_video}
-# snn loss
-compute_snn_loss: False
-loss_ckpt_path: ${loss_ckpt_path} 
-data_dir: ${data.data_dir}
-# mesh settings
 mesh_resolution: 128
 mesh_chunk_size: 65536
 # rendering settings

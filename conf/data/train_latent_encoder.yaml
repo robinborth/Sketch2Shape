@@ -24,7 +24,7 @@ eval_sampler:
   chunk_size: 2
   sample_steps: -1  # full dataset
 dataset: 
-  _target_: lib.data.dataset.loss.LatentEncoderDataset
+  _target_: lib.data.dataset.loss.LatentLossDataset
   _partial_: True
   deepsdf_ckpt_path: ${deepsdf_ckpt_path}
   sketch_transform:

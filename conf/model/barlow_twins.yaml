@@ -1,8 +1,16 @@
 # @package model
+
+# custom settings
 _target_: lib.models.siamese.BarlowTwins
 gamma: 5e-03
-embedding_size: 128
+support_latent: False
+
+# base settings
+embedding_size: 256
 pretrained: True 
+twin: False
+head: linear
+mode: cosine
 lr_head: 1e-03
 lr_backbone: 1e-05
 scheduler: null

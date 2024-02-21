@@ -38,7 +38,7 @@ class LossDataModule(LightningDataModule):
             self.train_metainfo = MetaInfo(data_dir=data_dir, split=split)
             self.train_dataset = self.hparams["dataset"](
                 data_dir=data_dir,
-                split="train",
+                split=split,
                 modes=modes,
             )
         if stage in ["validate", "fit", "all"]:
@@ -46,7 +46,7 @@ class LossDataModule(LightningDataModule):
             self.val_metainfo = MetaInfo(data_dir=data_dir, split=split)
             self.val_dataset = self.hparams["dataset"](
                 data_dir=data_dir,
-                split="val",
+                split=split,
                 modes=modes,
             )
         if stage in ["test", "all"]:

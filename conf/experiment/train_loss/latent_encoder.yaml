@@ -3,19 +3,21 @@
 defaults:
   - override /data:
     - train_latent_encoder
-    - eval_siamese
+    - eval_loss
   - override /dataset: shapenet_chair_4096
   - override /logger: wandb
   - override /model: latent_encoder 
 
 task_name: train_latent_encoder
-tags: ["train_latent_encoder", "shapenet_chair_4096"]
+tags: ["train_loss", "shapenet_chair_4096", "latent_encoder"]
+deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 
 trainer:
   max_epochs: 100
   check_val_every_n_epoch: 1
 
 model:
+  twin: True
   lr_head: 1e-03
   lr_backbone: 1e-04
   embedding_size: 256
@@ -27,6 +29,8 @@ model:
 
 data:
   batch_size: 256
+  modes: [0, 1]
+  latent: False
   train_sampler:
     chunk_size: 2
     sample_steps: 10
@@ -38,4 +42,4 @@ callbacks:
     save_last: True
   early_stopping:
     monitor: val/loss
-    patience: 100
+    patience: 3

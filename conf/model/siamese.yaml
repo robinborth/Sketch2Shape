@@ -1,10 +1,18 @@
 # @package model
+
+# custom settings
 _target_: lib.models.siamese.Siamese
-embedding_size: 128
-pretrained: True 
+margin: 1.0 
 reg_loss: True 
 reg_weight: 1e-01
-margin: 1.0 
+support_latent: False
+
+# base settings
+embedding_size: 256
+pretrained: True 
+twin: False
+head: linear
+mode: cosine
 lr_head: 1e-03
 lr_backbone: 1e-05
 scheduler: null

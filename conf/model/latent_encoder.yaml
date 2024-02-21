@@ -1,7 +1,15 @@
 # @package model
+
+# custom settings
 _target_: lib.models.latent_encoder.LatentEncoder
+support_latent: True
+
+# base settings
 embedding_size: 256
 pretrained: True 
+twin: False
+head: linear
+mode: cosine
 lr_head: 1e-03
 lr_backbone: 1e-05
 scheduler: null
