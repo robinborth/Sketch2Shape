@@ -57,6 +57,7 @@ preprocess_renderings:
   data_dir: ${data.data_dir}
   deepsdf_ckpt_path: ${deepsdf_ckpt_path} 
   skip: True
+  split: ???
   # traversal settings
   n_renderings: 100
   t_mean: 0.25

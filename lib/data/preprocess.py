@@ -172,9 +172,10 @@ class PreprocessRenderings:
     t_upper: int = 150
     aperture_size: int = 3  # 3, 5, 7
     l2_gradient: bool = True
+    split: str = "train_latent"  # train_latent, val_latent
 
     def __post_init__(self):
-        self.metainfo = MetaInfo(data_dir=self.data_dir, split="train_latent")
+        self.metainfo = MetaInfo(data_dir=self.data_dir, split=self.split)
         self.deepsdf = DeepSDF.load_from_checkpoint(self.deepsdf_ckpt_path)
         self.deepsdf.freeze()
         self.deepsdf.eval()

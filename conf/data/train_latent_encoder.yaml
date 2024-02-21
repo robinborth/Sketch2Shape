@@ -1,8 +1,10 @@
 # @package data
 
-_target_: lib.data.datamodule.latent_encoder.LatentEncoderDataModule
-# paths
+_target_: lib.data.datamodule.loss.LossDataModule
+# settings
 data_dir: ${paths.data_dir}/${data.dataset_name}
+modes: [0, 1]
+latent: True
 # training
 batch_size: 128
 num_workers: 7
@@ -22,7 +24,7 @@ eval_sampler:
   chunk_size: 2
   sample_steps: -1  # full dataset
 dataset: 
-  _target_: lib.data.dataset.latent_encoder.LatentEncoderDataset
+  _target_: lib.data.dataset.loss.LatentEncoderDataset
   _partial_: True
   deepsdf_ckpt_path: ${deepsdf_ckpt_path}
   sketch_transform:

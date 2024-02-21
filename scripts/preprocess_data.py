@@ -35,24 +35,26 @@ def preprocess(cfg: DictConfig) -> None:
             siamese.metainfo.save_sketch(sketch, obj_id=obj_id, image_id=f"{idx:05}")
 
     if cfg.get("deepsdf_ckpt_path"):
-        logger.debug("==> initializing renderings ...")
-        renderings = hydra.utils.instantiate(cfg.data.preprocess_renderings)()
-        logger.debug("==> start preprocessing renderings ...")
-        for obj_id in tqdm(list(renderings.obj_ids_iter())):
-            normals, sketches, latents, config = renderings.preprocess(obj_id=obj_id)
-            for idx, (normal, sketch) in enumerate(zip(normals, sketches)):
-                renderings.metainfo.save_rendered_normal(
-                    normal,
-                    obj_id=obj_id,
-                    image_id=f"{idx:05}",
-                )
-                renderings.metainfo.save_rendered_sketch(
-                    sketch,
-                    obj_id=obj_id,
-                    image_id=f"{idx:05}",
-                )
-            renderings.metainfo.save_rendered_config(obj_id=obj_id, config=config)
-            renderings.metainfo.save_rendered_latents(obj_id=obj_id, latents=latents)
+        for split in ["train_latent", "val_latent"]:
+            logger.debug(f"==> initializing renderings for {split} ...")
+            cfg.data.preprocess_renderings.split = split
+            renderings = hydra.utils.instantiate(cfg.data.preprocess_renderings)()
+            logger.debug(f"==> start preprocessing renderings for {split} ...")
+            for obj_id in tqdm(list(renderings.obj_ids_iter())):
+                normals, sketches, latents, config = renderings.preprocess(obj_id)
+                for idx, (normal, sketch) in enumerate(zip(normals, sketches)):
+                    renderings.metainfo.save_rendered_normal(
+                        normal,
+                        obj_id=obj_id,
+                        image_id=f"{idx:05}",
+                    )
+                    renderings.metainfo.save_rendered_sketch(
+                        sketch,
+                        obj_id=obj_id,
+                        image_id=f"{idx:05}",
+                    )
+                renderings.metainfo.save_rendered_config(obj_id, config=config)
+                renderings.metainfo.save_rendered_latents(obj_id, latents=latents)
 
 
 if __name__ == "__main__":

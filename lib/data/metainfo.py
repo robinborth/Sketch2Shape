@@ -53,34 +53,46 @@ class MetaInfo:
     # SNN pairs loader utils
     #################################################################
 
-    def load_snn(self):
-        data = []
+    def type_idx_2_image_dir(self, type_idx: int, obj_id: str):
+        if type_idx == 0:
+            return self.data_dir / "shapes" / obj_id / "sketches"
+        if type_idx == 1:
+            return self.data_dir / "shapes" / obj_id / "normals"
+        if type_idx == 2:
+            return self.data_dir / "shapes" / obj_id / "rendered_sketches"
+        if type_idx == 3:
+            return self.data_dir / "shapes" / obj_id / "rendered_normals"
+        raise NotImplementedError()
+
+    def iterate_image_data(self, type_idx: int):
         for obj_id, label in self._obj_id_to_label.items():
-            images_path = self.data_dir / "shapes" / obj_id / "sketches"
+            images_path = self.type_idx_2_image_dir(type_idx=type_idx, obj_id=obj_id)
             assert images_path.exists()
             for file_name in sorted(images_path.iterdir()):
-                image_id = file_name.stem
-                for image_type in self.image_type_2_type_idx.keys():
-                    data.append(
-                        dict(
-                            obj_id=obj_id,
-                            image_id=image_id,
-                            label=label,
-                            image_type=image_type,
-                        )
-                    )
-        self._snn_data = pd.DataFrame(data)
+                yield dict(
+                    obj_id=obj_id,
+                    image_id=file_name.stem,
+                    label=label,
+                    image_type=self.type_idx_2_image_type[type_idx],
+                )
+
+    def load_loss(self, modes: list[int] = [0, 1]):
+        data = []
+        for type_idx in modes:
+            for image_data in self.iterate_image_data(type_idx=type_idx):
+                data.append(image_data)
+        self._loss_data = pd.DataFrame(data)
 
     @property
-    def snn_count(self):
-        return len(self._snn_data)
+    def loss_count(self):
+        return len(self._loss_data)
 
     @property
-    def snn_labels(self):
-        return np.array(self._snn_data["label"])
+    def loss_labels(self):
+        return np.array(self._loss_data["label"])
 
-    def get_snn(self, index: int):
-        return self._snn_data.iloc[index].to_dict()
+    def get_loss(self, index: int):
+        return self._loss_data.iloc[index].to_dict()
 
     #################################################################
     # Object IDs and Labels

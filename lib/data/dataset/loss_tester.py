@@ -17,8 +17,8 @@ class LossTesterDataset(Dataset):
         self.sketch_transform = sketch_transform
         self.normal_transform = normal_transform
         self.metainfo = MetaInfo(data_dir=data_dir, split=split)
-        self.metainfo.load_snn()
-        self.labels = np.unique(self.metainfo.snn_labels, return_inverse=True)[1]
+        self.metainfo.load_loss()
+        self.labels = np.unique(self.metainfo.loss_labels, return_inverse=True)[1]
         _, counts = np.unique(self.labels, return_counts=True)
         self.num_images = counts[0]
         assert np.all(counts == self.num_images)
@@ -30,7 +30,7 @@ class LossTesterDataset(Dataset):
         data = []
         for image_idx in range(self.num_images):
             snn_idx = (idx * self.num_images) + image_idx
-            info = self.metainfo.get_snn(snn_idx)
+            info = self.metainfo.get_loss(snn_idx)
             obj_id = info["obj_id"]
             image_id = info["image_id"]
             label = info["label"]

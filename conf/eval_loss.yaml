@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
-  - data: eval_siamese
+  - data: eval_loss 
   - dataset: shapenet_chair_4096 
   - model: siamese 
   - callbacks: default
@@ -13,8 +13,8 @@ defaults:
   - _self_
 
 seed: 123
-task_name: eval_siamese
-tags: ["eval_siamese"]
+task_name: eval_loss
+tags: ["eval_loss"]
 deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 loss_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
 
