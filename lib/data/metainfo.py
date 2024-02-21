@@ -36,7 +36,7 @@ class MetaInfo:
         except Exception as e:
             logger.error("Not able to load dataset_splits file.")
 
-        # mappings for the twin loss network
+        # mappings for the tower loss network
         self.image_type_2_type_idx = {
             "sketch": 0,
             "normal": 1,

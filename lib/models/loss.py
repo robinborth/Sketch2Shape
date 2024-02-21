@@ -13,7 +13,7 @@ class Loss(LightningModule):
         mode: str = "cosine",
         embedding_size: int = 128,
         pretrained: bool = True,
-        twin: bool = False,
+        shared: bool = False,
         lr_head: float = 1e-03,
         lr_backbone: float = 1e-05,
         support_latent: bool = False,
@@ -26,23 +26,23 @@ class Loss(LightningModule):
         super().__init__()
         self.save_hyperparameters(logger=False)
         self.support_latent = support_latent
-        self.twin = twin
+        self.shared = shared
         self.mode = mode
 
         # load the resnet18 backbone
-        if twin:
-            self.twin_0 = ResNet18(
-                head=head,
-                embedding_size=embedding_size,
-                pretrained=pretrained,
-            )
-            self.twin_1 = ResNet18(
+        if shared:
+            self.siamese = ResNet18(
                 head=head,
                 embedding_size=embedding_size,
                 pretrained=pretrained,
             )
         else:
-            self.siamese = ResNet18(
+            self.tower_0 = ResNet18(
+                head=head,
+                embedding_size=embedding_size,
+                pretrained=pretrained,
+            )
+            self.tower_1 = ResNet18(
                 head=head,
                 embedding_size=embedding_size,
                 pretrained=pretrained,
@@ -71,23 +71,23 @@ class Loss(LightningModule):
         raise NotImplementedError()
 
     def forward(self, images, type_idx=None):
-        """Select the twin or siamese architecture.
+        """Select the tower or siamese architecture.
 
         Args:
             images: The images with dim (B, C, W, H)
-            type_idx: If twin network the index of twin with dim (B,). Defaults to None.
+            type_idx: The index of the tower with dim (B,). Defaults to None.
 
         Returns:
             torch.Tensor: The embedding of the images of dim (B, D)
         """
-        if self.twin:
+        if self.shared:
             assert type_idx is not None
             idx_set = set(type_idx.unique().detach().cpu().numpy())
             assert not idx_set.difference({0, 1})  # check that only 0, 1 is in type_idx
             N, D = images.shape[0], self.hparams["embedding_size"]
             emb = torch.zeros((N, D), device=images.device)
-            emb[type_idx == 0] = self.twin_0(images[type_idx == 0])
-            emb[type_idx == 1] = self.twin_1(images[type_idx == 1])
+            emb[type_idx == 0] = self.tower_0(images[type_idx == 0])
+            emb[type_idx == 1] = self.tower_1(images[type_idx == 1])
             return emb
         return self.siamese(images)
 
@@ -122,17 +122,17 @@ class Loss(LightningModule):
         # configure the optimizer
         lr_backbone = self.hparams["lr_backbone"]
         lr_head = self.hparams["lr_head"]
-        if self.twin:
-            params = [
-                {"params": self.twin_0.backbone.parameters(), "lr": lr_backbone},
-                {"params": self.twin_0.head.parameters(), "lr": lr_head},
-                {"params": self.twin_1.backbone.parameters(), "lr": lr_backbone},
-                {"params": self.twin_1.head.parameters(), "lr": lr_head},
-            ]
-        else:
+        if self.shared:
             params = [
                 {"params": self.siamese.backbone.parameters(), "lr": lr_backbone},
                 {"params": self.siamese.head.parameters(), "lr": lr_head},
+            ]
+        else:
+            params = [
+                {"params": self.tower_0.backbone.parameters(), "lr": lr_backbone},
+                {"params": self.tower_0.head.parameters(), "lr": lr_head},
+                {"params": self.tower_1.backbone.parameters(), "lr": lr_backbone},
+                {"params": self.tower_1.head.parameters(), "lr": lr_head},
             ]
         optimizer = torch.optim.Adam(params)
 

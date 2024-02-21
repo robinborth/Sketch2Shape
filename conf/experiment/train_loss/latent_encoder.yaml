@@ -17,7 +17,7 @@ trainer:
   check_val_every_n_epoch: 1
 
 model:
-  twin: True
+  shared: True
   lr_head: 1e-03
   lr_backbone: 1e-04
   embedding_size: 256

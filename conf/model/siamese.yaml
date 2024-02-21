@@ -10,7 +10,7 @@ support_latent: False
 # base settings
 embedding_size: 256
 pretrained: True 
-twin: False
+shared: False
 head: linear
 mode: cosine
 lr_head: 1e-03
