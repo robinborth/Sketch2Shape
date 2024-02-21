@@ -73,10 +73,7 @@ def train(cfg: DictConfig) -> None:
         trainer = hydra.utils.instantiate(cfg.trainer, logger=logger)
         trainer.validate(
             tester,
-            dataloaders=[
-                # datamodule.train_dataloader(),
-                datamodule.val_dataloader(),
-            ],
+            dataloaders=[datamodule.val_dataloader()],
         )
 
         log.info("==> start testing ...")

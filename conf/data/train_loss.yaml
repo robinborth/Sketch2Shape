@@ -6,7 +6,7 @@ data_dir: ${paths.data_dir}/${data.dataset_name}
 modes: [0, 1]
 latent: False
 # training
-batch_size: 128
+batch_size: 256
 num_workers: 7
 pin_memory: True
 drop_last: True
@@ -17,14 +17,14 @@ train_sampler:
   _target_: lib.data.sampler.ChunkSampler 
   _partial_: True
   chunk_size: 2
-  sample_steps: 1
+  sample_steps: -1
 eval_sampler:
   _target_: lib.data.sampler.ChunkSampler 
   _partial_: True
   chunk_size: 2
   sample_steps: -1  # full dataset
 dataset: 
-  _target_: lib.data.dataset.loss.BaseLossDataset
+  _target_: lib.data.dataset.loss.LossDataset
   _partial_: True
   sketch_transform:
     _target_: lib.data.transforms.BaseTransform

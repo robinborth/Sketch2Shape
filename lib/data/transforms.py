@@ -93,10 +93,11 @@ class DilateSketch(Transform):
         _, H, W = image.shape
         img = 1.0 - image
         img = v2.functional.pad(img, padding=self.padding)  # 3xH+PxW+P
-        img = self.conv(img)
+        with torch.no_grad():
+            img = self.conv(img)
         img = 1.0 - torch.min(img, torch.tensor(1.0))
         img = v2.functional.resize(img, (H, W), antialias=True)
-        return torch.clip(img, 0, 1)
+        return torch.clip(img, 0.0, 1.0)
 
 
 class ToSilhouette(Transform):

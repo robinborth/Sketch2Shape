@@ -10,7 +10,7 @@ from lib.models.deepsdf import DeepSDF
 ############################################################
 
 
-class BaseLossDataset(Dataset):
+class LossDataset(Dataset):
     def __init__(
         self,
         data_dir: str = "data/",
@@ -67,11 +67,11 @@ class BaseLossDataset(Dataset):
 
 
 ############################################################
-# Different Types Of Loss Datasets
+# Latent Loss Dataset
 ############################################################
 
 
-class LatentLossDataset(BaseLossDataset):
+class LatentLossDataset(LossDataset):
     def __init__(self, deepsdf_ckpt_path: str = "deepsdf.ckpt", **kwargs):
         super().__init__(**kwargs)
         self.deepsdf = DeepSDF.load_from_checkpoint(

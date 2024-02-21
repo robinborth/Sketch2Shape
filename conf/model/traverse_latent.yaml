@@ -5,7 +5,7 @@ _target_: lib.eval.traverse_latent.LatentTraversal
 data_dir: ${data.data_dir}
 loss_ckpt_path: ${loss_ckpt_path} 
 deepsdf_ckpt_path: ${deepsdf_ckpt_path}
-compute_snn_loss: False
+compute_loss: ${compute_loss} 
 # init settings: random, mean, prior, prior(idx), retrieval, latent
 source_latent_init: random
 source_obj_id: ""

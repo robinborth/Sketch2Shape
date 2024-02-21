@@ -9,7 +9,6 @@ tags: ["optimize_sketch", "shapenet_chair_4096", "optim_couch_prior"]
 split: train 
 train: True
 eval: False
-prior_idx: mean
 obj_ids:
   - 1459c329e2123d4fe5b03ab845ae95c
 

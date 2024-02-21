@@ -1,13 +1,14 @@
 # @package model
 
 # custom settings
-_target_: lib.models.latent_encoder.LatentEncoder
-support_latent: True
+_target_: lib.models.loss.BarlowLoss
+gamma: 5e-03
+support_latent: False
 
 # base settings
 embedding_size: 256
 pretrained: True 
-shared: False
+shared: True
 head: linear
 mode: cosine
 lr_head: 1e-03

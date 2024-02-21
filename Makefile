@@ -22,17 +22,31 @@ format:
 train_deepsdf:
 	python scripts/train_deepsdf.py +experiment/train_deepsdf=shapenet_chair_4096
 
-train_latent_encoder:
-	python scripts/train_loss.py +experiment/train_loss=latent_encoder
+train_latent_loss:
+	python scripts/train_loss.py +experiment/train_loss=latent_siamese_multi_view
 
-train_siamese:
-	python scripts/train_loss.py +experiment/train_loss=siamese
+abblation_latent_loss:
+	python scripts/train_loss.py +experiment/train_loss=latent_siamese_edge_grayscale_multi_view_256
+	python scripts/train_loss.py +experiment/train_loss=latent_siamese_edge_normal_latent_256
+	python scripts/train_loss.py +experiment/train_loss=latent_siamese_edge_normal_multi_view_256
+	python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_latent_multi_view_256
+	python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_multi_view_64
+	python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_multi_view_128
+	python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_multi_view_256
+	python scripts/train_loss.py +experiment/train_loss=latent_tower_edge_grayscale_multi_view_256
+	python scripts/train_loss.py +experiment/train_loss=latent_tower_edge_normal_multi_view_256
+
+train_triplet_loss:
+	python scripts/train_loss.py +experiment/train_loss=triplet_siamese_multi_view
+
+train_barlow_loss:
+	python scripts/train_loss.py +experiment/train_loss=triplet_siamese_multi_view
 
 eval_loss:
 	python scripts/eval_loss.py +experiment/eval_loss=resnet18
 	python scripts/eval_loss.py +experiment/eval_loss=clip
-	python scripts/eval_loss.py +experiment/eval_loss=siamese
-	python scripts/eval_loss.py +experiment/eval_loss=latent_encoder
+	python scripts/eval_loss.py +experiment/eval_loss=latent_loss
+	python scripts/eval_loss.py +experiment/eval_loss=triplet_loss
 
 traverse_latent:
 	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_1
@@ -47,7 +61,6 @@ traverse_latent:
 	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_2
 	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_3
 	python scripts/traverse_latent.py +experiment/traverse_latent=train_train_4
-	python scripts/traverse_latent.py +experiment/traverse_latent=siamese_train_train_1
 
 optimize_deepsdf:
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=baseline
@@ -82,24 +95,18 @@ optimize_chair:
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=chair_train_mean
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=chair_train_random
 
-optimize_couch:
+optimize_deepsdf_couch:
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=couch_train_prior
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=couch_train_prior_close
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=couch_train_mean
 	python scripts/optimize_deepsdf.py +experiment/optimize_deepsdf=couch_train_random
 
+optimize_normals_couch:
 	python scripts/optimize_normals.py +experiment/optimize_normals=couch_train_prior
 	python scripts/optimize_normals.py +experiment/optimize_normals=couch_train_prior_close
 	python scripts/optimize_normals.py +experiment/optimize_normals=couch_train_mean
 	python scripts/optimize_normals.py +experiment/optimize_normals=couch_train_random
 
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=couch_train_prior
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=couch_train_prior_close
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=couch_train_mean
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=couch_train_random
+optimize_sketch_couch:
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=couch_latent
 
-optimize_couch_1:
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=optim_couch_1
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=optim_couch_1 model.reg_loss=True
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=optim_chair_1
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=optim_chair_1 model.reg_loss=True

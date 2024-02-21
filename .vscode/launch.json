@@ -26,7 +26,7 @@
             "request": "launch",
             "program": "scripts/train_loss.py",
             "args": [
-                "+experiment/train_loss=latent_encoder",
+                "+experiment/train_loss=latent_siamese_multi_view",
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
@@ -43,13 +43,13 @@
             "justMyCode": false,
         },
         {
-            "name": "Debug: Eval Siamese",
+            "name": "Debug: Eval Loss",
             "type": "debugpy",
             "request": "launch",
             "program": "scripts/eval_loss.py",
             "console": "integratedTerminal",
             "args": [
-                "+experiment/eval_loss=siamese"
+                "+experiment/eval_loss=latent_loss"
             ],
             "justMyCode": true,
         },

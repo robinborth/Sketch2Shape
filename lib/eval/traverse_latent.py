@@ -16,6 +16,7 @@ class LatentTraversal(LatentOptimizer):
         # video settings
         create_mesh: bool = True,
         create_video: bool = True,
+        compute_loss: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -58,7 +59,7 @@ class LatentTraversal(LatentOptimizer):
         if self.hparams["create_video"]:
             self.capture_camera_frame()
 
-        if self.snn_loss:
+        if self.hparams["compute_loss"]:
             # calculate the normal embedding
             rendered_normal = self.capture_camera_frame()  # (H, W, 3)
             normal = self.deepsdf.normal_to_siamese(rendered_normal)  # (1, 3, H, W)

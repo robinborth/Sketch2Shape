@@ -18,8 +18,6 @@ class LossTesterDataModule(LightningDataModule):
         shuffle: bool = True,
         # dataset
         dataset=None,
-        sketch_transform: Optional[Callable] = None,
-        normal_transform: Optional[Callable] = None,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -29,20 +27,14 @@ class LossTesterDataModule(LightningDataModule):
         self.train_dataset = self.hparams["dataset"](
             data_dir=self.hparams["data_dir"],
             split="train",
-            sketch_transform=self.hparams["sketch_transform"],
-            normal_transform=self.hparams["normal_transform"],
         )
         self.val_dataset = self.hparams["dataset"](
             data_dir=self.hparams["data_dir"],
             split="val",
-            sketch_transform=self.hparams["sketch_transform"],
-            normal_transform=self.hparams["normal_transform"],
         )
         self.test_dataset = self.hparams["dataset"](
             data_dir=self.hparams["data_dir"],
             split="test",
-            sketch_transform=self.hparams["sketch_transform"],
-            normal_transform=self.hparams["normal_transform"],
         )
 
     @staticmethod
