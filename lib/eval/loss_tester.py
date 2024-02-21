@@ -107,12 +107,12 @@ class LossTester(LightningModule):
         index_mask = batch["type_idx"] == type_idx
         image = batch["image"][index_mask]
         type_idx = batch["type_idx"][index_mask]
-        emb = self.model(image, type_idx=type_idx).detach().cpu().numpy()
+        emb = self.model(image, type_idx=type_idx)
         return emb, index_mask
 
     def validation_step(self, batch, batch_idx, dataloader_idx: int = 0):
         index_emb, index_mask = self.forward(batch, type_idx=self.index_type_idx)
-        self._index.append(index_emb)
+        self._index.append(index_emb.detach().cpu().numpy())
         self._labels.extend(batch["label"][index_mask].detach().cpu().numpy())
         self._image_ids.extend(batch["image_id"][index_mask].detach().cpu().numpy())
 
@@ -146,8 +146,8 @@ class LossTester(LightningModule):
         dist, idx = self.search(query_emb, k=self.max_k)
 
         # extract from the batch
-        gt_labels = batch["label"][query_mask].cpu().numpy()
-        gt_image_ids = batch["image_id"][query_mask].cpu().numpy()
+        gt_labels = batch["label"][query_mask].detach().cpu().numpy()
+        gt_image_ids = batch["image_id"][query_mask].detach().cpu().numpy()
 
         # calculate the metrics
         for metric_name in [
