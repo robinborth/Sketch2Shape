@@ -9,7 +9,7 @@ defaults:
   - override /model: latent_siamese
 
 task_name: train_latent_loss
-tags: ["train_loss", "shapenet_chair_4096", "latent_siamese_sketch_normal_multi_view_256"]
+tags: ["train_loss", "shapenet_chair_4096", "latent_siamese_sketch_grayscale_multi_view_256"]
 
 data:
   latent: True

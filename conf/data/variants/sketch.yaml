@@ -1,26 +1,26 @@
 # @package _global_
 
-defaults:
-  - override /data: optimize_latent
-  - override /dataset: shapenet_chair_4096
-  - override /logger: wandb
-
-tags: ["baseline", "shapenet_chair_4096", "latent_sketch"]
-
-ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
-loss_ckpt_path: ${paths.checkpoint_dir}/latent_loss.ckpt 
-
-train: False
-eval: True
-save_mesh: True
-create_video: False
-split: val 
-
-model:
-  latent_init: latent
-  mesh_resolution: 128
-
 data:
+  dataset: 
+    sketch_transform:
+      transforms:
+        - _target_: torchvision.transforms.v2.RandomRotation
+          degrees: 5 
+          fill: 1.0
+        - _target_: torchvision.transforms.v2.RandomChoice
+          transforms:
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 1
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 3
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 5
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 7
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 9
+
+eval_data:
   dataset: 
     sketch_transform:
       transforms:

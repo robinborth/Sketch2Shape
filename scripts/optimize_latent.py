@@ -11,10 +11,11 @@ from lightning.pytorch.loggers import Logger as LightningLogger
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig
 from torchmetrics.image.fid import FrechetInceptionDistance
+from torchvision.transforms import v2
 from tqdm import tqdm
 
 from lib.data.metainfo import MetaInfo
-from lib.data.transforms import BaseTransform, ToSketch
+from lib.data.transforms import BaseTransform, DilateSketch, ToSketch
 from lib.eval.chamfer_distance import ChamferDistance
 from lib.eval.clip_score import CLIPScore
 from lib.eval.earth_movers_distance import EarthMoversDistance
@@ -122,18 +123,20 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
             emd.update(mesh, surface_samples)
 
         # frechet inception distance and clip score
-        transform = BaseTransform(normalize=False)
-        to_sketch = ToSketch()
+        transforms = [ToSketch(), DilateSketch(kernel_size=5)]
+        sketch_transform = BaseTransform(normalize=False, transforms=transforms)
+        normal_transform = v2.Compose(transforms)
         model.deepsdf.create_camera(azim=eval_azim, elev=eval_elev)
         log.info("==> start evaluate FID and CLIPScore ...")
         for latent, obj_id in tqdm(zip(latents, obj_ids), total=len(obj_ids)):
             # gt sketch
             gt_sketch = metainfo.load_sketch(obj_id, f"{eval_view_id:05}")
-            gt_sketch = transform(gt_sketch)[None, ...]
+            gt_sketch = sketch_transform(gt_sketch)[None, ...]
             # rendered sketch
             model.latent = latent
-            rendered_normal = model.capture_camera_frame().permute(2, 0, 1)
-            rendered_sketch = to_sketch(rendered_normal.detach().cpu())[None, ...]
+            rendered_normal = model.capture_camera_frame()
+            rendered_normal = rendered_normal.permute(2, 0, 1).detach().cpu()
+            rendered_sketch = normal_transform(rendered_normal)[None, ...]
             # frechet inception distance
             fid.update(gt_sketch, real=True)
             fid.update(rendered_sketch, real=False)

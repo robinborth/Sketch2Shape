@@ -21,7 +21,7 @@ def evaluate(cfg: DictConfig) -> None:
 
     log.info(f"==> initializing datamodule <{cfg.eval_data._target_}>")
     datamodule: LightningDataModule = hydra.utils.instantiate(cfg.eval_data)
-    datamodule.setup("all")
+    datamodule.setup("validate")
 
     log.info("==> load tester ...")
     tester = LossTester(loss_ckpt_path=cfg.loss_ckpt_path, data_dir=cfg.data.data_dir)

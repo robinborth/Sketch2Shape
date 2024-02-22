@@ -1,7 +1,0 @@
-# @package _global_
-
-eval_data:
-  dataset:
-    normal_transform:
-      transforms:
-        - _target_: lib.data.transforms.ToGrayScale 

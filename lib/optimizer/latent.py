@@ -6,7 +6,7 @@ from lightning.pytorch.loggers import WandbLogger
 from tqdm import tqdm
 
 from lib.data.metainfo import MetaInfo
-from lib.data.transforms import BaseTransform
+from lib.data.transforms import BaseTransform, DilateSketch
 from lib.models.deepsdf import DeepSDF
 from lib.models.loss import Loss
 
@@ -47,7 +47,9 @@ class LatentOptimizer(LightningModule):
         super().__init__()
         self.save_hyperparameters(logger=False)
         self.metainfo = MetaInfo(data_dir=data_dir)
-        self.transforms = BaseTransform(mean=0.5, std=0.5)
+        # TODO fix the normal transforms and the init with other
+        # sketches e.g. handdrawn and grayscale
+        self.transforms = BaseTransform(transforms=[DilateSketch(kernel_size=5)])
 
         # init deepsdf
         self.deepsdf = DeepSDF.load_from_checkpoint(

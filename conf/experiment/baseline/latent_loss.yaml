@@ -3,9 +3,8 @@
 defaults:
   - override /data: optimize_latent
   - override /dataset: shapenet_chair_4096
-  - override /logger: wandb
 
-tags: ["baseline", "shapenet_chair_4096", "latent_edge"]
+tags: ["baseline", "shapenet_chair_4096", "latent_loss"]
 
 ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 loss_ckpt_path: ${paths.checkpoint_dir}/latent_loss.ckpt 

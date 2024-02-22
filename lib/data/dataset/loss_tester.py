@@ -11,13 +11,14 @@ class LossTesterDataset(Dataset):
         self,
         data_dir: str = "data/",
         split: Optional[str] = None,
+        modes: list[int] = [0, 1],
         sketch_transform: Optional[Callable] = None,
         normal_transform: Optional[Callable] = None,
     ):
         self.sketch_transform = sketch_transform
         self.normal_transform = normal_transform
         self.metainfo = MetaInfo(data_dir=data_dir, split=split)
-        self.metainfo.load_loss()
+        self.metainfo.load_loss(modes=modes)
         self.labels = np.unique(self.metainfo.loss_labels, return_inverse=True)[1]
         _, counts = np.unique(self.labels, return_counts=True)
         self.num_images = counts[0]

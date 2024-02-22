@@ -118,7 +118,9 @@
             "request": "launch",
             "program": "scripts/optimize_deepsdf.py",
             "args": [
-                "+experiment/optimize_deepsdf=baseline"
+                "+experiment/baseline=latent_loss",
+                "loss_ckpt_path=checkpoints/latent_siamese_edge_normal_multi_view_256.ckpt",
+                "+data/variants=sketch"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
