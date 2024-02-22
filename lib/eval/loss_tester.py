@@ -115,6 +115,8 @@ class LossTester(LightningModule):
         self._index.append(index_emb.detach().cpu().numpy())
         self._labels.extend(batch["label"][index_mask].detach().cpu().numpy())
         self._image_ids.extend(batch["image_id"][index_mask].detach().cpu().numpy())
+        type_idx, image = batch["type_idx"][0], batch["image"][0]
+        self.model.log_image(key=f"image_{type_idx}", image=image, batch_idx=batch_idx)
 
     def calculate_recall(self, recall_type, idx, gt_labels):
         _, _, n, _type = recall_type.split("_")

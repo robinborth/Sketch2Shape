@@ -26,18 +26,20 @@ train_latent_loss:
 	python scripts/train_loss.py +experiment/train_loss=latent_siamese_multi_view
 
 abblation_latent_loss:
-	python scripts/train_loss.py +experiment/train_loss=latent_tower_edge_grayscale_multi_view_256
-	python scripts/train_loss.py +experiment/train_loss=latent_tower_edge_normal_multi_view_256
-	python scripts/train_loss.py +experiment/train_loss=latent_siamese_edge_grayscale_multi_view_256
-
-	python scripts/train_loss.py +experiment/train_loss=latent_siamese_edge_normal_multi_view_256
+	# python scripts/train_loss.py +experiment/train_loss=latent_siamese_edge_normal_multi_view_256
+	# python scripts/train_loss.py +experiment/train_loss=latent_siamese_edge_grayscale_multi_view_256
 	python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_multi_view_256
-	python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_latent_256
-	python scripts/train_loss.py +experiment/train_loss=latent_siamese_edge_normal_latent_256
-	python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_latent_multi_view_256
 
-	python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_multi_view_64
-	python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_multi_view_128
+	# python scripts/train_loss.py +experiment/train_loss=latent_tower_edge_normal_multi_view_256
+	# python scripts/train_loss.py +experiment/train_loss=latent_tower_edge_grayscale_multi_view_256
+	python scripts/train_loss.py +experiment/train_loss=latent_tower_sketch_grayscale_multi_view_256
+
+	python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_latent_256
+	python scripts/train_loss.py +experiment/train_loss=latent_tower_sketch_grayscale_latent_256
+
+	# python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_latent_multi_view_256
+	# python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_multi_view_64
+	# python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_multi_view_128
 
 train_triplet_loss:
 	python scripts/train_loss.py +experiment/train_loss=triplet_siamese_multi_view
@@ -48,8 +50,20 @@ train_barlow_loss:
 eval_loss:
 	python scripts/eval_loss.py +experiment/eval_loss=resnet18
 	python scripts/eval_loss.py +experiment/eval_loss=clip
-	python scripts/eval_loss.py +experiment/eval_loss=latent_loss
 	python scripts/eval_loss.py +experiment/eval_loss=triplet_loss
+
+eval_latent_loss:
+	python scripts/eval_loss.py +experiment/eval_loss=latent_loss loss_ckpt_path=checkpoints/latent_siamese_edge_grayscale_multi_view_256.ckpt
+	python scripts/eval_loss.py +experiment/eval_loss=latent_loss loss_ckpt_path=checkpoints/latent_siamese_edge_grayscale_multi_view_256.ckpt +data/variants=eval_grayscale
+	python scripts/eval_loss.py +experiment/eval_loss=latent_loss loss_ckpt_path=checkpoints/latent_siamese_edge_grayscale_multi_view_256.ckpt +data/variants=eval_sketch
+	python scripts/eval_loss.py +experiment/eval_loss=latent_loss loss_ckpt_path=checkpoints/latent_siamese_edge_grayscale_multi_view_256.ckpt +data/variants=eval_grayscale +data/variants=eval_sketch
+
+eval_latent_deepsdf:
+	python scripts/eval_loss.py +experiment/eval_loss=latent_loss loss_ckpt_path=checkpoints/latent_siamese_edge_grayscale_multi_view_256.ckpt
+	python scripts/eval_loss.py +experiment/eval_loss=latent_loss loss_ckpt_path=checkpoints/latent_siamese_edge_grayscale_multi_view_256.ckpt +data/variants=eval_grayscale
+	python scripts/eval_loss.py +experiment/eval_loss=latent_loss loss_ckpt_path=checkpoints/latent_siamese_edge_grayscale_multi_view_256.ckpt +data/variants=eval_sketch
+	python scripts/eval_loss.py +experiment/eval_loss=latent_loss loss_ckpt_path=checkpoints/latent_siamese_edge_grayscale_multi_view_256.ckpt +data/variants=eval_grayscale +data/variants=eval_sketch
+
 
 traverse_latent:
 	python scripts/traverse_latent.py +experiment/traverse_latent=mean_train_1

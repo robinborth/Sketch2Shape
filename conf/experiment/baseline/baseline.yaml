@@ -4,7 +4,7 @@ defaults:
   - override /data: optimize_latent
   - override /dataset: shapenet_chair_4096
 
-tags: ["optimize_deepsdf", "shapenet_chair_4096", "baseline"]
+tags: ["baseline", "shapenet_chair_4096", "baseline"]
 split: train
 train: False
 eval: True

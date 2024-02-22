@@ -54,9 +54,9 @@ class Loss(LightningModule):
 
     def embedding(self, images, mode: str = "sketch"):
         if mode == "sketch":
-            type_idx = torch.zeros((images.shape[0]), dtype=images.device)
+            type_idx = torch.zeros(images.shape[0], device=images.device)
         else:
-            type_idx = torch.ones((images.shape[0]), dtype=images.device)
+            type_idx = torch.ones(images.shape[0], device=images.device)
         return self.forward(images, type_idx=type_idx)
 
     def compute(self, emb_0, emb_1):

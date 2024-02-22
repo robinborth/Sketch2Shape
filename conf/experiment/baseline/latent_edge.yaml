@@ -1,0 +1,21 @@
+# @package _global_
+
+defaults:
+  - override /data: optimize_latent
+  - override /dataset: shapenet_chair_4096
+  - override /logger: wandb
+
+tags: ["baseline", "shapenet_chair_4096", "latent_edge"]
+
+ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
+loss_ckpt_path: ${paths.checkpoint_dir}/latent_loss.ckpt 
+
+train: False
+eval: True
+save_mesh: True
+create_video: False
+split: val 
+
+model:
+  latent_init: latent
+  mesh_resolution: 128
