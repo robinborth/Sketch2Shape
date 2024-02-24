@@ -44,6 +44,9 @@ class DeepSDF(LightningModule):
         surface_eps: float = 1e-03,
         sphere_eps: float = 1e-01,
         normal_eps: float = 5e-03,
+        # lightning settings
+        ambient: float = 0.2,
+        diffuse: float = 0.5,
     ):
         super().__init__()
         self.save_hyperparameters(logger=False)
@@ -237,11 +240,17 @@ class DeepSDF(LightningModule):
             sphere_eps=sphere_eps,
         )
         points, rays, mask = camera.unit_sphere_intersection_rays()
+        camera_position = camera.camera_position()
         self.camera_points = torch.tensor(points, device=self.device)
         self.camera_rays = torch.tensor(rays, device=self.device)
         self.camera_mask = torch.tensor(mask, dtype=torch.bool, device=self.device)
+        self.camera_position = torch.tensor(camera_position, device=self.device)
 
-    def capture_camera_frame(self, latent: torch.Tensor) -> torch.Tensor:
+    def capture_camera_frame(
+        self,
+        latent: torch.Tensor,
+        mode: str = "normal",
+    ) -> torch.Tensor:
         self.eval()
         with torch.no_grad():
             points, surface_mask = self.sphere_tracing(
@@ -250,12 +259,13 @@ class DeepSDF(LightningModule):
                 mask=self.camera_mask,
                 rays=self.camera_rays,
             )
-            normals = self.render_normals(
+            fn = self.render_normals if mode == "normal" else self.render_grayscale
+            image = fn(
                 points=points,
                 latent=latent,
                 mask=surface_mask,
             )
-        return normals
+        return image
 
     def log_image(self, key: str, image: torch.Tensor):
         image = image.detach().cpu().numpy()
@@ -265,6 +275,35 @@ class DeepSDF(LightningModule):
     ############################################################
     # Rendering Utils
     ############################################################
+
+    def normal_to_grayscale(
+        self,
+        normal: torch.Tensor,
+        ambient: float = 0.2,
+        diffuse: float = 0.5,
+    ):
+        """Transforms the normal after render_normals to grayscale."
+
+        Args:
+            normal (torch.Tensor): The normal image of dim: (H, W, 3) and range (0, 1)
+
+        Returns:
+            torch.Tensor: The grayscale image of dim (H, W, 3) and range (0, 1)
+        """
+        mask = normal.sum(-1) > 2.95
+        N = (normal - 0.5) / 0.5
+        C = self.camera_position.clone()
+        L = C / torch.norm(C)
+        grayscale = torch.zeros_like(normal)
+        grayscale += ambient
+        grayscale += diffuse * (N @ L)[..., None]
+        grayscale[mask, :] = 1.0
+        grayscale = torch.clamp(
+            grayscale,
+            torch.tensor(0.0, device=grayscale.device),
+            torch.tensor(1.0, device=grayscale.device),
+        )
+        return grayscale
 
     def normal_to_siamese(self, normal: torch.Tensor) -> torch.Tensor:
         """Transforms the normal after render_normals to siamese input."
@@ -336,6 +375,11 @@ class DeepSDF(LightningModule):
         mask: torch.Tensor,
     ):
         rendered_normal = self.render_normals(points=points, latent=latent, mask=mask)
+        return self.normal_to_grayscale(
+            normal=rendered_normal,
+            ambient=self.hparams["ambient"],
+            diffuse=self.hparams["diffuse"],
+        )
 
     ############################################################
     # Sphere Tracing Variants

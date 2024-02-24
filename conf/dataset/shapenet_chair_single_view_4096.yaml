@@ -1,0 +1,16 @@
+# @package data
+
+defaults:
+  - preprocess_data
+  - _self_
+
+dataset_name: shapenet_chair_single_view_4096
+data_dir: ${paths.data_dir}/${data.dataset_name}
+
+########################################################################
+# Training Splits 
+########################################################################
+
+num_obj_train: 4096
+num_obj_val: 128
+num_obj_test: 256

@@ -1,25 +1,7 @@
 # @package _global_
 
-defaults:
-  - override /data:
-    - train_loss
-    - eval_loss
-  - override /dataset: shapenet_chair_4096
-  - override /logger: wandb
-  - override /model: latent_siamese
-
-task_name: train_latent_loss
-tags: ["train_loss", "shapenet_chair_4096", "latent_siamese_sketch_normal_multi_view_64"]
-
 data:
-  latent: True
-  modes: [0, 1]
-  batch_size: 256 
-  train_sampler:
-    chunk_size: 1
   dataset: 
-    _target_: lib.data.dataset.loss.LatentLossDataset
-    deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
     sketch_transform:
       transforms:
         - _target_: torchvision.transforms.v2.RandomRotation
@@ -38,9 +20,24 @@ data:
         - _target_: torchvision.transforms.v2.Resize
           size: [64, 64]
           antialias: False
-    normal_transform:
+
+eval_data:
+  dataset: 
+    sketch_transform:
       transforms:
+        - _target_: torchvision.transforms.v2.RandomRotation
+          degrees: 5 
+          fill: 1.0
+        - _target_: torchvision.transforms.v2.RandomChoice
+          transforms:
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 3
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 5
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 7
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 9
         - _target_: torchvision.transforms.v2.Resize
           size: [64, 64]
           antialias: False
-        - _target_: lib.data.transforms.ToGrayScale 

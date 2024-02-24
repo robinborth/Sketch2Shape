@@ -154,19 +154,23 @@ class PreprocessRenderings:
     deepsdf_ckpt_path: str = "deepsdf.ckpt"
     skip: bool = True
     # traversal settings
-    n_renderings: int = 100
+    traversal: bool = True
+    n_renderings: int = 10
     t_mean: float = 0.25
     t_std: float = 0.1
     # camera settings
-    azim_mean: float = 30
-    azim_std: float = 5
-    elev_mean: float = -20
+    azims: list[float] = field(default_factory=list)
+    azim_std: float = 22.5
+    elev: float = -20
     elev_std: float = 5
     dist: float = 4.0
     width: int = 256
     height: int = 256
     focal: int = 512
     sphere_eps: float = 1e-1
+    # grayscale settings
+    ambient: float = 0.2
+    diffuse: float = 0.5
     # sketch settings
     t_lower: int = 100
     t_upper: int = 150
@@ -184,7 +188,10 @@ class PreprocessRenderings:
         if not self.skip:
             yield from self.metainfo.obj_ids
         for obj_id in self.metainfo.obj_ids:
-            config_path = self.metainfo.rendered_config_path(obj_id=obj_id)
+            if self.traversal:
+                config_path = self.metainfo.traversed_config_path(obj_id=obj_id)
+            else:
+                config_path = self.metainfo.rendered_config_path(obj_id=obj_id)
             if not config_path.exists():
                 yield obj_id
 
@@ -201,60 +208,79 @@ class PreprocessRenderings:
     def preprocess(self, obj_id: str):
         source_label = self.metainfo.obj_id_to_label(obj_id)
         source_latent = self.deepsdf.lat_vecs.weight[source_label]
-
-        permutation = np.random.permutation(len(self.metainfo.obj_ids))
-        target_idxs = permutation[permutation != source_label][: self.n_renderings]
+        target_idxs = [source_label] * self.n_renderings
 
         normals = []
         sketches = []
+        grayscales = []
         latents = []
         configs = []
-        for idx, target_idx in enumerate(target_idxs):
-            # get the latent from the target obj_id
-            target_obj_id = self.metainfo.obj_ids[target_idx]
-            target_label = self.metainfo.obj_id_to_label(target_obj_id)
-            target_latent = self.deepsdf.lat_vecs.weight[target_label]
 
-            # set the camera settings
-            azim = np.random.normal(self.azim_mean, self.azim_std)
-            elev = np.random.normal(self.elev_mean, self.elev_std)
-            camera_config = dict(
-                azim=azim,
-                elev=elev,
-                dist=self.dist,
-                width=self.width,
-                height=self.height,
-                focal=self.focal,
-                sphere_eps=self.sphere_eps,
-            )
-            self.deepsdf.create_camera(**camera_config)
+        for azim in self.azims:
+            if self.traversal:
+                permutation = np.random.permutation(len(self.metainfo.obj_ids))
+                target_idxs = list(permutation[: self.n_renderings])
+            for idx, target_idx in enumerate(target_idxs):
+                # get the latent from the target obj_id
+                if self.traversal:
+                    target_obj_id = self.metainfo.obj_ids[target_idx]
+                    target_label = self.metainfo.obj_id_to_label(target_obj_id)
+                    target_latent = self.deepsdf.lat_vecs.weight[target_label]
+                else:
+                    target_obj_id = obj_id
+                    target_latent = source_latent
 
-            # interpolate between the source latent and the target
-            t = torch.normal(torch.tensor(self.t_mean), torch.tensor(self.t_std))
-            t = torch.clamp(t, 0.0, 0.5)
-            interpolated_latent = (1 - t) * source_latent + t * target_latent
-            latents.append(interpolated_latent.detach().cpu().numpy())
+                # set the camera settings
+                rand_azim = np.random.normal(azim, self.azim_std)
+                rand_elev = np.random.normal(self.elev, self.elev_std)
+                camera_config = dict(
+                    azim=rand_azim,
+                    elev=rand_elev,
+                    dist=self.dist,
+                    width=self.width,
+                    height=self.height,
+                    focal=self.focal,
+                    sphere_eps=self.sphere_eps,
+                )
+                self.deepsdf.create_camera(**camera_config)
+                camera_config["ambient"] = self.ambient
+                camera_config["diffuse"] = self.diffuse
 
-            # render the normals and the sketch
-            rendered_normal = self.deepsdf.capture_camera_frame(interpolated_latent)
-            normal = (rendered_normal.detach().cpu().numpy() * 255).astype(np.uint8)
-            sketch = self.image_to_sketch(normal)
+                # interpolate between the source latent and the target
+                t = torch.normal(torch.tensor(self.t_mean), torch.tensor(self.t_std))
+                t = torch.clamp(t, 0.0, 0.5)
+                if not self.traversal:  # disable traversal
+                    t = torch.tensor(0.0)
+                interpolated_latent = (1 - t) * source_latent + t * target_latent
+                latents.append(interpolated_latent.detach().cpu().numpy())
 
-            # update the images
-            normals.append(normal)
-            sketches.append(sketch)
-            # update the configs
-            config = {
-                "image_id": f"{idx:05}",
-                "source_obj_id": obj_id,
-                "target_obj_id": target_obj_id,
-                "t": t.item(),
-            }
-            config.update(camera_config)
-            configs.append(config)
+                # render the normals and the sketch
+                rendered_normal = self.deepsdf.capture_camera_frame(interpolated_latent)
+                normal = (rendered_normal.detach().cpu().numpy() * 255).astype(np.uint8)
+                sketch = self.image_to_sketch(normal)
+                rendered_grayscale = self.deepsdf.normal_to_grayscale(
+                    normal=rendered_normal,
+                    ambient=self.ambient,
+                    diffuse=self.diffuse,
+                ).detach()
+                grayscale = (rendered_grayscale.cpu().numpy() * 255).astype(np.uint8)
+
+                # update the images
+                grayscales.append(grayscale)
+                normals.append(normal)
+                sketches.append(sketch)
+                # update the configs
+                config = {
+                    "image_id": f"{idx:05}",
+                    "source_obj_id": obj_id,
+                    "target_obj_id": target_obj_id,
+                    "t": t.item(),
+                }
+                config.update(camera_config)
+                configs.append(config)
         latents = np.stack(latents)
         configs = pd.DataFrame(configs)
-        return normals, sketches, latents, configs
+        return normals, sketches, grayscales, latents, configs
 
 
 @dataclass

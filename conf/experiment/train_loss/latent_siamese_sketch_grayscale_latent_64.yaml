@@ -9,11 +9,11 @@ defaults:
   - override /model: latent_siamese
 
 task_name: train_latent_loss
-tags: ["train_loss", "shapenet_chair_4096", "latent_siamese_sketch_normal_multi_view_128"]
+tags: ["train_loss", "shapenet_chair_4096", "latent_siamese_sketch_normal_latent_64"]
 
 data:
   latent: True
-  modes: [0, 1]
+  modes: [2, 3]
   batch_size: 256 
   train_sampler:
     chunk_size: 1
@@ -28,8 +28,6 @@ data:
         - _target_: torchvision.transforms.v2.RandomChoice
           transforms:
             - _target_: lib.data.transforms.DilateSketch
-              kernel_size: 1
-            - _target_: lib.data.transforms.DilateSketch
               kernel_size: 3
             - _target_: lib.data.transforms.DilateSketch
               kernel_size: 5
@@ -38,11 +36,11 @@ data:
             - _target_: lib.data.transforms.DilateSketch
               kernel_size: 9
         - _target_: torchvision.transforms.v2.Resize
-          size: [128, 128]
+          size: [64, 64]
           antialias: False
     normal_transform:
       transforms:
         - _target_: torchvision.transforms.v2.Resize
-          size: [128, 128]
+          size: [64, 64]
           antialias: False
         - _target_: lib.data.transforms.ToGrayScale 

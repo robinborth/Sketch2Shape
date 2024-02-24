@@ -23,7 +23,7 @@ preprocess_mesh:
   laplacian_num_iters: 1
 
 ########################################################################
-# Preprocessing Siamese
+# Preprocessing Synthetic 
 ########################################################################
 
 preprocess_siamese:
@@ -59,19 +59,23 @@ preprocess_renderings:
   skip: True
   split: ???
   # traversal settings
-  n_renderings: 100
+  traversal: False
+  n_renderings: 10
   t_mean: 0.25
   t_std: 0.1
   # camera settings
-  azim_mean: 30.0
-  azim_std: 5.0
-  elev_mean: -20.0
+  azims: [-90.0, -45.0, 0.0, 45.0, 90.0]
+  azim_std: 22.5
+  elev: -20.0
   elev_std: 5.0
   dist: ${data.camera_dist} 
   width: ${data.camera_width} 
   height: ${data.camera_height} 
   focal: ${data.camera_focal} 
   sphere_eps: ${data.camera_sphere_eps} 
+  # grayscale settings
+  ambient: 0.2
+  diffuse: 0.5
   # sketch settings
   t_lower: 100
   t_upper: 150

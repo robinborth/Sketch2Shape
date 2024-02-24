@@ -29,7 +29,7 @@ class Camera:
         return mat
 
     def get_camera_to_world(self):
-        return np.linalg.inv(self.get_world_to_camera())
+        return np.linalg.inv(self.get_world_to_camera()).astype(np.float32)
 
     def camera_position(self):
         return self.get_camera_to_world()[:3, -1]

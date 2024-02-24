@@ -189,8 +189,8 @@ class LatentOptimizer(LightningModule):
     def to_mesh(self):
         return self.deepsdf.to_mesh(self.latent)
 
-    def capture_camera_frame(self):
-        image = self.deepsdf.capture_camera_frame(self.latent)
+    def capture_camera_frame(self, mode="normal"):
+        image = self.deepsdf.capture_camera_frame(self.latent, mode=mode)
         self.log_image("camera_frame", image)
         return image
 

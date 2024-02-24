@@ -227,6 +227,22 @@ class MetaInfo:
         return Image.open(path)
 
     #################################################################
+    # Rendered Normals: Loading and Storing Utils
+    #################################################################
+
+    def traversed_normals_dir_path(self, obj_id: str) -> Path:
+        return self.data_dir / "shapes" / obj_id / "traversed_normals"
+
+    def save_traversed_normal(self, normals: np.ndarray, obj_id: str, image_id: str):
+        path = self.traversed_normals_dir_path(obj_id) / f"{image_id}.png"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        Image.fromarray(normals).save(path)
+
+    def load_traversed_normal(self, obj_id: str, image_id: str):
+        path = self.traversed_normals_dir_path(obj_id) / f"{image_id}.png"
+        return Image.open(path)
+
+    #################################################################
     # Sketches: Loading and Storing Utils
     #################################################################
 
@@ -259,6 +275,54 @@ class MetaInfo:
         return Image.open(path)
 
     #################################################################
+    # Traversed Sketches: Loading and Storing Utils
+    #################################################################
+
+    def traversed_sketches_dir_path(self, obj_id: str) -> Path:
+        return self.data_dir / "shapes" / obj_id / "traversed_sketches"
+
+    def save_traversed_sketch(self, normals: np.ndarray, obj_id: str, image_id: str):
+        path = self.traversed_sketches_dir_path(obj_id) / f"{image_id}.png"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        Image.fromarray(normals).save(path)
+
+    def load_traversed_sketch(self, obj_id: str, image_id: str):
+        path = self.traversed_sketches_dir_path(obj_id) / f"{image_id}.png"
+        return Image.open(path)
+
+    #################################################################
+    # Rendered Grayscale: Loading and Storing Utils
+    #################################################################
+
+    def rendered_grayscales_dir_path(self, obj_id: str) -> Path:
+        return self.data_dir / "shapes" / obj_id / "rendered_grayscales"
+
+    def save_rendered_grayscale(self, normals: np.ndarray, obj_id: str, image_id: str):
+        path = self.rendered_grayscales_dir_path(obj_id) / f"{image_id}.png"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        Image.fromarray(normals).save(path)
+
+    def load_rendered_grayscale(self, obj_id: str, image_id: str):
+        path = self.rendered_grayscales_dir_path(obj_id) / f"{image_id}.png"
+        return Image.open(path)
+
+    #################################################################
+    # Traversed Grayscale: Loading and Storing Utils
+    #################################################################
+
+    def traversed_grayscales_dir_path(self, obj_id: str) -> Path:
+        return self.data_dir / "shapes" / obj_id / "traversed_grayscales"
+
+    def save_traversed_grayscale(self, normals: np.ndarray, obj_id: str, image_id: str):
+        path = self.traversed_grayscales_dir_path(obj_id) / f"{image_id}.png"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        Image.fromarray(normals).save(path)
+
+    def load_traversed_grayscale(self, obj_id: str, image_id: str):
+        path = self.traversed_grayscales_dir_path(obj_id) / f"{image_id}.png"
+        return Image.open(path)
+
+    #################################################################
     # Rendered Config: Loading and Storing Utils
     #################################################################
 
@@ -275,6 +339,22 @@ class MetaInfo:
         return pd.read_csv(path)
 
     #################################################################
+    # Traversed Config: Loading and Storing Utils
+    #################################################################
+
+    def traversed_config_path(self, obj_id: str) -> Path:
+        return self.data_dir / "shapes" / obj_id / "traversed_config.csv"
+
+    def save_traversed_config(self, obj_id: str, config: pd.DataFrame):
+        path = self.traversed_config_path(obj_id)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        config.to_csv(path, index=False)
+
+    def load_traversed_config(self, obj_id: str) -> pd.DataFrame:
+        path = self.traversed_config_path(obj_id)
+        return pd.read_csv(path)
+
+    #################################################################
     # Rendered Latents: Loading and Storing Utils
     #################################################################
 
@@ -288,6 +368,22 @@ class MetaInfo:
 
     def load_rendered_latents(self, obj_id: str) -> pd.DataFrame:
         path = self.rendered_latents_path(obj_id)
+        return np.load(path).astype(np.float32)
+
+    #################################################################
+    # Traversed Latents: Loading and Storing Utils
+    #################################################################
+
+    def traversed_latents_path(self, obj_id: str) -> Path:
+        return self.data_dir / "shapes" / obj_id / "traversed_latents.npy"
+
+    def save_traversed_latents(self, obj_id: str, latents: np.ndarray):
+        path = self.traversed_latents_path(obj_id)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        np.save(path, latents.astype(np.float32))
+
+    def load_traversed_latents(self, obj_id: str) -> pd.DataFrame:
+        path = self.traversed_latents_path(obj_id)
         return np.load(path).astype(np.float32)
 
     #################################################################
