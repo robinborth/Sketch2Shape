@@ -230,6 +230,7 @@ class DeepSDF(LightningModule):
         focal: int = 512,
         sphere_eps: float = 1e-01,
     ):
+        device = self.device
         camera = Camera(
             azim=azim,
             elev=elev,
@@ -241,10 +242,13 @@ class DeepSDF(LightningModule):
         )
         points, rays, mask = camera.unit_sphere_intersection_rays()
         camera_position = camera.camera_position()
-        self.camera_points = torch.tensor(points, device=self.device)
-        self.camera_rays = torch.tensor(rays, device=self.device)
-        self.camera_mask = torch.tensor(mask, dtype=torch.bool, device=self.device)
-        self.camera_position = torch.tensor(camera_position, device=self.device)
+        self.camera_points = torch.tensor(points, device=device)
+        self.camera_rays = torch.tensor(rays, device=device)
+        self.camera_mask = torch.tensor(mask, dtype=torch.bool, device=device)
+        self.camera_position = torch.tensor(camera_position, device=device)
+        self.world_to_camera = torch.tensor(camera.get_world_to_camera(), device=device)
+        self.camera_width = torch.tensor(width, device=device)
+        self.camera_height = torch.tensor(height, device=device)
 
     def capture_camera_frame(
         self,
@@ -396,11 +400,15 @@ class DeepSDF(LightningModule):
         step_scale = self.hparams["step_scale"]
         surface_eps = self.hparams["surface_eps"]
 
+        total_points = (points.shape[0],)
+        sdf = torch.ones(total_points, device=self.device)
+
         points = points.clone()
         mask = mask.clone()
 
-        total_points = (points.shape[0],)
-        sdf = torch.ones(total_points, device=self.device)
+        # track the points closest to the surface
+        min_points = points.clone()
+        min_sdf = sdf.clone()
 
         # sphere tracing
         for _ in range(self.hparams["n_render_steps"]):
@@ -427,12 +435,17 @@ class DeepSDF(LightningModule):
             # update the current point on the ray
             points[mask] = points[mask] + sdf[mask, None] * rays[mask]
 
+            # update the closest points to the surface
+            min_mask = torch.abs(sdf) < torch.abs(min_sdf)
+            min_sdf[min_mask] = sdf[min_mask]
+            min_points[min_mask] = points[min_mask]
+
             # check if converged
             if not mask.sum():
                 break
 
         surface_mask = sdf < surface_eps
-        return points, surface_mask
+        return min_points, surface_mask
 
     ############################################################
     # Mesh Utils

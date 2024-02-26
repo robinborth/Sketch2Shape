@@ -62,33 +62,34 @@ def preprocess(cfg: DictConfig) -> None:
                 renderings.metainfo.save_rendered_config(obj_id, config=config)
                 renderings.metainfo.save_rendered_latents(obj_id, latents=latents)
 
-    # if cfg.get("deepsdf_ckpt_path"):
-    #     for split in ["train_latent", "val_latent"]:
-    #         logger.debug(f"==> initializing traversal for {split} ...")
-    #         cfg.data.preprocess_renderings.split = split
-    #         cfg.data.preprocess_renderings.traversal = True
-    #         renderings = hydra.utils.instantiate(cfg.data.preprocess_renderings)()
-    #         logger.debug(f"==> start preprocessing traversals for {split} ...")
-    #         for obj_id in tqdm(list(renderings.obj_ids_iter())):
-    #             norms, sketchs, grays, latents, config = renderings.preprocess(obj_id)
-    #             for idx, (norm, sketch, gray) in enumerate(zip(norms, sketchs, grays)):
-    #                 renderings.metainfo.save_traversed_normal(
-    #                     norm,
-    #                     obj_id=obj_id,
-    #                     image_id=f"{idx:05}",
-    #                 )
-    #                 renderings.metainfo.save_traversed_sketch(
-    #                     sketch,
-    #                     obj_id=obj_id,
-    #                     image_id=f"{idx:05}",
-    #                 )
-    #                 renderings.metainfo.save_traversed_grayscale(
-    #                     gray,
-    #                     obj_id=obj_id,
-    #                     image_id=f"{idx:05}",
-    #                 )
-    #             renderings.metainfo.save_traversed_config(obj_id, config=config)
-    #             renderings.metainfo.save_traversed_latents(obj_id, latents=latents)
+    if cfg.get("deepsdf_ckpt_path"):
+        for split in ["train_latent", "val_latent"]:
+            logger.debug(f"==> initializing traversal for {split} ...")
+            cfg.data.preprocess_renderings.split = split
+            cfg.data.preprocess_renderings.traversal = True
+            cfg.data.preprocess_renderings.n_renderings = 20
+            renderings = hydra.utils.instantiate(cfg.data.preprocess_renderings)()
+            logger.debug(f"==> start preprocessing traversals for {split} ...")
+            for obj_id in tqdm(list(renderings.obj_ids_iter())):
+                norms, sketchs, grays, latents, config = renderings.preprocess(obj_id)
+                for idx, (norm, sketch, gray) in enumerate(zip(norms, sketchs, grays)):
+                    renderings.metainfo.save_traversed_normal(
+                        norm,
+                        obj_id=obj_id,
+                        image_id=f"{idx:05}",
+                    )
+                    renderings.metainfo.save_traversed_sketch(
+                        sketch,
+                        obj_id=obj_id,
+                        image_id=f"{idx:05}",
+                    )
+                    renderings.metainfo.save_traversed_grayscale(
+                        gray,
+                        obj_id=obj_id,
+                        image_id=f"{idx:05}",
+                    )
+                renderings.metainfo.save_traversed_config(obj_id, config=config)
+                renderings.metainfo.save_traversed_latents(obj_id, latents=latents)
 
 
 if __name__ == "__main__":
