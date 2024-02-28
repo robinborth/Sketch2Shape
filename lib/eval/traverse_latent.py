@@ -62,7 +62,7 @@ class LatentTraversal(LatentOptimizer):
         if self.hparams["compute_loss"]:
             # calculate the normal embedding
             rendered_normal = self.capture_camera_frame()  # (H, W, 3)
-            normal = self.deepsdf.normal_to_siamese(rendered_normal)  # (1, 3, H, W)
+            normal = self.deepsdf.image_to_siamese(rendered_normal)  # (1, 3, H, W)
             normal_emb = self.loss(normal)
             normal_norm = torch.norm(normal_emb, dim=-1)
             self.log("optimize/rendered_norm", normal_norm, on_step=True)

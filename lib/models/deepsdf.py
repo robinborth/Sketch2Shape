@@ -8,6 +8,7 @@ from lightning import LightningModule
 from lightning.pytorch.loggers import WandbLogger
 from skimage.measure import marching_cubes
 from torch.utils.data import DataLoader
+from torchvision.transforms import v2
 from tqdm import tqdm
 
 from lib.render.camera import Camera
@@ -229,6 +230,7 @@ class DeepSDF(LightningModule):
         height: int = 256,
         focal: int = 512,
         sphere_eps: float = 1e-01,
+        surface_eps: float = 1e-03,
     ):
         device = self.device
         camera = Camera(
@@ -247,8 +249,9 @@ class DeepSDF(LightningModule):
         self.camera_mask = torch.tensor(mask, dtype=torch.bool, device=device)
         self.camera_position = torch.tensor(camera_position, device=device)
         self.world_to_camera = torch.tensor(camera.get_world_to_camera(), device=device)
-        self.camera_width = torch.tensor(width, device=device)
-        self.camera_height = torch.tensor(height, device=device)
+        self.camera_width = width
+        self.camera_height = height
+        self.camera_focal = focal
 
     def capture_camera_frame(
         self,
@@ -285,6 +288,7 @@ class DeepSDF(LightningModule):
         normal: torch.Tensor,
         ambient: float = 0.2,
         diffuse: float = 0.5,
+        camera_position=None,
     ):
         """Transforms the normal after render_normals to grayscale."
 
@@ -297,6 +301,8 @@ class DeepSDF(LightningModule):
         mask = normal.sum(-1) > 2.95
         N = (normal - 0.5) / 0.5
         C = self.camera_position.clone()
+        if camera_position is not None:
+            C = camera_position.clone()
         L = C / torch.norm(C)
         grayscale = torch.zeros_like(normal)
         grayscale += ambient
@@ -309,18 +315,18 @@ class DeepSDF(LightningModule):
         )
         return grayscale
 
-    def normal_to_siamese(self, normal: torch.Tensor) -> torch.Tensor:
-        """Transforms the normal after render_normals to siamese input."
+    def image_to_siamese(self, image: torch.Tensor) -> torch.Tensor:
+        """Transforms the rendered normal or grayscale to siamese input."
 
         Args:
-            normal (torch.Tensor): The normal image of dim: (H, W, 3) and range (0, 1)
+            image (torch.Tensor): The image of dim: (H, W, 3) and range (0, 1)
 
         Returns:
             torch.Tensor: The input for the siamese network of dim (1, 3, H, W)
         """
-        normal = normal.permute(2, 0, 1)  # (3, H, W)
-        normal = (normal - 0.5) / 0.5  # scale from (0, 1) -> (-1, 1) with mean,std=0.5
-        return normal[None, ...]  # (1, 3, H, W)
+        image = image.permute(2, 0, 1)  # (3, H, W)
+        image = (image - 0.5) / 0.5  # scale from (0, 1) -> (-1, 1) with mean,std=0.5
+        return image[None, ...]  # (1, 3, H, W)
 
     def loss_input_to_image(self, loss_input: torch.Tensor) -> torch.Tensor:
         """Transforms a loss_input to a image that can be plotted."
@@ -384,6 +390,90 @@ class DeepSDF(LightningModule):
             ambient=self.hparams["ambient"],
             diffuse=self.hparams["diffuse"],
         )
+
+    def render_silhouette(
+        self,
+        normals: torch.Tensor,
+        points: torch.Tensor,
+        latent: torch.Tensor,
+        silhouette_surface_eps: float = 5e-02,
+        proj_blur_kernal_size: int = 5,
+        proj_blur_sigma: float = 3.0,
+        proj_blur_eps: float = 0.5,
+        weight_blur_kernal_size: int = 9,
+        weight_blur_sigma: float = 9.0,
+        weight_blur_eps: float = 10.0,
+        return_full: bool = True,
+    ):
+        """Converts an image into an weighted silhouette.
+
+        Args:
+            normals (torch.Tensor): Normal image of dim (H, W, 3) with range (0, 1)
+            points (torch.Tensor): The min points closest to the surface of dim (W*H, 3)
+            latent (torch.Tensor): The latent that reconstructs the full surface.
+            silhouette_surface_eps (float, optional): The threshold of the cloestest
+                points that are used to calculate the surface. Defaults to 5e-02.
+        """
+        width, height = self.camera_width, self.camera_height
+
+        # calculate the base silhouette from the initial rendering
+        min_normals = (normals - 0.5) / 0.5  # (H, W, 3) with range (-1, 1) and norm=1.0
+        base_silhouette = min_normals.sum(-1) > 2.95  # (H, W)
+
+        # silhouette with higher threshold, that blows up the rendering
+        min_eps = self.hparams["surface_eps"]
+        max_eps = silhouette_surface_eps
+        min_sdf = self.forward(points, latent=latent)
+        min_sdf = torch.abs(min_sdf).reshape(width, height)
+        extra_silhouette = (min_sdf < max_eps) & (min_sdf > min_eps)  # (H, W)
+
+        # project the points from the extra silhouette to the surface in world coords
+        min_points = points.reshape(width, height, 3)  # (H, W, 3)
+        idx = torch.where(extra_silhouette)
+        w_points = min_points[idx] - min_normals[idx] * min_sdf[idx][..., None]  # (X,3)
+        # transform the points into camera coords
+        c_points = torch.ones((w_points.shape[0], 4), dtype=torch.float32)
+        c_points[:, :3] = w_points
+        c_points = self.world_to_camera @ c_points.T
+        c_points = c_points.T
+        # convert the points into pixels on the image plane
+        focal = self.focal
+        pxs = ((width * 0.5) - (c_points[:, 0] * focal) / c_points[:, 2]).to(torch.int)
+        pys = ((height * 0.5) - (c_points[:, 1] * focal) / c_points[:, 2]).to(torch.int)
+        # filter the points that are not on the image plane after projection
+        inside_mask = (pxs >= 0) & (pxs < width) & (pys >= 0) & (pys < height)
+        pxs = pxs[inside_mask]
+        pys = pys[inside_mask]
+        # sum up the pixels on the projected silhouette
+        unique_idx, counts = torch.stack([pys, pxs]).unique(dim=1, return_counts=True)
+        proj_silhouette = torch.zeros_like(min_sdf)  # (H, W)
+        proj_silhouette[unique_idx[0], unique_idx[1]] = counts.to(torch.float32)
+
+        # blur the silhouette and filter noise out
+        proj_blur = v2.GaussianBlur(proj_blur_kernal_size, proj_blur_sigma)
+        proj_blur_silhouette = proj_blur(torch.stack([proj_silhouette] * 3))[0]
+        proj_blur_silhouette = torch.clip(proj_blur_silhouette - proj_blur_eps, min=0)
+
+        # blur the base silhouette to get an density map
+        weight_blur = v2.GaussianBlur(weight_blur_kernal_size, weight_blur_sigma)
+        base_blur_silhouette = weight_blur(torch.stack([base_silhouette] * 3))[0]
+
+        # weight map of the blured projected silhouette, to encourage creating
+        # silhouette in empty space
+        weights = torch.clip(-torch.log(base_blur_silhouette), 0, weight_blur_eps)
+        weighted_silhouette = proj_blur_silhouette * weights  # (H, W)
+
+        if return_full:
+            return {
+                "min_sdf": min_sdf,
+                "base_silhouette": base_silhouette,
+                "extra_silhouette": extra_silhouette,
+                "proj_silhouette": proj_silhouette,
+                "proj_blur_silhouette": proj_blur_silhouette,
+                "base_blur_silhouette": base_blur_silhouette,
+                "weighted_silhouette": weighted_silhouette,
+            }
+        return weighted_silhouette
 
     ############################################################
     # Sphere Tracing Variants

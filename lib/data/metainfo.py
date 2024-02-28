@@ -291,6 +291,22 @@ class MetaInfo:
         return Image.open(path)
 
     #################################################################
+    # Synthetic Grayscale: Loading and Storing Utils
+    #################################################################
+
+    def synthetic_grayscale_dir_path(self, obj_id: str) -> Path:
+        return self.data_dir / "shapes" / obj_id / "synthetic_grayscale"
+
+    def save_synthetic_grayscale(self, normals: np.ndarray, obj_id: str, image_id: str):
+        path = self.synthetic_grayscale_dir_path(obj_id) / f"{image_id}.png"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        Image.fromarray(normals).save(path)
+
+    def load_synthetic_grayscale(self, obj_id: str, image_id: str):
+        path = self.synthetic_grayscale_dir_path(obj_id) / f"{image_id}.png"
+        return Image.open(path)
+
+    #################################################################
     # Rendered Grayscale: Loading and Storing Utils
     #################################################################
 
@@ -401,4 +417,12 @@ class MetaInfo:
             return self.load_rendered_normal(obj_id, f"{image_id:05}")
         if image_type == "rendered_sketch":
             return self.load_rendered_sketch(obj_id, f"{image_id:05}")
+        if image_type == "rendered_grayscale":
+            return self.load_rendered_grayscale(obj_id, f"{image_id:05}")
+        if image_type == "traversed_normal":
+            return self.load_traversed_normal(obj_id, f"{image_id:05}")
+        if image_type == "traversed_sketch":
+            return self.load_traversed_sketch(obj_id, f"{image_id:05}")
+        if image_type == "traversed_grayscale":
+            return self.load_traversed_grayscale(obj_id, f"{image_id:05}")
         raise ValueError(f"Please provide an {image_type=} that is correct!")

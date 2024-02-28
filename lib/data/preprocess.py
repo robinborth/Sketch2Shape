@@ -9,7 +9,7 @@ import torch
 
 from lib.data.metainfo import MetaInfo
 from lib.models.deepsdf import DeepSDF
-from lib.render.mesh import render_normals
+from lib.render.camera import Camera
 
 o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)
 
@@ -77,7 +77,7 @@ class PreprocessMesh:
 
 
 @dataclass
-class PreprocessSiamese:
+class PreprocessSynthetic:
     # processing settings
     data_dir: str = "/data"
     skip: bool = True
@@ -89,6 +89,9 @@ class PreprocessSiamese:
     height: int = 256
     focal: int = 512
     sphere_eps: float = 1e-1
+    # grayscale settings
+    ambient: float = 0.2
+    diffuse: float = 0.5
     # sketch settings
     t_lower: int = 100
     t_upper: int = 150
@@ -104,7 +107,12 @@ class PreprocessSiamese:
         for obj_id in self.metainfo.obj_ids:
             normals_dir = self.metainfo.normals_dir_path(obj_id=obj_id)
             sketches_dir = self.metainfo.sketches_dir_path(obj_id=obj_id)
-            if not normals_dir.exists() or not sketches_dir.exists():
+            grayscale_dir = self.metainfo.synthetic_grayscale_dir_path(obj_id=obj_id)
+            if (
+                not normals_dir.exists()
+                or not sketches_dir.exists()
+                or not grayscale_dir.exists()
+            ):
                 yield obj_id
 
     def image_to_sketch(self, images: np.ndarray):
@@ -130,21 +138,83 @@ class PreprocessSiamese:
         normals = (normals * 255).astype(np.uint8)
         return normals
 
+    def render_normals(self, mesh: o3d.geometry.TriangleMesh):
+        _mesh = o3d.t.geometry.TriangleMesh.from_legacy(mesh)
+        scene = o3d.t.geometry.RaycastingScene()
+        _ = scene.add_triangles(_mesh)
+
+        _points = []
+        _normals = []
+        _masks = []
+        for azim in self.azims:
+            for elev in self.elevs:
+                camera = Camera(
+                    azim=azim,
+                    elev=elev,
+                    dist=self.dist,
+                    width=self.width,
+                    height=self.height,
+                    focal=self.focal,
+                    sphere_eps=self.sphere_eps,
+                )
+                points, rays, _ = camera.unit_sphere_intersection_rays()
+
+                # sphere tracing
+                camera_rays = np.concatenate([points, rays], axis=-1)
+                out = scene.cast_rays(camera_rays)
+
+                # noramls map
+                t_hit = out["t_hit"].numpy()
+                mask = t_hit != np.inf
+                t_hit[~mask] = 0
+
+                # correct normals
+                normals = out["primitive_normals"].numpy()
+                outside_mask = (normals * rays).sum(axis=-1) > 0
+                normals[outside_mask] = -normals[outside_mask]
+
+                # update the points
+                points = points + t_hit[..., None] * rays
+
+                _points.append(points)
+                _normals.append(normals)
+                _masks.append(mask)
+
+        return np.stack(_points), np.stack(_normals), np.stack(_masks)
+
+    def normals_to_grayscales(self, normals: np.ndarray):
+        """Transforms the normal after render_normals to grayscale."
+
+        Args:
+            normal (np.ndarray): The normal image of dim: (B, H, W, 3) and range (0, 1)
+
+        Returns:
+            np.ndarray: The grayscale image of dim (B, H, W, 3) and range (0, 1)
+        """
+        grayscales = []
+        view_id = 0
+        for azim in self.azims:
+            for elev in self.elevs:
+                camera_position = Camera(azim=azim, elev=elev).camera_position()
+                mask = normals.sum(-1) > 2.95
+                N = (normals - 0.5) / 0.5
+                L = camera_position / np.linalg.norm(camera_position)
+                grayscale = np.zeros_like(normals)
+                grayscale += self.ambient
+                grayscale += self.diffuse * (N @ L)[..., None]
+                grayscale[mask, :] = 1.0
+                grayscale = np.clip(grayscale, 0, 1)
+                grayscales.append(grayscale)
+                view_id += 1
+        return np.stack(grayscales)
+
     def preprocess(self, obj_id: str):
         mesh = self.metainfo.load_normalized_mesh(obj_id=obj_id)
-        _, normals, masks = render_normals(
-            mesh=mesh,
-            azims=self.azims,
-            elevs=self.elevs,
-            dist=self.dist,
-            width=self.width,
-            height=self.height,
-            focal=self.focal,
-            sphere_eps=self.sphere_eps,
-        )
+        _, normals, masks = self.render_normals(mesh=mesh)
         normals = self.normals_to_image(normals=normals, mask=masks)
         sketches = self.image_to_sketch(normals)
-        return normals, sketches
+        grayscales = self.normals_to_grayscales(normals)
+        return normals, sketches, grayscales
 
 
 @dataclass
@@ -396,3 +466,10 @@ class PreprocessSDF:
         surface_samples, _ = self.sample_surface(num_samples=self.surface_samples)
 
         return sdf_samples, surface_samples
+
+
+############################################################
+# Deprecated Preprocessing
+############################################################
+class PreprocessSiamese:
+    pass

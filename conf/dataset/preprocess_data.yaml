@@ -26,8 +26,8 @@ preprocess_mesh:
 # Preprocessing Synthetic 
 ########################################################################
 
-preprocess_siamese:
-  _target_: lib.data.preprocess.PreprocessSiamese
+preprocess_synthetic:
+  _target_: lib.data.preprocess.PreprocessSynthetic
   _partial_: True
   # processing settings
   data_dir: ${data.data_dir}

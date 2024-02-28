@@ -35,8 +35,8 @@ data:
   milestones: []
   dataset:
     _target_: lib.data.dataset.optimize_latent.SketchLatentOptimizerDataset
-    azims: ${data.preprocess_siamese.azims}
-    elevs: ${data.preprocess_siamese.elevs}
+    azims: ${data.preprocess_synthetic.azims}
+    elevs: ${data.preprocess_synthetic.elevs}
   shuffle: True
 
 model:

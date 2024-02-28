@@ -39,6 +39,7 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
         log.info(f"==> selecting obj_ids ({cfg.split}) ...>")
 
     latents = []
+    retrieval_idxs = []
     for obj_id in tqdm(obj_ids):
         log.info(f"==> initializing datamodule <{cfg.data._target_}>")
         cfg.data.obj_id = obj_id
@@ -88,13 +89,18 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
 
         # update the latents from the current obj_id
         latents.append(model.latent)
+        if cfg.model.latent_init == "retrieval":
+            retrieval_idxs.append(model.retrieval_idx[0])
 
     # create the meshes
     meshes = []
     if cfg.eval or cfg.save_mesh:
         log.info("==> create meshes ...")
         for obj_id in obj_ids:
-            mesh = model.to_mesh()
+            if cfg.model.latent_init == "retrieval":
+                mesh = metainfo.load_normalized_mesh(obj_id=obj_id)
+            else:
+                mesh = model.to_mesh()
             meshes.append(mesh)
             if cfg.save_mesh:
                 path = Path(cfg.paths.mesh_dir, f"{obj_id}.obj")
@@ -128,15 +134,21 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
         normal_transform = v2.Compose(transforms)
         model.deepsdf.create_camera(azim=eval_azim, elev=eval_elev)
         log.info("==> start evaluate FID and CLIPScore ...")
-        for latent, obj_id in tqdm(zip(latents, obj_ids), total=len(obj_ids)):
+        for idx, obj_id in tqdm(enumerate(obj_ids), total=len(obj_ids)):
             # gt sketch
-            gt_sketch = metainfo.load_sketch(obj_id, f"{eval_view_id:05}")
+            image_id = f"{eval_view_id:05}"
+            gt_sketch = metainfo.load_sketch(obj_id, image_id)
             gt_sketch = sketch_transform(gt_sketch)[None, ...]
-            # rendered sketch
-            model.latent = latent
-            rendered_normal = model.capture_camera_frame()
-            rendered_normal = rendered_normal.permute(2, 0, 1).detach().cpu()
-            rendered_sketch = normal_transform(rendered_normal)[None, ...]
+            if cfg.model.latent_init == "retrieval":
+                retrieved_obj_id = metainfo.label_to_obj_id(retrieval_idxs[idx])
+                rendered_sketch = metainfo.load_sketch(retrieved_obj_id, image_id)
+                rendered_sketch = sketch_transform(rendered_sketch)[None, ...]
+            else:
+                # rendered sketch
+                model.latent = latents[idx]
+                rendered_normal = model.capture_camera_frame()
+                rendered_normal = rendered_normal.permute(2, 0, 1).detach().cpu()
+                rendered_sketch = normal_transform(rendered_normal)[None, ...]
             # frechet inception distance
             fid.update(gt_sketch, real=True)
             fid.update(rendered_sketch, real=False)

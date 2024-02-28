@@ -22,7 +22,7 @@ class LatentOptimizer(LightningModule):
         scheduler=None,
         # init settings: random, mean, prior, prior(idx), retrieval, latent
         latent_init: str = "mean",
-        # regularization settings: none, prior, retrieval
+        # regularization settings: none, prior, retrieval, latent
         reg_loss: str = "none",
         reg_weight: float = 1e-5,
         # retrieval settings for init and prior
