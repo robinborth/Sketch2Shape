@@ -2,11 +2,13 @@
 
 defaults:
   - data:
-    - train_siamese
-    - eval_siamese
+    - train_loss
+    - eval_loss
   - dataset: shapenet_chair_4096
   - model: siamese 
-  - callbacks: default
+  - callbacks: 
+    - default
+    - early_stopping
   - logger: default 
   - trainer: default
   - hydra: default
@@ -21,12 +23,30 @@ task_name: train_loss
 tags: ["train_loss"]
 train: True
 eval: True
-ckpt_path: null
+ckpt_path: ???
+deepsdf_ckpt_path: ???
+loss_ckpt_path: ???
+
+# DEBUG Settings
+# trainer:
+#   max_epochs: 1
+#   check_val_every_n_epoch: 1
+# data:
+#   train_sampler:
+#     sample_steps: 1
+# model:
+#   capture_rate: 1
 
 trainer:
-  max_epochs: 10
+  max_epochs: 20
+  val_check_interval: 0.25
 
 callbacks:
-  early_stopping:
+  model_checkpoint:
+    save_top_k: -1
+    every_n_epochs: 1
+    save_last: True
+  # stop if no improvement after one full epoch
+  early_stopping:  
     monitor: val/loss
-    patience: 40
+    patience: 4

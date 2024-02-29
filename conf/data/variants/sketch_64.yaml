@@ -1,0 +1,43 @@
+# @package _global_
+
+data:
+  dataset: 
+    sketch_transform:
+      transforms:
+        - _target_: torchvision.transforms.v2.RandomRotation
+          degrees: 5 
+          fill: 1.0
+        - _target_: torchvision.transforms.v2.RandomChoice
+          transforms:
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 3
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 5
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 7
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 9
+        - _target_: torchvision.transforms.v2.Resize
+          size: [64, 64]
+          antialias: False
+
+eval_data:
+  dataset: 
+    sketch_transform:
+      transforms:
+        - _target_: torchvision.transforms.v2.RandomRotation
+          degrees: 5 
+          fill: 1.0
+        - _target_: torchvision.transforms.v2.RandomChoice
+          transforms:
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 3
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 5
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 7
+            - _target_: lib.data.transforms.DilateSketch
+              kernel_size: 9
+        - _target_: torchvision.transforms.v2.Resize
+          size: [64, 64]
+          antialias: False

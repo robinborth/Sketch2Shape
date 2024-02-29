@@ -6,23 +6,6 @@ from lib.data.transforms import BaseTransform
 from lib.render.camera import Camera
 
 ############################################################
-# Evaluation Dataset
-############################################################
-
-
-class SurfaceSamplesDataset(Dataset):
-    def __init__(self, data_dir: str = "/data", obj_id: str = "obj_id"):
-        self.metainfo = MetaInfo(data_dir=data_dir)
-        self.gt_surface_samples = self.metainfo.load_surface_samples(obj_id=obj_id)
-
-    def __len__(self):
-        return 1
-
-    def __getitem__(self, idx: int):
-        return {"surface_samples": self.gt_surface_samples}
-
-
-############################################################
 # DeepSDF Optimization Datasets
 ############################################################
 
@@ -34,6 +17,7 @@ class DeepSDFLatentOptimizerDataset(Dataset):
         obj_id: str = "obj_id",
         chunk_size: int = 16384,
         half: bool = False,
+        **kwargs,
     ):
         self.metainfo = MetaInfo(data_dir=data_dir)
         self.chunk_size = chunk_size
@@ -64,6 +48,7 @@ class NormalLatentOptimizerDataset(Dataset):
         elevs: list[int] = [],
         dist: float = 4.0,
         size: int = 256,
+        **kwargs,
     ):
         self.metainfo = MetaInfo(data_dir=data_dir)
         self.transforms = BaseTransform(
@@ -116,6 +101,7 @@ class SketchLatentOptimizerDataset(Dataset):
         dist: float = 4.0,
         sketch_id: int = 11,
         size: int = 256,
+        **kwargs,
     ):
         self.metainfo = MetaInfo(data_dir=data_dir)
         self.data = []

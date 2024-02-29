@@ -2,13 +2,13 @@
 
 defaults:
   - override /data:
-    - train_siamese
-    - eval_siamese
+    - train_loss 
+    - eval_loss
   - override /dataset: shapenet_chair_4096
   - override /logger: wandb
 
-ckpt_path: clip 
-tags: ["eval_siamese", "shapenet_chair_4096", "clip"]
+loss_ckpt_path: clip 
+tags: ["eval_clip", "shapenet_chair_4096", "clip"]
 
 eval_data:
   sketch_transform:

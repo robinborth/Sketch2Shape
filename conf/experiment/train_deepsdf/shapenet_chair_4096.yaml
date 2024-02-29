@@ -29,8 +29,6 @@ data:
   half: True
 
 callbacks:
-  early_stopping:
-    patience: 2000
   model_checkpoint:
     save_top_k: -1
     every_n_epochs: 100

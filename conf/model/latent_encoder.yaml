@@ -1,7 +1,0 @@
-# @package model
-_target_: lib.models.latent_encoder.LatentEncoder
-embedding_size: 256
-pretrained: True 
-lr_head: 1e-03
-lr_backbone: 1e-05
-scheduler: null

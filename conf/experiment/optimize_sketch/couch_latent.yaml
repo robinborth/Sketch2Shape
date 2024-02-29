@@ -1,0 +1,41 @@
+# @package _global_
+
+defaults:
+  - override /data: optimize_latent
+  - override /dataset: shapenet_chair_4096
+  - override /logger: wandb
+
+tags: ["optimize_sketch", "shapenet_chair_4096", "optim_couch_prior"]
+split: train 
+train: True
+eval: False
+obj_ids:
+  - 1459c329e2123d4fe5b03ab845ae95c
+
+
+trainer:
+  max_epochs: 500
+  accumulate_grad_batches: 1
+  # reload_dataloaders_every_n_epochs: 100
+
+data:
+  num_workers: 0
+  pin_memory: False
+  persistent_workers: False
+  size: 256
+  milestones: []
+  train_dataset:
+    azims: [40]
+    elevs: [-30]
+
+model:
+  loss_weight: 1.0
+  shape_init: True
+  shape_prior: True 
+  shape_k: 16
+  capture_rate: 8
+  reg_loss: False
+  reg_weight: 0.05
+  optimizer:
+    lr: 1e-02
+  scheduler: null

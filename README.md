@@ -96,7 +96,7 @@ This will create the full dataset for the SNN and the DeepSDF module. It will lo
 After an intial preprocessing you can also change some settings and only recalculate some parts, e.g. for just recallculating the siamese data you can do:
 
 ```bash
-python scripts/preprocess_data.py data=shapenet_chair_16 data.preprocess_siamese.skip=False
+python scripts/preprocess_data.py data=shapenet_chair_16 data.preprocess_synthetic.skip=False
 ```
 ## DeepSDF
 

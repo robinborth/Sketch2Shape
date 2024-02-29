@@ -9,6 +9,8 @@ class LossTesterDataModule(LightningDataModule):
         self,
         # paths
         data_dir: str = "data/",
+        modes: list[int] = [0, 1],
+        latent: bool = False,
         # training
         batch_size: int = 32,
         num_workers: int = 0,
@@ -18,32 +20,34 @@ class LossTesterDataModule(LightningDataModule):
         shuffle: bool = True,
         # dataset
         dataset=None,
-        sketch_transform: Optional[Callable] = None,
-        normal_transform: Optional[Callable] = None,
         **kwargs,
     ) -> None:
         super().__init__()
         self.save_hyperparameters(logger=False)
 
     def setup(self, stage: str):
-        self.train_dataset = self.hparams["dataset"](
-            data_dir=self.hparams["data_dir"],
-            split="train",
-            sketch_transform=self.hparams["sketch_transform"],
-            normal_transform=self.hparams["normal_transform"],
-        )
-        self.val_dataset = self.hparams["dataset"](
-            data_dir=self.hparams["data_dir"],
-            split="val",
-            sketch_transform=self.hparams["sketch_transform"],
-            normal_transform=self.hparams["normal_transform"],
-        )
-        self.test_dataset = self.hparams["dataset"](
-            data_dir=self.hparams["data_dir"],
-            split="test",
-            sketch_transform=self.hparams["sketch_transform"],
-            normal_transform=self.hparams["normal_transform"],
-        )
+        data_dir = self.hparams["data_dir"]
+        modes = self.hparams["modes"]
+        if stage in ["fit", "all"]:
+            split = "train_latent" if self.hparams["latent"] else "train"
+            self.train_dataset = self.hparams["dataset"](
+                data_dir=data_dir,
+                split=split,
+                modes=modes,
+            )
+        if stage in ["validate", "fit", "all"]:
+            split = "val_latent" if self.hparams["latent"] else "val"
+            self.val_dataset = self.hparams["dataset"](
+                data_dir=data_dir,
+                split=split,
+                modes=modes,
+            )
+        if stage in ["test", "all"]:
+            self.test_dataset = self.hparams["dataset"](
+                data_dir=data_dir,
+                split="test",
+                modes=modes,
+            )
 
     @staticmethod
     def collate_fn(batch):

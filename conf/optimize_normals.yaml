@@ -15,14 +15,14 @@ defaults:
 seed: 123
 task_name: optimize_normals
 tags: ["optimize_normals"]
-split: val
-obj_ids: ???
+split: val  # train, train_latent, val, val_latent, test
+obj_ids: ???  # overrids the split setting, make sure that obj_ids are only from the same split.
 train: True
-prior_idx: mean  # random(-2), mean(-1), prior, prior(idx)
 eval: True
 save_mesh: True
-create_video: True
-ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
+create_video: True 
+deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
+loss_ckpt_path: ${paths.checkpoint_dir}/latent_encoder.ckpt
 
 trainer:
   num_sanity_val_steps: 0
@@ -33,18 +33,21 @@ trainer:
 data:
   size: 256
   milestones: []
-  train_dataset:
+  dataset:
     _target_: lib.data.dataset.optimize_latent.NormalLatentOptimizerDataset
-    azims: ${data.preprocess_siamese.azims}
-    elevs: ${data.preprocess_siamese.elevs}
+    azims: ${data.preprocess_synthetic.azims}
+    elevs: ${data.preprocess_synthetic.elevs}
   shuffle: True
 
 model:
+  # custom settings
   _target_: lib.optimizer.normals.NormalsOptimizer
+  # base settings
+  reg_loss: prior
   reg_weight: 1e-01
-  capture_rate: 8
   optimizer:
     lr: 5e-03
   scheduler:
     step_size: 5
     gamma: 0.5
+  capture_rate: 8

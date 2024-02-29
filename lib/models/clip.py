@@ -4,15 +4,16 @@ from transformers import CLIPModel, CLIPProcessor
 
 
 class CLIP(LightningModule):
-    def __init__(self):
+    def __init__(self, model_name: str = "openai/clip-vit-large-patch14"):
         super().__init__()
-        self.model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
-        self.processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+        self.model = CLIPModel.from_pretrained(model_name)
+        self.processor = CLIPProcessor.from_pretrained(model_name)
 
-    def forward(self, batch):
+    def forward(self, batch, *args, **kwargs):
         inputs = self.processor(
             text=[""],
-            images=batch * 255,
+            images=batch,
+            # images=batch * 255,
             return_tensors="pt",
             padding=True,
         )

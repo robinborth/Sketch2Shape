@@ -1,0 +1,22 @@
+# @package _global_
+
+defaults:
+  - override /data:
+    - train_loss
+    - eval_loss
+  - override /dataset: shapenet_chair_4096
+  - override /logger: wandb
+  - override /model: latent_tower
+
+task_name: train_latent_loss
+tags: ["train_loss", "shapenet_chair_4096", "latent_tower_edge_normal_multi_view_256"]
+
+data:
+  latent: True
+  modes: [0, 1]
+  batch_size: 256 
+  train_sampler:
+    chunk_size: 1
+  dataset: 
+    _target_: lib.data.dataset.loss.LatentLossDataset
+    deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt

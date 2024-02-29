@@ -16,17 +16,19 @@ camera_sphere_eps: 1e-1
 
 preprocess_mesh:
   _target_: lib.data.preprocess.PreprocessMesh
+  _partial_: True
   data_dir: ${data.data_dir}
   skip: True
   resolution: 30000
   laplacian_num_iters: 1
 
 ########################################################################
-# Preprocessing Siamese
+# Preprocessing Synthetic 
 ########################################################################
 
-preprocess_siamese:
-  _target_: lib.data.preprocess.PreprocessSiamese
+preprocess_synthetic:
+  _target_: lib.data.preprocess.PreprocessSynthetic
+  _partial_: True
   # processing settings
   data_dir: ${data.data_dir}
   skip: True
@@ -50,24 +52,30 @@ preprocess_siamese:
 
 preprocess_renderings:
   _target_: lib.data.preprocess.PreprocessRenderings
+  _partial_: True
   # processing settings
   data_dir: ${data.data_dir}
   deepsdf_ckpt_path: ${deepsdf_ckpt_path} 
   skip: True
+  split: ???
   # traversal settings
-  n_renderings: 100
+  traversal: False
+  n_renderings: 10
   t_mean: 0.25
   t_std: 0.1
   # camera settings
-  azim_mean: 30.0
-  azim_std: 5.0
-  elev_mean: -20.0
+  azims: [-90.0, -45.0, 0.0, 45.0, 90.0]
+  azim_std: 22.5
+  elev: -20.0
   elev_std: 5.0
   dist: ${data.camera_dist} 
   width: ${data.camera_width} 
   height: ${data.camera_height} 
   focal: ${data.camera_focal} 
   sphere_eps: ${data.camera_sphere_eps} 
+  # grayscale settings
+  ambient: 0.2
+  diffuse: 0.5
   # sketch settings
   t_lower: 100
   t_upper: 150
@@ -80,6 +88,7 @@ preprocess_renderings:
 
 preprocess_sdf:
   _target_: lib.data.preprocess.PreprocessSDF
+  _partial_: True
   # processing settings
   data_dir: ${data.data_dir}
   skip: True

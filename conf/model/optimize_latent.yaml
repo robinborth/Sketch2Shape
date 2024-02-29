@@ -1,11 +1,10 @@
 # @package model
 
 _target_: lib.optimizer.deepsdf.DeepSDFLatentOptimizer
-ckpt_path: ${ckpt_path} 
-prior_idx: -1
-obj_id: "" 
-reg_loss: True
-reg_weight: 1e-05
+# base settings
+data_dir: ${data.data_dir}
+loss_ckpt_path: ${loss_ckpt_path} 
+deepsdf_ckpt_path: ${deepsdf_ckpt_path}
 optimizer:
   _target_: torch.optim.Adam
   _partial_: true
@@ -15,14 +14,25 @@ scheduler:
   _target_: torch.optim.lr_scheduler.StepLR
   step_size: 100
   gamma: 0.5
+# init settings: random, mean, prior, prior(idx), retrieval, latent
+latent_init: mean
+# regularization settings: none, prior, retrieval
+reg_loss: none
+reg_weight: 1e-5
+# retrieval settings for init and prior
+prior_obj_id: "" 
+prior_view_id: 11
+retrieval_k: 16
 # mesh settings
 mesh_resolution: 128
 mesh_chunk_size: 65536
 # rendering settings
-capture_rate: 30
 n_render_steps: 100
 clamp_sdf: 0.1
 step_scale: 1.0
 surface_eps: 1e-03
 sphere_eps: 1e-01
 normal_eps: 5e-03
+# image logger settings
+log_images:  True
+capture_rate: 30

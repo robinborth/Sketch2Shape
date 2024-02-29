@@ -1,0 +1,16 @@
+# @package model
+
+# custom settings
+_target_: lib.models.loss.BarlowLoss
+gamma: 5e-03
+support_latent: False
+
+# base settings
+embedding_size: 256
+pretrained: True 
+shared: True
+head: linear
+mode: cosine
+lr_head: 1e-03
+lr_backbone: 1e-05
+scheduler: null

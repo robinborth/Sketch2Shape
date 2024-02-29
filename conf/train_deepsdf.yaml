@@ -18,4 +18,6 @@ seed: 123
 task_name: train_deepsdf
 tags: ["train_deepsdf"]
 train: True
-ckpt_path: null
+ckpt_path: ???
+deepsdf_ckpt_path: ???
+loss_ckpt_path: ???

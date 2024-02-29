@@ -14,12 +14,12 @@ defaults:
 seed: 123
 task_name: traverse_latent
 tags: ["traverse_latent"]
-create_mesh: True
+create_mesh: False
 create_video: True
-ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
+compute_loss: False
+deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 loss_ckpt_path: ${paths.checkpoint_dir}/siamese.ckpt
 traversal_steps: 20
 
 trainer:
   num_sanity_val_steps: 0
-

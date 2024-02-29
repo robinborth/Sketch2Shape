@@ -16,8 +16,7 @@ class LatentOptimizationDataModule(LightningDataModule):
         persistent_workers: bool = False,
         shuffle: bool = False,
         # dataset
-        train_dataset: Optional[Dataset] = None,
-        eval_dataset: Optional[Dataset] = None,
+        dataset: Optional[Dataset] = None,
         milestones: list[int] = [],
         size: int = 256,
         **kwargs,
@@ -31,36 +30,24 @@ class LatentOptimizationDataModule(LightningDataModule):
     def get_sizes(self):
         return [self.size // (2**n) for n in range(len(self.milestones) + 1)]
 
-    def get_train_dataset(self):
+    def get_dataset(self):
         current_epoch = self.trainer.current_epoch
         num_downsample = sum(m >= current_epoch for m in self.milestones)
-        return self.train_datasets[num_downsample]
+        return self.datasets[num_downsample]
 
     def setup(self, stage: str) -> None:
-        if stage == "fit":
-            self.train_datasets = []
-            for size in self.get_sizes():
-                dataset = self.hparams["train_dataset"](obj_id=self.obj_id, size=size)
-                self.train_datasets.append(dataset)
-        if stage == "test":
-            self.eval_dataset = self.hparams["eval_dataset"](obj_id=self.obj_id)
+        self.datasets = []
+        for size in self.get_sizes():
+            dataset = self.hparams["dataset"](obj_id=self.obj_id, size=size)
+            self.datasets.append(dataset)
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
-            dataset=self.get_train_dataset(),
+            dataset=self.get_dataset(),
             batch_size=self.hparams["batch_size"],
             num_workers=self.hparams["num_workers"],
             pin_memory=self.hparams["pin_memory"],
             drop_last=self.hparams["drop_last"],
             persistent_workers=self.hparams["persistent_workers"],
             shuffle=self.hparams["shuffle"],
-        )
-
-    def test_dataloader(self) -> DataLoader:
-        return DataLoader(
-            dataset=self.eval_dataset,
-            batch_size=1,
-            num_workers=self.hparams["num_workers"],
-            pin_memory=self.hparams["pin_memory"],
-            persistent_workers=self.hparams["persistent_workers"],
         )

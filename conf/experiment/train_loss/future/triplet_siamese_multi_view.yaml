@@ -1,0 +1,28 @@
+# @package _global_
+
+defaults:
+  - override /data:
+    - train_loss
+    - eval_loss
+  - override /dataset: shapenet_chair_4096
+  - override /logger: wandb
+  - override /model: triplet_siamese 
+
+task_name: train_triplet_loss
+tags: ["train_loss", "shapenet_chair_4096", "triplet_siamese"]
+
+data:
+  modes: [0, 1]
+  dataset: 
+    sketch_transform:
+      transforms:
+        - _target_: torchvision.transforms.v2.RandomRotation
+          degrees: 5 
+          fill: 1.0
+        - _target_: lib.data.transforms.DilateSketch
+          _partial_:  False
+          kernel_size: 5
+    normal_transform:
+      transforms:
+        - _target_: lib.data.transforms.ToGrayScale 
+  

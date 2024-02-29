@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -7,14 +9,16 @@ from torchmetrics.aggregation import CatMetric, MeanMetric
 from torchvision.transforms import ToTensor
 
 from lib.data.metainfo import MetaInfo
-from lib.utils.checkpoint import load_model
+from lib.models.clip import CLIP
+from lib.models.loss import Loss
+from lib.models.resnet import ResNet18
 from lib.visualize.image import image_grid, plot_single_image, transform_to_plot
 
 
 class LossTester(LightningModule):
     def __init__(
         self,
-        ckpt_path: str = ".ckpt",
+        loss_ckpt_path: str = "loss.ckpt",
         data_dir: str = "/data",
         index_mode: str = "normal",  # normal, sketch
         query_mode: str = "sketch",  # normal, sketch
@@ -23,7 +27,7 @@ class LossTester(LightningModule):
     ):
         super().__init__()
 
-        self.model = load_model(ckpt_path=ckpt_path)
+        self.model = self.load_model(loss_ckpt_path)
         self.metainfo = MetaInfo(data_dir=data_dir)
 
         self._index: list = []
@@ -44,6 +48,18 @@ class LossTester(LightningModule):
         self.heatmap = CatMetric()
 
         self.transform = ToTensor()
+
+    def load_model(self, loss_ckpt_path: str) -> LightningModule:
+        path = Path(loss_ckpt_path)
+        if path.stem == "resnet18":
+            return ResNet18()
+        if path.stem == "clip":
+            return CLIP()
+        try:
+            return Loss.load_from_checkpoint(path)
+        except Exception:
+            pass
+        raise FileNotFoundError(f"The provided {loss_ckpt_path=} can not be found!")
 
     @property
     def max_k(self):
@@ -87,15 +103,20 @@ class LossTester(LightningModule):
         l2_distance = np.linalg.norm(embedding, axis=-1)
         return embedding / l2_distance.reshape(-1, 1)
 
-    def forward(self, batch):
-        return self.model(batch)
+    def forward(self, batch, type_idx: int):
+        index_mask = batch["type_idx"] == type_idx
+        image = batch["image"][index_mask]
+        type_idx = batch["type_idx"][index_mask]
+        emb = self.model(image, type_idx=type_idx)
+        return emb, index_mask
 
     def validation_step(self, batch, batch_idx, dataloader_idx: int = 0):
-        index_mask = batch["type_idx"] == self.index_type_idx
-        index_emb = self.forward(batch["image"][index_mask]).detach().cpu().numpy()
-        self._index.append(index_emb)
+        index_emb, index_mask = self.forward(batch, type_idx=self.index_type_idx)
+        self._index.append(index_emb.detach().cpu().numpy())
         self._labels.extend(batch["label"][index_mask].detach().cpu().numpy())
         self._image_ids.extend(batch["image_id"][index_mask].detach().cpu().numpy())
+        type_idx, image = batch["type_idx"][0], batch["image"][0]
+        self.model.log_image(key=f"image_{type_idx}", image=image, batch_idx=batch_idx)
 
     def calculate_recall(self, recall_type, idx, gt_labels):
         _, _, n, _type = recall_type.split("_")
@@ -120,16 +141,15 @@ class LossTester(LightningModule):
         self.index = torch.tensor(index).to(self.device)
 
     def test_step(self, batch, batch_idx):
-        # extract from the batch
-        query_mask = batch["type_idx"] == self.query_type_idx
-        gt_labels = batch["label"][query_mask].cpu().numpy()
-        gt_image_ids = batch["image_id"][query_mask].cpu().numpy()
-
         # get the distance
-        query_emb = self.forward(batch["image"][query_mask])
+        query_emb, query_mask = self.forward(batch, type_idx=self.query_type_idx)
         k_at_1_object = self.k_for_num_objects(num_objects=1)
         self.log("k_at_1_object", k_at_1_object)
         dist, idx = self.search(query_emb, k=self.max_k)
+
+        # extract from the batch
+        gt_labels = batch["label"][query_mask].detach().cpu().numpy()
+        gt_image_ids = batch["image_id"][query_mask].detach().cpu().numpy()
 
         # calculate the metrics
         for metric_name in [
@@ -156,51 +176,51 @@ class LossTester(LightningModule):
         )
         self.heatmap.update(heatmap)
 
-        # every self.obj_capture_rate log on retrieved normals, sketch pairs in wadnb
-        if (batch_idx % self.obj_capture_rate) == 0:
-            _idx = np.where(gt_image_ids == self.obj_capture_image_id)
-            gt_label = gt_labels[_idx].item()
-            gt_image_id = gt_image_ids[_idx].item()
-            _labels_at_1_object = labels_at_1_object[_idx].squeeze()
-            _image_ids_at_1_object = image_ids_at_1_object[_idx].squeeze()
+    #     # every self.obj_capture_rate log on retrieved normals, sketch pairs in wadnb
+    #     if (batch_idx % self.obj_capture_rate) == 0:
+    #         _idx = np.where(gt_image_ids == self.obj_capture_image_id)
+    #         gt_label = gt_labels[_idx].item()
+    #         gt_image_id = gt_image_ids[_idx].item()
+    #         _labels_at_1_object = labels_at_1_object[_idx].squeeze()
+    #         _image_ids_at_1_object = image_ids_at_1_object[_idx].squeeze()
 
-            index_images = {}
-            # fetch the sketch from the current batch
-            obj_id = self.metainfo.label_to_obj_id(gt_label)
-            sketch = self.metainfo.load_sketch(obj_id, f"{gt_image_id:05}")
-            plot_single_image(sketch)
-            index_images["query/sketch"] = wandb.Image(plt)
-            # fetch the top k retrieved normal images from the dataset
-            images = []
-            for label, image_id in zip(_labels_at_1_object, _image_ids_at_1_object):
-                obj_id = self.metainfo.label_to_obj_id(label)
-                normal = self.metainfo.load_normal(obj_id, f"{image_id:05}")
-                normal = self.transform(normal)
-                if gt_label != label:  # color background back of wrong labels
-                    background = normal.mean(0) > 0.99
-                    normal[:, background] = 0
-                images.append(normal)
-            image_data = transform_to_plot(images, batch=True)
-            image_grid(image_data, rows=5, cols=18)
-            index_images["index/normals"] = wandb.Image(plt)
-            # log the sketch and normals
-            self.logger.log_metrics(index_images)  # type: ignore
+    #         index_images = {}
+    #         # fetch the sketch from the current batch
+    #         obj_id = self.metainfo.label_to_obj_id(gt_label)
+    #         sketch = self.metainfo.load_sketch(obj_id, f"{gt_image_id:05}")
+    #         plot_single_image(sketch)
+    #         index_images["query/sketch"] = wandb.Image(plt)
+    #         # fetch the top k retrieved normal images from the dataset
+    #         images = []
+    #         for label, image_id in zip(_labels_at_1_object, _image_ids_at_1_object):
+    #             obj_id = self.metainfo.label_to_obj_id(label)
+    #             normal = self.metainfo.load_normal(obj_id, f"{image_id:05}")
+    #             normal = self.transform(normal)
+    #             if gt_label != label:  # color background back of wrong labels
+    #                 background = normal.mean(0) > 0.99
+    #                 normal[:, background] = 0
+    #             images.append(normal)
+    #         image_data = transform_to_plot(images, batch=True)
+    #         image_grid(image_data, rows=5, cols=18)
+    #         index_images["index/normals"] = wandb.Image(plt)
+    #         # log the sketch and normals
+    #         self.logger.log_metrics(index_images)  # type: ignore
 
-    def on_test_end(self) -> None:
-        # heatmap based on: query sketch and how good are the different views
-        heatmap_angles = self.heatmap.compute().mean(0).reshape(18, 5)
-        heatmap_angles = heatmap_angles.detach().cpu().numpy()
-        plt.clf()
-        c = plt.imshow(heatmap_angles, cmap="viridis", interpolation="nearest")
-        plt.colorbar(c)
-        self.logger.log_metrics({"heatmap_angles": wandb.Image(c)})  # type: ignore
+    # def on_test_end(self) -> None:
+    #     # heatmap based on: query sketch and how good are the different views
+    #     heatmap_angles = self.heatmap.compute().mean(0).reshape(18, 5)
+    #     heatmap_angles = heatmap_angles.detach().cpu().numpy()
+    #     plt.clf()
+    #     c = plt.imshow(heatmap_angles, cmap="viridis", interpolation="nearest")
+    #     plt.colorbar(c)
+    #     self.logger.log_metrics({"heatmap_angles": wandb.Image(c)})  # type: ignore
 
-        # heatmap for both normals and sketch as query hence 2D matrix
-        size = self.num_views_per_object
-        heatmap_full = self.heatmap.compute()
-        heatmap_full = heatmap_full.reshape(-1, size, size).mean(dim=0)
-        heatmap_full = heatmap_full.detach().cpu().numpy()
-        plt.clf()
-        c = plt.imshow(heatmap_full, cmap="viridis", interpolation="nearest")
-        plt.colorbar(c)
-        self.logger.log_metrics({"heatmap_full": wandb.Image(c)})  # type: ignore
+    #     # heatmap for both normals and sketch as query hence 2D matrix
+    #     size = self.num_views_per_object
+    #     heatmap_full = self.heatmap.compute()
+    #     heatmap_full = heatmap_full.reshape(-1, size, size).mean(dim=0)
+    #     heatmap_full = heatmap_full.detach().cpu().numpy()
+    #     plt.clf()
+    #     c = plt.imshow(heatmap_full, cmap="viridis", interpolation="nearest")
+    #     plt.colorbar(c)
+    #     self.logger.log_metrics({"heatmap_full": wandb.Image(c)})  # type: ignore

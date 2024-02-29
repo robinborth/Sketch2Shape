@@ -11,11 +11,7 @@ persistent_workers: True
 drop_last: False
 shuffle: False
 # dataset 
-train_dataset:
+dataset:
   _target_: ??? 
-  _partial_: True
-  data_dir: ${data.data_dir} 
-eval_dataset:
-  _target_: lib.data.dataset.optimize_latent.SurfaceSamplesDataset
   _partial_: True
   data_dir: ${data.data_dir} 

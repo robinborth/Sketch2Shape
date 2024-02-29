@@ -26,10 +26,10 @@ class Camera:
         mat = get_translation(self.dist)
         mat = mat @ get_rotation_x(self.elev)
         mat = mat @ get_rotation_y(self.azim)
-        return mat
+        return mat.astype(np.float32)
 
     def get_camera_to_world(self):
-        return np.linalg.inv(self.get_world_to_camera())
+        return np.linalg.inv(self.get_world_to_camera()).astype(np.float32)
 
     def camera_position(self):
         return self.get_camera_to_world()[:3, -1]

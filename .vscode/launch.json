@@ -1,7 +1,4 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
@@ -29,7 +26,7 @@
             "request": "launch",
             "program": "scripts/train_loss.py",
             "args": [
-                "+experiment/train_loss=latent_encoder_shapenet_chair_4096",
+                "+experiment/train_loss=latent_siamese_multi_view",
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
@@ -46,13 +43,13 @@
             "justMyCode": false,
         },
         {
-            "name": "Debug: Eval Siamese",
+            "name": "Debug: Eval Loss",
             "type": "debugpy",
             "request": "launch",
             "program": "scripts/eval_loss.py",
             "console": "integratedTerminal",
             "args": [
-                "+experiment/eval_loss=siamese"
+                "+experiment/eval_loss=latent_loss"
             ],
             "justMyCode": true,
         },
@@ -121,12 +118,9 @@
             "request": "launch",
             "program": "scripts/optimize_deepsdf.py",
             "args": [
-                "+data=shapenet_chair_1024",
-                "ckpt_path=/shared/logs/deepsdf.ckpt",
-                "split=train",
-                "train=False",
-                "obj_ids=[7139284dff5142d4593ebeeedbff73b]"
-                // "logger=wandb"
+                "+experiment/baseline=latent_loss",
+                "loss_ckpt_path=checkpoints/latent_siamese_edge_normal_multi_view_256.ckpt",
+                "+data/variants=sketch"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
@@ -137,7 +131,7 @@
             "request": "launch",
             "program": "scripts/traverse_latent.py",
             "args": [
-                "+experiment/traverse_latent=siamese_train_train_1"
+                "+experiment/traverse_latent=train_train_1"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

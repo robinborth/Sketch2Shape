@@ -6,10 +6,6 @@ from lib.optimizer.latent import LatentOptimizer
 class DeepSDFLatentOptimizer(LatentOptimizer):
     def __init__(
         self,
-        decoder_lr: float = 5e-04,
-        latents_lr: float = 1e-03,
-        reg_loss: bool = True,
-        reg_weight: float = 1e-4,
         clamp: bool = True,
         clamp_val: float = 0.1,
         adaptive_sample_strategy: bool = False,

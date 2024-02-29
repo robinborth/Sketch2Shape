@@ -5,7 +5,12 @@ from lib.optimizer.latent import LatentOptimizer
 
 
 class NormalsOptimizer(LatentOptimizer):
-    def __init__(self, **kwargs) -> None:
+    def __init__(
+        self,
+        reg_loss: bool = True,
+        reg_weight: float = 1e-5,
+        **kwargs,
+    ) -> None:
         super().__init__(**kwargs)
         self.deepsdf.lat_vecs = None
 
