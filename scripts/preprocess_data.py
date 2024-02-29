@@ -53,7 +53,7 @@ def preprocess(cfg: DictConfig) -> None:
 
     for split in ["train_latent", "val_latent"]:
         logger.debug(f"==> initializing traversal for {split} ...")
-        cfg.data.preprocess_renderings.split = split
+        cfg.data.preprocess_traversal.split = split
         traverse = hydra.utils.instantiate(cfg.data.preprocess_traversal)()
         logger.debug(f"==> start preprocessing traversals for {split} ...")
         for obj_id in tqdm(list(traverse.obj_ids_iter())):

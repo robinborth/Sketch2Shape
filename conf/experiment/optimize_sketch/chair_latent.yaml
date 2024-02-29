@@ -5,17 +5,19 @@ defaults:
   - override /dataset: shapenet_chair_4096
   - override /logger: wandb
 
-tags: ["optimize_sketch", "shapenet_chair_4096", "optim_couch_prior"]
-split: train 
-eval: False
-prior_idx: mean
+tags: ["optimize_sketch", "shapenet_chair_4096", "chair_latent"]
+loss_ckpt_path: ${paths.checkpoint_dir}/latent_siamese_sketch_grayscale_latent_256.ckpt
+eval: False 
+save_mesh: True 
+create_video: True 
 obj_ids:
-  - 52310bca00e6a3671201d487ecde379e
+  # - f1cb7ac166e7f23fd9d3572bbd9cf789  # 4112
+  - 21f2927b04e2f22830ddb6ead95f49cc  # 10
+  # - 85d0d147adcb6318b8e1b99345a5afd4  # 13
 
 trainer:
-  max_epochs: 500
-  accumulate_grad_batches: 1
-  # reload_dataloaders_every_n_epochs: 100
+  max_epochs: 3
+  accumulate_grad_batches: 24
 
 data:
   num_workers: 0
@@ -23,18 +25,17 @@ data:
   persistent_workers: False
   size: 256
   milestones: []
-  train_dataset:
-    azims: [40]
-    elevs: [-30]
+  dataset:
+    azims: [70, 50, 30, 10, -20, -40, -60, -80]
+    elevs: [-45, -20, -5]
 
 model:
   loss_weight: 1.0
-  shape_init: True 
-  shape_prior: True 
-  shape_k: 16
-  capture_rate: 8
-  reg_loss: True 
-  reg_weight: 0.1
+  reg_weight: 1.0
+  silhouette_weight: 100.0
   optimizer:
     lr: 1e-02
-  scheduler: null
+  reg_loss: latent
+  latent_init: latent
+  silhouette_loss: l1 
+  loss_mode: l1 

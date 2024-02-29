@@ -13,7 +13,6 @@ class CLIP(LightningModule):
         inputs = self.processor(
             text=[""],
             images=batch,
-            # images=batch * 255,
             return_tensors="pt",
             padding=True,
         )

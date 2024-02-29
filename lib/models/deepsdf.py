@@ -230,7 +230,6 @@ class DeepSDF(LightningModule):
         height: int = 256,
         focal: int = 512,
         sphere_eps: float = 1e-01,
-        surface_eps: float = 1e-03,
     ):
         device = self.device
         camera = Camera(
@@ -342,6 +341,17 @@ class DeepSDF(LightningModule):
         loss_input = (loss_input * 0.5) + 0.5  # (-1, 1) -> (0, 1)
         return loss_input.permute(1, 2, 0)  # (H, W, 3)
 
+    def silhouette_to_image(self, silhouette: torch.Tensor) -> torch.Tensor:
+        """Transforms a silhouette to a image that can be plotted."
+
+        Args:
+            loss_input (torch.Tensor): The input of dim: (H, W); range: (0, 1)
+
+        Returns:
+            torch.Tensor: The transformed image of dim (H, W, 3).
+        """
+        return 1 - silhouette
+
     def render_normals(
         self,
         points: torch.Tensor,
@@ -399,11 +409,15 @@ class DeepSDF(LightningModule):
         silhouette_surface_eps: float = 5e-02,
         proj_blur_kernal_size: int = 5,
         proj_blur_sigma: float = 3.0,
-        proj_blur_eps: float = 0.5,
+        proj_blur_eps: float = 7e-01,
         weight_blur_kernal_size: int = 9,
         weight_blur_sigma: float = 9.0,
-        weight_blur_eps: float = 10.0,
+        weight_blur_eps: float = 5e-02,
         return_full: bool = True,
+        world_to_camera=None,
+        camera_width=None,
+        camera_height=None,
+        camera_focal=None,
     ):
         """Converts an image into an weighted silhouette.
 
@@ -414,11 +428,16 @@ class DeepSDF(LightningModule):
             silhouette_surface_eps (float, optional): The threshold of the cloestest
                 points that are used to calculate the surface. Defaults to 5e-02.
         """
-        width, height = self.camera_width, self.camera_height
+        width = camera_width or self.camera_width
+        height = camera_height or self.camera_height
+        camera_focal = camera_focal or self.camera_focal
+        world_to_camera = world_to_camera  # multi dim tensor cant be bool
+        if world_to_camera is None:
+            world_to_camera = self.world_to_camera
 
         # calculate the base silhouette from the initial rendering
         min_normals = (normals - 0.5) / 0.5  # (H, W, 3) with range (-1, 1) and norm=1.0
-        base_silhouette = min_normals.sum(-1) > 2.95  # (H, W)
+        base_silhouette = min_normals.sum(-1) < 2.95  # (H, W)
 
         # silhouette with higher threshold, that blows up the rendering
         min_eps = self.hparams["surface_eps"]
@@ -432,12 +451,16 @@ class DeepSDF(LightningModule):
         idx = torch.where(extra_silhouette)
         w_points = min_points[idx] - min_normals[idx] * min_sdf[idx][..., None]  # (X,3)
         # transform the points into camera coords
-        c_points = torch.ones((w_points.shape[0], 4), dtype=torch.float32)
+        c_points = torch.ones(
+            size=(w_points.shape[0], 4),
+            dtype=torch.float32,
+            device=self.device,
+        )
         c_points[:, :3] = w_points
-        c_points = self.world_to_camera @ c_points.T
+        c_points = world_to_camera @ c_points.T
         c_points = c_points.T
         # convert the points into pixels on the image plane
-        focal = self.focal
+        focal = camera_focal
         pxs = ((width * 0.5) - (c_points[:, 0] * focal) / c_points[:, 2]).to(torch.int)
         pys = ((height * 0.5) - (c_points[:, 1] * focal) / c_points[:, 2]).to(torch.int)
         # filter the points that are not on the image plane after projection
@@ -452,28 +475,41 @@ class DeepSDF(LightningModule):
         # blur the silhouette and filter noise out
         proj_blur = v2.GaussianBlur(proj_blur_kernal_size, proj_blur_sigma)
         proj_blur_silhouette = proj_blur(torch.stack([proj_silhouette] * 3))[0]
-        proj_blur_silhouette = torch.clip(proj_blur_silhouette - proj_blur_eps, min=0)
+
+        proj_blur_mask = (proj_blur_silhouette - proj_blur_eps) < 0
+        proj_blur_silhouette = torch.nn.functional.sigmoid(proj_blur_silhouette)
+        proj_blur_silhouette[proj_blur_mask] = 0.0
 
         # blur the base silhouette to get an density map
         weight_blur = v2.GaussianBlur(weight_blur_kernal_size, weight_blur_sigma)
-        base_blur_silhouette = weight_blur(torch.stack([base_silhouette] * 3))[0]
+        base_blur_silhouette = torch.stack([base_silhouette] * 3).to(torch.float32)
+        base_blur_silhouette = weight_blur(base_blur_silhouette)[0]
 
-        # weight map of the blured projected silhouette, to encourage creating
-        # silhouette in empty space
-        weights = torch.clip(-torch.log(base_blur_silhouette), 0, weight_blur_eps)
+        # weights = torch.clip(-torch.log(base_blur_silhouette), 0, weight_blur_eps)
+        weights = base_blur_silhouette < weight_blur_eps
         weighted_silhouette = proj_blur_silhouette * weights  # (H, W)
+
+        # combination of the base and the weigted silouette
+        final_silhouette = base_silhouette.to(torch.float32) + weighted_silhouette
+        final_silhouette = torch.clip(final_silhouette, 0.0, 1.0)
+        margin_mask = base_blur_silhouette > min_eps
+        margin_value = torch.tensor(0.5).to(self.device)
+        # margin_value = torch.tensor(0.3).to(self.device)
+        margin = torch.clamp(final_silhouette[margin_mask], min=margin_value)
+        final_silhouette[margin_mask] = margin
 
         if return_full:
             return {
                 "min_sdf": min_sdf,
-                "base_silhouette": base_silhouette,
-                "extra_silhouette": extra_silhouette,
+                "base_silhouette": base_silhouette.to(torch.float32),
+                "extra_silhouette": extra_silhouette.to(torch.float32),
                 "proj_silhouette": proj_silhouette,
                 "proj_blur_silhouette": proj_blur_silhouette,
                 "base_blur_silhouette": base_blur_silhouette,
                 "weighted_silhouette": weighted_silhouette,
+                "final_silhouette": final_silhouette,
             }
-        return weighted_silhouette
+        return final_silhouette
 
     ############################################################
     # Sphere Tracing Variants

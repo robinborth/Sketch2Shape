@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 from torchvision.transforms import v2
 
 from lib.data.metainfo import MetaInfo
-from lib.data.transforms import BaseTransform
+from lib.data.transforms import BaseTransform, SketchTransform
 from lib.render.camera import Camera
 
 ############################################################
@@ -102,8 +102,7 @@ class SketchLatentOptimizerDataset(Dataset):
     ):
         self.metainfo = MetaInfo(data_dir=data_dir)
         self.data = []
-        self.transforms = BaseTransform(transforms=[v2.Resize((size, size))])
-        view_id = 0
+        self.transforms = SketchTransform()
         for azim in azims:
             for elev in elevs:
                 data = {}
@@ -118,10 +117,13 @@ class SketchLatentOptimizerDataset(Dataset):
                 points, rays, mask = camera.unit_sphere_intersection_rays()
                 data["points"], data["rays"], data["mask"] = points, rays, mask
                 data["camera_position"] = camera.camera_position()
+                data["world_to_camera"] = camera.get_world_to_camera()
+                data["camera_width"] = size
+                data["camera_height"] = size 
+                data["camera_focal"] = size * 2
                 label = self.metainfo.obj_id_to_label(obj_id)
-                sketch = self.metainfo.load_image(label, view_id, 0)
+                sketch = self.metainfo.load_image(label, sketch_id, 0)
                 data["sketch"] = self.transforms(sketch)  # (3, W, H)
-                view_id += 1
                 self.data.append(data)
 
     def __len__(self):

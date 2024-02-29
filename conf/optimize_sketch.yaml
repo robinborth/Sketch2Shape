@@ -43,14 +43,14 @@ model:
   # custom settings
   _target_: lib.optimizer.sketch.SketchOptimizer
   loss_weight: 1.0
+  silhouette_loss: none 
+  silhouette_weight: 1.0
   # base settings
   reg_loss: none
   reg_weight: 2e-03
   optimizer:
     lr: 1e-02
-  scheduler:
-    step_size: 5
-    gamma: 0.5
+  scheduler: null
   latent_init: latent
   prior_obj_id: ""
   prior_view_id: 11

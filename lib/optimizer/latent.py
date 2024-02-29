@@ -6,7 +6,7 @@ from lightning.pytorch.loggers import WandbLogger
 from tqdm import tqdm
 
 from lib.data.metainfo import MetaInfo
-from lib.data.transforms import BaseTransform, DilateSketch
+from lib.data.transforms import SketchTransform
 from lib.models.deepsdf import DeepSDF
 from lib.models.loss import Loss
 
@@ -49,7 +49,7 @@ class LatentOptimizer(LightningModule):
         super().__init__()
         self.save_hyperparameters(logger=False)
         self.metainfo = MetaInfo(data_dir=data_dir)
-        self.sketch_transforms = BaseTransform(transforms=[DilateSketch(kernel_size=5)])
+        self.sketch_transform = SketchTransform()
 
         # init deepsdf
         self.deepsdf = DeepSDF.load_from_checkpoint(
@@ -113,7 +113,7 @@ class LatentOptimizer(LightningModule):
             view_id = self.hparams["prior_view_id"]
             assert sketch_mode in [0, 3, 6]
             sketch = self.metainfo.load_image(label, view_id, sketch_mode)  # sketch
-            loss_input = self.transforms(sketch)[None, ...].to(self.loss.device)
+            loss_input = self.sketch_transform(sketch)[None, ...].to(self.loss.device)
             return self.loss.embedding(loss_input)[0]
 
         if latent_init == "mean":
@@ -144,8 +144,9 @@ class LatentOptimizer(LightningModule):
     ):
         device = self.loss.device
         obj_id_label = int(self.metainfo.obj_id_to_label(obj_id))
+        assert sketch_mode in [0, 3, 6]  # sketches
         sketch = self.metainfo.load_image(obj_id_label, view_id, sketch_mode)
-        loss_input = self.transforms(sketch)[None, ...].to(device)
+        loss_input = self.sketch_transform(sketch)[None, ...].to(device)
         sketch_emb = self.loss.embedding(loss_input, mode="sketch")
 
         # get the loss from all objects in the train dataset
@@ -153,9 +154,10 @@ class LatentOptimizer(LightningModule):
         _loss = []
         for obj_id in tqdm(metainfo.obj_ids):
             label = int(metainfo.obj_id_to_label(obj_id))
+            assert retrieval_mode in [0, 1, 2]  # synthetic
             image = metainfo.load_image(label, view_id, retrieval_mode)
-            loss_input = self.transforms(image)[None, ...].to(device)
-            loss_emb = self.loss.embedding(loss_input, mode="normal")
+            loss_input = self.sketch_transform(image)[None, ...].to(device)
+            loss_emb = self.loss.embedding(loss_input, mode="sketch")
             loss = self.loss.compute(sketch_emb, loss_emb)
             _loss.append(loss)
         self.shape_loss = torch.concatenate(_loss)
@@ -210,3 +212,6 @@ class LatentOptimizer(LightningModule):
         image = image.detach().cpu().numpy()
         if isinstance(self.logger, WandbLogger):
             self.logger.log_image(key, [image])  # type: ignore
+
+    def log_silhouette(self, silhouette_output: dict, key: str):
+        self.log_image(key, self.deepsdf.silhouette_to_image(silhouette_output[key]))
