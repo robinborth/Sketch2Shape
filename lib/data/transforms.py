@@ -33,6 +33,11 @@ class BaseTransform:
         return self.transform(image)
 
 
+############################################################
+# Custom Transforms Layers
+############################################################
+
+
 class ToSketch(Transform):
     """Convert the image to an sketch.
 
@@ -110,10 +115,10 @@ class ToSilhouette(Transform):
         return image
 
 
-class ToGrayScale(Transform):
-    def __init__(self):
-        super().__init__()
+############################################################
+# Deprecated Transforms
+############################################################
 
-    def __call__(self, image):
-        mean = image.mean(0)
-        return torch.stack([mean, mean, mean], dim=0)
+
+class ToGrayScale(Transform):
+    pass

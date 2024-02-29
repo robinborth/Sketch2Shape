@@ -38,51 +38,38 @@ class MetaInfo:
 
         # mappings for the tower loss network
         self.image_type_2_type_idx = {
-            "sketch": 0,
-            "normal": 1,
+            "synthetic_sketch": 0,
+            "synthetic_normal": 1,
+            "synthetic_grayscale": 1,
+            "rendered_sketch": 0,
+            "rendered_normal": 1,
+            "rendered_grayscale": 1,
+            "traverse_sketch": 0,
+            "traverse_normal": 1,
+            "traverse_grayscale": 1,
         }
-        self.type_idx_2_image_type = {
-            0: "sketch",
-            1: "normal",
-        }
+
         # mappings for the different image datasets
         self.mode_2_image_type = {
-            0: "sketch",
-            1: "normal",
-            2: "rendered_sketch",
-            3: "rendered_normal",
+            0: "synthetic_sketch",
+            1: "synthetic_normal",
+            2: "synthetic_grayscale",
+            3: "rendered_sketch",
+            4: "rendered_normal",
+            5: "rendered_grayscale",
+            6: "traverse_sketch",
+            7: "traverse_normal",
+            8: "traverse_grayscale",
         }
-        self.mode_2_type_idx = {
-            0: 0,
-            1: 1,
-            2: 0,
-            3: 1,
-        }
-        self.mode_2_image_dir = {
-            0: "sketches",
-            1: "normals",
-            2: "rendered_sketches",
-            3: "rendered_normals",
-        }
+        self.image_type_2_mode = {v: k for k, v in self.mode_2_image_type.items()}
 
     #################################################################
     # SNN pairs loader utils
     #################################################################
 
-    def type_idx_2_image_dir(self, type_idx: int, obj_id: str):
-        if type_idx == 0:
-            return self.data_dir / "shapes" / obj_id / "sketches"
-        if type_idx == 1:
-            return self.data_dir / "shapes" / obj_id / "normals"
-        if type_idx == 2:
-            return self.data_dir / "shapes" / obj_id / "rendered_sketches"
-        if type_idx == 3:
-            return self.data_dir / "shapes" / obj_id / "rendered_normals"
-        raise NotImplementedError()
-
     def iterate_image_data(self, mode: int):
         for obj_id, label in self._obj_id_to_label.items():
-            image_dir = self.data_dir / "shapes" / obj_id / self.mode_2_image_dir[mode]
+            image_dir = self.data_dir / "shapes" / obj_id / self.mode_2_image_type[mode]
             assert image_dir.exists()
             for file_name in sorted(image_dir.iterdir()):
                 yield dict(
@@ -195,234 +182,61 @@ class MetaInfo:
         return np.save(path, samples.astype(np.float32))
 
     #################################################################
-    # Normals: Loading and Storing Utils
+    # General Config: Loading and Storing Utils
     #################################################################
 
-    def normals_dir_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "normals"
+    def config_path(self, obj_id: str, mode: int) -> Path:
+        image_type = self.mode_2_image_type.get(mode)
+        if image_type is None:
+            raise ValueError(f"Please provide an {mode=} that is correct!")
+        image_prefix = image_type.split("_")[0]
+        return self.data_dir / "shapes" / obj_id / f"{image_prefix}_config.csv"
 
-    def save_normal(self, normals: np.ndarray, obj_id: str, image_id: str):
-        path = self.normals_dir_path(obj_id) / f"{image_id}.png"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        Image.fromarray(normals).save(path)
-
-    def load_normal(self, obj_id: str, image_id: str):
-        path = self.normals_dir_path(obj_id) / f"{image_id}.png"
-        return Image.open(path)
-
-    #################################################################
-    # Rendered Normals: Loading and Storing Utils
-    #################################################################
-
-    def rendered_normals_dir_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "rendered_normals"
-
-    def save_rendered_normal(self, normals: np.ndarray, obj_id: str, image_id: str):
-        path = self.rendered_normals_dir_path(obj_id) / f"{image_id}.png"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        Image.fromarray(normals).save(path)
-
-    def load_rendered_normal(self, obj_id: str, image_id: str):
-        path = self.rendered_normals_dir_path(obj_id) / f"{image_id}.png"
-        return Image.open(path)
-
-    #################################################################
-    # Rendered Normals: Loading and Storing Utils
-    #################################################################
-
-    def traversed_normals_dir_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "traversed_normals"
-
-    def save_traversed_normal(self, normals: np.ndarray, obj_id: str, image_id: str):
-        path = self.traversed_normals_dir_path(obj_id) / f"{image_id}.png"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        Image.fromarray(normals).save(path)
-
-    def load_traversed_normal(self, obj_id: str, image_id: str):
-        path = self.traversed_normals_dir_path(obj_id) / f"{image_id}.png"
-        return Image.open(path)
-
-    #################################################################
-    # Sketches: Loading and Storing Utils
-    #################################################################
-
-    def sketches_dir_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "sketches"
-
-    def save_sketch(self, normals: np.ndarray, obj_id: str, image_id: str):
-        path = self.sketches_dir_path(obj_id) / f"{image_id}.png"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        Image.fromarray(normals).save(path)
-
-    def load_sketch(self, obj_id: str, image_id: str):
-        path = self.sketches_dir_path(obj_id) / f"{image_id}.png"
-        return Image.open(path)
-
-    #################################################################
-    # Rendered Sketches: Loading and Storing Utils
-    #################################################################
-
-    def rendered_sketches_dir_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "rendered_sketches"
-
-    def save_rendered_sketch(self, normals: np.ndarray, obj_id: str, image_id: str):
-        path = self.rendered_sketches_dir_path(obj_id) / f"{image_id}.png"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        Image.fromarray(normals).save(path)
-
-    def load_rendered_sketch(self, obj_id: str, image_id: str):
-        path = self.rendered_sketches_dir_path(obj_id) / f"{image_id}.png"
-        return Image.open(path)
-
-    #################################################################
-    # Traversed Sketches: Loading and Storing Utils
-    #################################################################
-
-    def traversed_sketches_dir_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "traversed_sketches"
-
-    def save_traversed_sketch(self, normals: np.ndarray, obj_id: str, image_id: str):
-        path = self.traversed_sketches_dir_path(obj_id) / f"{image_id}.png"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        Image.fromarray(normals).save(path)
-
-    def load_traversed_sketch(self, obj_id: str, image_id: str):
-        path = self.traversed_sketches_dir_path(obj_id) / f"{image_id}.png"
-        return Image.open(path)
-
-    #################################################################
-    # Synthetic Grayscale: Loading and Storing Utils
-    #################################################################
-
-    def synthetic_grayscale_dir_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "synthetic_grayscale"
-
-    def save_synthetic_grayscale(self, normals: np.ndarray, obj_id: str, image_id: str):
-        path = self.synthetic_grayscale_dir_path(obj_id) / f"{image_id}.png"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        Image.fromarray(normals).save(path)
-
-    def load_synthetic_grayscale(self, obj_id: str, image_id: str):
-        path = self.synthetic_grayscale_dir_path(obj_id) / f"{image_id}.png"
-        return Image.open(path)
-
-    #################################################################
-    # Rendered Grayscale: Loading and Storing Utils
-    #################################################################
-
-    def rendered_grayscales_dir_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "rendered_grayscales"
-
-    def save_rendered_grayscale(self, normals: np.ndarray, obj_id: str, image_id: str):
-        path = self.rendered_grayscales_dir_path(obj_id) / f"{image_id}.png"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        Image.fromarray(normals).save(path)
-
-    def load_rendered_grayscale(self, obj_id: str, image_id: str):
-        path = self.rendered_grayscales_dir_path(obj_id) / f"{image_id}.png"
-        return Image.open(path)
-
-    #################################################################
-    # Traversed Grayscale: Loading and Storing Utils
-    #################################################################
-
-    def traversed_grayscales_dir_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "traversed_grayscales"
-
-    def save_traversed_grayscale(self, normals: np.ndarray, obj_id: str, image_id: str):
-        path = self.traversed_grayscales_dir_path(obj_id) / f"{image_id}.png"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        Image.fromarray(normals).save(path)
-
-    def load_traversed_grayscale(self, obj_id: str, image_id: str):
-        path = self.traversed_grayscales_dir_path(obj_id) / f"{image_id}.png"
-        return Image.open(path)
-
-    #################################################################
-    # Rendered Config: Loading and Storing Utils
-    #################################################################
-
-    def rendered_config_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "rendered_config.csv"
-
-    def save_rendered_config(self, obj_id: str, config: pd.DataFrame):
-        path = self.rendered_config_path(obj_id)
+    def save_config(self, obj_id: str, config: pd.DataFrame, mode: int):
+        path = self.config_path(obj_id=obj_id, mode=mode)
         path.parent.mkdir(parents=True, exist_ok=True)
         config.to_csv(path, index=False)
 
-    def load_rendered_config(self, obj_id: str) -> pd.DataFrame:
-        path = self.rendered_config_path(obj_id)
+    def load_config(self, obj_id: str, mode: int) -> pd.DataFrame:
+        path = self.config_path(obj_id=obj_id, mode=mode)
         return pd.read_csv(path)
 
     #################################################################
-    # Traversed Config: Loading and Storing Utils
+    # General Latents: Loading and Storing Utils
     #################################################################
 
-    def traversed_config_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "traversed_config.csv"
+    def latents_path(self, obj_id: str, mode: int) -> Path:
+        image_type = self.mode_2_image_type.get(mode)
+        if image_type is None:
+            raise ValueError(f"Please provide an {mode=} that is correct!")
+        image_prefix = image_type.split("_")[0]
+        return self.data_dir / "shapes" / obj_id / f"{image_prefix}_latents.npy"
 
-    def save_traversed_config(self, obj_id: str, config: pd.DataFrame):
-        path = self.traversed_config_path(obj_id)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        config.to_csv(path, index=False)
-
-    def load_traversed_config(self, obj_id: str) -> pd.DataFrame:
-        path = self.traversed_config_path(obj_id)
-        return pd.read_csv(path)
-
-    #################################################################
-    # Rendered Latents: Loading and Storing Utils
-    #################################################################
-
-    def rendered_latents_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "rendered_latents.npy"
-
-    def save_rendered_latents(self, obj_id: str, latents: np.ndarray):
-        path = self.rendered_latents_path(obj_id)
+    def save_latents(self, obj_id: str, latents: np.ndarray, mode: int):
+        path = self.latents_path(obj_id=obj_id, mode=mode)
         path.parent.mkdir(parents=True, exist_ok=True)
         np.save(path, latents.astype(np.float32))
 
-    def load_rendered_latents(self, obj_id: str) -> pd.DataFrame:
-        path = self.rendered_latents_path(obj_id)
+    def load_latents(self, obj_id: str, mode: int) -> pd.DataFrame:
+        path = self.latents_path(obj_id=obj_id, mode=mode)
         return np.load(path).astype(np.float32)
 
     #################################################################
-    # Traversed Latents: Loading and Storing Utils
+    # General Image: Loading and Storing Utils
     #################################################################
 
-    def traversed_latents_path(self, obj_id: str) -> Path:
-        return self.data_dir / "shapes" / obj_id / "traversed_latents.npy"
+    def image_dir_path(self, obj_id: str, mode: int) -> Path:
+        image_type = self.mode_2_image_type.get(mode)
+        if image_type is None:
+            raise ValueError(f"Please provide an {mode=} that is correct!")
+        return self.data_dir / "shapes" / obj_id / image_type
 
-    def save_traversed_latents(self, obj_id: str, latents: np.ndarray):
-        path = self.traversed_latents_path(obj_id)
+    def save_image(self, obj_id: str, image: np.ndarray, image_id: int, mode: int):
+        path = self.image_dir_path(obj_id, mode) / f"{image_id:05}.png"
         path.parent.mkdir(parents=True, exist_ok=True)
-        np.save(path, latents.astype(np.float32))
+        Image.fromarray(image).save(path)
 
-    def load_traversed_latents(self, obj_id: str) -> pd.DataFrame:
-        path = self.traversed_latents_path(obj_id)
-        return np.load(path).astype(np.float32)
-
-    #################################################################
-    # General: Loading and Storing Utils
-    #################################################################
-
-    def load_image(self, label: int, image_id: int, type_idx: int):
+    def load_image(self, label: int, image_id: int, mode: int):
         obj_id = self.label_to_obj_id(label)
-        image_type = self.type_idx_2_image_type[type_idx]
-        if image_type == "sketch":
-            return self.load_sketch(obj_id, f"{image_id:05}")
-        if image_type == "normal":
-            return self.load_normal(obj_id, f"{image_id:05}")
-        if image_type == "rendered_normal":
-            return self.load_rendered_normal(obj_id, f"{image_id:05}")
-        if image_type == "rendered_sketch":
-            return self.load_rendered_sketch(obj_id, f"{image_id:05}")
-        if image_type == "rendered_grayscale":
-            return self.load_rendered_grayscale(obj_id, f"{image_id:05}")
-        if image_type == "traversed_normal":
-            return self.load_traversed_normal(obj_id, f"{image_id:05}")
-        if image_type == "traversed_sketch":
-            return self.load_traversed_sketch(obj_id, f"{image_id:05}")
-        if image_type == "traversed_grayscale":
-            return self.load_traversed_grayscale(obj_id, f"{image_id:05}")
-        raise ValueError(f"Please provide an {image_type=} that is correct!")
+        path = self.image_dir_path(obj_id, mode) / f"{image_id:05}.png"
+        return Image.open(path)

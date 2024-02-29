@@ -1,5 +1,6 @@
 import numpy as np
 from torch.utils.data import Dataset
+from torchvision.transforms import v2
 
 from lib.data.metainfo import MetaInfo
 from lib.data.transforms import BaseTransform
@@ -51,14 +52,9 @@ class NormalLatentOptimizerDataset(Dataset):
         **kwargs,
     ):
         self.metainfo = MetaInfo(data_dir=data_dir)
-        self.transforms = BaseTransform(
-            to_image=False,
-            normalize=False,
-            size=size,
-            sharpness=1.0,
-        )
+        self.transforms = BaseTransform(transforms=[v2.Resize((size, size))])
         self.data = []
-        label = 0
+        view_id = 0
         for azim in azims:
             for elev in elevs:
                 data = {}
@@ -73,10 +69,11 @@ class NormalLatentOptimizerDataset(Dataset):
                 points, rays, mask = camera.unit_sphere_intersection_rays()
                 data["points"], data["rays"], data["mask"] = points, rays, mask
                 data["camera_position"] = camera.camera_position()
-                normal = self.metainfo.load_normal(obj_id, f"{label:05}")
+                label = self.metainfo.obj_id_to_label(obj_id)
+                normal = self.metainfo.load_image(label, view_id, 1)
                 data["gt_image"] = self.transforms(normal)  # (H, W, 3)
                 data["gt_surface_mask"] = (data["gt_image"].sum(-1) < 2.95).reshape(-1)
-                label += 1
+                view_id += 1
                 self.data.append(data)
 
     def __len__(self):
@@ -105,13 +102,8 @@ class SketchLatentOptimizerDataset(Dataset):
     ):
         self.metainfo = MetaInfo(data_dir=data_dir)
         self.data = []
-        self.transforms = BaseTransform(
-            to_image=True,
-            normalize=True,
-            size=size,
-            sharpness=1.0,
-        )
-        label = 0
+        self.transforms = BaseTransform(transforms=[v2.Resize((size, size))])
+        view_id = 0
         for azim in azims:
             for elev in elevs:
                 data = {}
@@ -126,9 +118,10 @@ class SketchLatentOptimizerDataset(Dataset):
                 points, rays, mask = camera.unit_sphere_intersection_rays()
                 data["points"], data["rays"], data["mask"] = points, rays, mask
                 data["camera_position"] = camera.camera_position()
-                sketch = self.metainfo.load_sketch(obj_id, f"{sketch_id:05}")
+                label = self.metainfo.obj_id_to_label(obj_id)
+                sketch = self.metainfo.load_image(label, view_id, 0)
                 data["sketch"] = self.transforms(sketch)  # (3, W, H)
-                label += 1
+                view_id += 1
                 self.data.append(data)
 
     def __len__(self):

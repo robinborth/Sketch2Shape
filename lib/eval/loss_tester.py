@@ -22,12 +22,14 @@ class LossTester(LightningModule):
         data_dir: str = "/data",
         index_mode: str = "normal",  # normal, sketch
         query_mode: str = "sketch",  # normal, sketch
+        sketch_mode: int = 0,  # synthetic sketch
+        retrieval_mode: int = 2,  # synthetic grayscale
         obj_capture_image_id: int = 11,  # (azims=40, elev=-30)
         obj_capture_rate: int = 16,
     ):
         super().__init__()
 
-        self.model = self.load_model(loss_ckpt_path)
+        self.model = Loss.load_from_checkpoint(loss_ckpt_path)
         self.metainfo = MetaInfo(data_dir=data_dir)
 
         self._index: list = []
@@ -40,6 +42,8 @@ class LossTester(LightningModule):
         self.query_type_idx = self.metainfo.image_type_2_type_idx[self.query_mode]
         self.obj_capture_rate = obj_capture_rate
         self.obj_capture_image_id = obj_capture_image_id
+        self.sketch_mode = sketch_mode
+        self.retrieval_mode = retrieval_mode
 
         self.l2_dist = MeanMetric()
         self.recall_at_1_object = MeanMetric()
@@ -176,51 +180,51 @@ class LossTester(LightningModule):
         )
         self.heatmap.update(heatmap)
 
-    #     # every self.obj_capture_rate log on retrieved normals, sketch pairs in wadnb
-    #     if (batch_idx % self.obj_capture_rate) == 0:
-    #         _idx = np.where(gt_image_ids == self.obj_capture_image_id)
-    #         gt_label = gt_labels[_idx].item()
-    #         gt_image_id = gt_image_ids[_idx].item()
-    #         _labels_at_1_object = labels_at_1_object[_idx].squeeze()
-    #         _image_ids_at_1_object = image_ids_at_1_object[_idx].squeeze()
+        # every self.obj_capture_rate log on retrieved normals, sketch pairs in wadnb
+        if (batch_idx % self.obj_capture_rate) == 0:
+            _idx = np.where(gt_image_ids == self.obj_capture_image_id)
+            gt_label = gt_labels[_idx].item()
+            gt_image_id = gt_image_ids[_idx].item()
+            _labels_at_1_object = labels_at_1_object[_idx].squeeze()
+            _image_ids_at_1_object = image_ids_at_1_object[_idx].squeeze()
 
-    #         index_images = {}
-    #         # fetch the sketch from the current batch
-    #         obj_id = self.metainfo.label_to_obj_id(gt_label)
-    #         sketch = self.metainfo.load_sketch(obj_id, f"{gt_image_id:05}")
-    #         plot_single_image(sketch)
-    #         index_images["query/sketch"] = wandb.Image(plt)
-    #         # fetch the top k retrieved normal images from the dataset
-    #         images = []
-    #         for label, image_id in zip(_labels_at_1_object, _image_ids_at_1_object):
-    #             obj_id = self.metainfo.label_to_obj_id(label)
-    #             normal = self.metainfo.load_normal(obj_id, f"{image_id:05}")
-    #             normal = self.transform(normal)
-    #             if gt_label != label:  # color background back of wrong labels
-    #                 background = normal.mean(0) > 0.99
-    #                 normal[:, background] = 0
-    #             images.append(normal)
-    #         image_data = transform_to_plot(images, batch=True)
-    #         image_grid(image_data, rows=5, cols=18)
-    #         index_images["index/normals"] = wandb.Image(plt)
-    #         # log the sketch and normals
-    #         self.logger.log_metrics(index_images)  # type: ignore
+            index_images = {}
+            # fetch the sketch from the current batch
+            obj_id = self.metainfo.label_to_obj_id(gt_label)
+            sketch = self.metainfo.load_image(obj_id, gt_image_id, self.sketch_mode)
+            plot_single_image(sketch)
+            index_images["query/sketch"] = wandb.Image(plt)
+            # fetch the top k retrieved normal images from the dataset
+            images = []
+            for label, image_id in zip(_labels_at_1_object, _image_ids_at_1_object):
+                obj_id = self.metainfo.label_to_obj_id(label)
+                normal = self.metainfo.load_image(obj_id, image_id, self.retrieval_mode)
+                normal = self.transform(normal)
+                if gt_label != label:  # color background back of wrong labels
+                    background = normal.mean(0) > 0.99
+                    normal[:, background] = 0
+                images.append(normal)
+            image_data = transform_to_plot(images, batch=True)
+            image_grid(image_data, rows=5, cols=18)
+            index_images["index/normals"] = wandb.Image(plt)
+            # log the sketch and normals
+            self.logger.log_metrics(index_images)  # type: ignore
 
-    # def on_test_end(self) -> None:
-    #     # heatmap based on: query sketch and how good are the different views
-    #     heatmap_angles = self.heatmap.compute().mean(0).reshape(18, 5)
-    #     heatmap_angles = heatmap_angles.detach().cpu().numpy()
-    #     plt.clf()
-    #     c = plt.imshow(heatmap_angles, cmap="viridis", interpolation="nearest")
-    #     plt.colorbar(c)
-    #     self.logger.log_metrics({"heatmap_angles": wandb.Image(c)})  # type: ignore
+    def on_test_end(self) -> None:
+        # heatmap based on: query sketch and how good are the different views
+        heatmap_angles = self.heatmap.compute().mean(0).reshape(18, 5)
+        heatmap_angles = heatmap_angles.detach().cpu().numpy()
+        plt.clf()
+        c = plt.imshow(heatmap_angles, cmap="viridis", interpolation="nearest")
+        plt.colorbar(c)
+        self.logger.log_metrics({"heatmap_angles": wandb.Image(c)})  # type: ignore
 
-    #     # heatmap for both normals and sketch as query hence 2D matrix
-    #     size = self.num_views_per_object
-    #     heatmap_full = self.heatmap.compute()
-    #     heatmap_full = heatmap_full.reshape(-1, size, size).mean(dim=0)
-    #     heatmap_full = heatmap_full.detach().cpu().numpy()
-    #     plt.clf()
-    #     c = plt.imshow(heatmap_full, cmap="viridis", interpolation="nearest")
-    #     plt.colorbar(c)
-    #     self.logger.log_metrics({"heatmap_full": wandb.Image(c)})  # type: ignore
+        # heatmap for both normals and sketch as query hence 2D matrix
+        size = self.num_views_per_object
+        heatmap_full = self.heatmap.compute()
+        heatmap_full = heatmap_full.reshape(-1, size, size).mean(dim=0)
+        heatmap_full = heatmap_full.detach().cpu().numpy()
+        plt.clf()
+        c = plt.imshow(heatmap_full, cmap="viridis", interpolation="nearest")
+        plt.colorbar(c)
+        self.logger.log_metrics({"heatmap_full": wandb.Image(c)})  # type: ignore
