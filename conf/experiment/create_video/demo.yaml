@@ -6,13 +6,28 @@ defaults:
   # - override /logger: wandb
 
 tags: ["create_video", "shapenet_chair_4096", "demo"]
+deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 loss_ckpt_path: ${paths.checkpoint_dir}/latent_siamese_sketch_grayscale_multi_view_256.ckpt
-eval: False 
-train: False
-save_mesh: False
+
+# override the training settings
 save_latent: True
+train: False
+eval: False 
+save_mesh: False
 create_video: False
 
-obj_dir: ${data.data_dir}/demo/sketch
+# override the paths
+video_dir: ${data.data_dir}/demo
+video_path: ${video_dir}/demo.mp4
+obj_dir: ${video_dir}/sketch
+latent_dir: ${video_dir}/latent 
+frame_dir: ${video_dir}/frame
 paths:
-  latent_dir: ${data.data_dir}/demo/latent
+  latent_dir: ${latent_dir}
+
+# the video settings
+video_camera:
+  _target_: lib.render.video.VideoCamera
+  deepsdf_ckpt_path: ${deepsdf_ckpt_path}
+  latent_dir: ${latent_dir}
+  keystones: null

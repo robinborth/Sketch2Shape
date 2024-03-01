@@ -114,6 +114,18 @@
             "justMyCode": false,
         },
         {
+            "name": "Debug: Create Video",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "scripts/create_video.py",
+            "args": [
+                // "+experiment/optimize_sketch=chair_latent"
+                "+experiment/create_video=demo"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
+        },
+        {
             "name": "Debug: Optimize DeepSDF",
             "type": "debugpy",
             "request": "launch",

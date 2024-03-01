@@ -47,6 +47,7 @@ class MetaInfo:
             "traverse_sketch": 0,
             "traverse_normal": 1,
             "traverse_grayscale": 1,
+            "hand_drawn_sketch": 0,
         }
 
         # mappings for the different image datasets
@@ -60,6 +61,7 @@ class MetaInfo:
             6: "traverse_sketch",
             7: "traverse_normal",
             8: "traverse_grayscale",
+            9: "hand_drawn_sketch",
         }
         self.image_type_2_mode = {v: k for k, v in self.mode_2_image_type.items()}
 
