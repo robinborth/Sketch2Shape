@@ -3,7 +3,7 @@
 _target_: lib.data.datamodule.loss_tester.LossTesterDataModule
 # paths
 data_dir: ${paths.data_dir}/${data.dataset_name}
-modes: [2, 3]
+modes: [0, 2]
 latent: True
 # training
 batch_size: 1
@@ -17,10 +17,7 @@ dataset:
   _target_: lib.data.dataset.loss_tester.LossTesterDataset
   _partial_: True
   sketch_transform:
-    _target_: lib.data.transforms.BaseTransform
-    mean: 0.5 
-    std: 0.5
-    transforms: []
+    _target_: lib.data.transforms.SketchTransform
   normal_transform:
     _target_: lib.data.transforms.BaseTransform
     mean: 0.5 

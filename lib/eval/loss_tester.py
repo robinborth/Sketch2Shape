@@ -20,8 +20,8 @@ class LossTester(LightningModule):
         self,
         loss_ckpt_path: str = "loss.ckpt",
         data_dir: str = "/data",
-        index_mode: str = "normal",  # normal, sketch
-        query_mode: str = "sketch",  # normal, sketch
+        index_mode: str = "synthetic_grayscale",  # normal, sketch
+        query_mode: str = "synthetic_sketch",  # normal, sketch
         sketch_mode: int = 0,  # synthetic sketch
         retrieval_mode: int = 2,  # synthetic grayscale
         obj_capture_image_id: int = 11,  # (azims=40, elev=-30)
@@ -190,15 +190,14 @@ class LossTester(LightningModule):
 
             index_images = {}
             # fetch the sketch from the current batch
-            obj_id = self.metainfo.label_to_obj_id(gt_label)
-            sketch = self.metainfo.load_image(obj_id, gt_image_id, self.sketch_mode)
+
+            sketch = self.metainfo.load_image(gt_label, gt_image_id, self.sketch_mode)
             plot_single_image(sketch)
             index_images["query/sketch"] = wandb.Image(plt)
             # fetch the top k retrieved normal images from the dataset
             images = []
             for label, image_id in zip(_labels_at_1_object, _image_ids_at_1_object):
-                obj_id = self.metainfo.label_to_obj_id(label)
-                normal = self.metainfo.load_image(obj_id, image_id, self.retrieval_mode)
+                normal = self.metainfo.load_image(label, image_id, self.retrieval_mode)
                 normal = self.transform(normal)
                 if gt_label != label:  # color background back of wrong labels
                     background = normal.mean(0) > 0.99

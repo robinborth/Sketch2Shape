@@ -1,0 +1,20 @@
+# @package _global_
+
+defaults:
+  - logger: default
+  - hydra: default
+  - paths: default
+  - optional local: default
+  - _self_
+
+seed: 123
+task_name: create_video
+tags: ["create_video"]
+deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
+video_dir: ??? 
+
+video_camera:
+  _target_: lib.render.video.VideoCamera
+  deepsdf_ckpt_path: ${deepsdf_ckpt_path}
+  latent_dir: ???
+  keystones: ???
