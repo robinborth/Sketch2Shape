@@ -1,4 +1,5 @@
 import numpy as np
+from PIL import Image
 from torch.utils.data import Dataset
 from torchvision.transforms import v2
 
@@ -119,7 +120,7 @@ class SketchLatentOptimizerDataset(Dataset):
                 data["camera_position"] = camera.camera_position()
                 data["world_to_camera"] = camera.get_world_to_camera()
                 data["camera_width"] = size
-                data["camera_height"] = size 
+                data["camera_height"] = size
                 data["camera_focal"] = size * 2
                 label = self.metainfo.obj_id_to_label(obj_id)
                 sketch = self.metainfo.load_image(label, sketch_id, 0)
