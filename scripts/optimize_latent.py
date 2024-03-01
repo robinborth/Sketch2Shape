@@ -115,6 +115,7 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
 
     # save the optimized latents
     if cfg.save_latent:
+        log.info("==> save latents ...")
         for frame_idx, latent in enumerate(latents):
             path = Path(cfg.paths.latent_dir, f"{frame_idx:05}.pt")
             path.parent.mkdir(parents=True, exist_ok=True)

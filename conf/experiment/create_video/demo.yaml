@@ -3,11 +3,12 @@
 defaults:
   - override /data: optimize_latent
   - override /dataset: shapenet_chair_4096
-  - override /logger: wandb
+  # - override /logger: wandb
 
 tags: ["create_video", "shapenet_chair_4096", "demo"]
 loss_ckpt_path: ${paths.checkpoint_dir}/latent_siamese_sketch_grayscale_multi_view_256.ckpt
 eval: False 
+train: False
 save_mesh: False
 save_latent: True
 create_video: False
