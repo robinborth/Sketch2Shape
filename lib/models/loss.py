@@ -14,7 +14,7 @@ class Loss(LightningModule):
     def __init__(
         self,
         head: str = "linear",
-        mode: str = "cosine",
+        mode: str = "cosine",  # cosine, l1
         embedding_size: int = 128,
         pretrained: bool = True,
         shared: bool = False,
@@ -72,6 +72,8 @@ class Loss(LightningModule):
         """
         if self.hparams["mode"] == "cosine":
             return 1.0 - cosine_similarity(emb_0, emb_1)
+        if self.hparams["mode"] == "l1":
+            return torch.nn.functional.l1_loss(emb_0, emb_1)
         raise NotImplementedError()
 
     def forward(self, images, type_idx=None):

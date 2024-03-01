@@ -107,7 +107,7 @@
             "request": "launch",
             "program": "scripts/optimize_sketch.py",
             "args": [
-                "+experiment/optimize_sketch=optim_chair_prior"
+                "+experiment/optimize_sketch=chair_latent"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

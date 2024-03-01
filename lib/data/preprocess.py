@@ -28,6 +28,8 @@ class PreprocessMesh:
     def obj_ids_iter(self):
         if not self.skip:
             yield from self.metainfo.obj_ids
+            return
+
         for obj_id in self.metainfo.obj_ids:
             path = self.metainfo.normalized_mesh_path(obj_id=obj_id)
             if not path.exists():
@@ -104,13 +106,15 @@ class PreprocessSynthetic:
     def obj_ids_iter(self):
         if not self.skip:
             yield from self.metainfo.obj_ids
+            return
+
         for obj_id in self.metainfo.obj_ids:
-            normals_dir = self.metainfo.normals_dir_path(obj_id=obj_id)
-            sketches_dir = self.metainfo.sketches_dir_path(obj_id=obj_id)
-            grayscale_dir = self.metainfo.synthetic_grayscale_dir_path(obj_id=obj_id)
+            sketches_dir = self.metainfo.image_dir_path(obj_id=obj_id, mode=0)
+            normals_dir = self.metainfo.image_dir_path(obj_id=obj_id, mode=1)
+            grayscale_dir = self.metainfo.image_dir_path(obj_id=obj_id, mode=2)
             if (
-                not normals_dir.exists()
-                or not sketches_dir.exists()
+                not sketches_dir.exists()
+                or not normals_dir.exists()
                 or not grayscale_dir.exists()
             ):
                 yield obj_id
@@ -195,25 +199,26 @@ class PreprocessSynthetic:
         view_id = 0
         for azim in self.azims:
             for elev in self.elevs:
+                normal = normals[view_id]
                 camera_position = Camera(azim=azim, elev=elev).camera_position()
-                mask = normals.sum(-1) > 2.95
-                N = (normals - 0.5) / 0.5
+                mask = normal.sum(-1) > 2.95
+                N = (normal - 0.5) / 0.5
                 L = camera_position / np.linalg.norm(camera_position)
-                grayscale = np.zeros_like(normals)
+                grayscale = np.zeros(normal.shape)
                 grayscale += self.ambient
                 grayscale += self.diffuse * (N @ L)[..., None]
                 grayscale[mask, :] = 1.0
                 grayscale = np.clip(grayscale, 0, 1)
                 grayscales.append(grayscale)
                 view_id += 1
-        return np.stack(grayscales)
+        return (np.stack(grayscales) * 255).astype(np.uint8)
 
     def preprocess(self, obj_id: str):
         mesh = self.metainfo.load_normalized_mesh(obj_id=obj_id)
         _, normals, masks = self.render_normals(mesh=mesh)
+        grayscales = self.normals_to_grayscales(normals)
         normals = self.normals_to_image(normals=normals, mask=masks)
         sketches = self.image_to_sketch(normals)
-        grayscales = self.normals_to_grayscales(normals)
         return normals, sketches, grayscales
 
 
@@ -257,11 +262,13 @@ class PreprocessRenderings:
     def obj_ids_iter(self):
         if not self.skip:
             yield from self.metainfo.obj_ids
+            return
+
         for obj_id in self.metainfo.obj_ids:
             if self.traversal:
-                config_path = self.metainfo.traversed_config_path(obj_id=obj_id)
+                config_path = self.metainfo.config_path(obj_id=obj_id, mode=6)
             else:
-                config_path = self.metainfo.rendered_config_path(obj_id=obj_id)
+                config_path = self.metainfo.config_path(obj_id=obj_id, mode=3)
             if not config_path.exists():
                 yield obj_id
 
@@ -377,6 +384,8 @@ class PreprocessSDF:
     def obj_ids_iter(self):
         if not self.skip:
             yield from self.metainfo.obj_ids
+            return
+
         for obj_id in self.metainfo.obj_ids:
             surface_samples_path = self.metainfo.surface_samples_path(obj_id=obj_id)
             sdf_samples_path = self.metainfo.sdf_samples_path(obj_id=obj_id)

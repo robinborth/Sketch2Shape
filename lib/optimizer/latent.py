@@ -6,7 +6,7 @@ from lightning.pytorch.loggers import WandbLogger
 from tqdm import tqdm
 
 from lib.data.metainfo import MetaInfo
-from lib.data.transforms import BaseTransform, DilateSketch
+from lib.data.transforms import SketchTransform
 from lib.models.deepsdf import DeepSDF
 from lib.models.loss import Loss
 
@@ -22,6 +22,8 @@ class LatentOptimizer(LightningModule):
         scheduler=None,
         # init settings: random, mean, prior, prior(idx), retrieval, latent
         latent_init: str = "mean",
+        sketch_mode: int = 0,  # synthetic sketch
+        retrieval_mode: int = 2,  # synthetic grayscale
         # regularization settings: none, prior, retrieval, latent
         reg_loss: str = "none",
         reg_weight: float = 1e-5,
@@ -47,9 +49,7 @@ class LatentOptimizer(LightningModule):
         super().__init__()
         self.save_hyperparameters(logger=False)
         self.metainfo = MetaInfo(data_dir=data_dir)
-        # TODO fix the normal transforms and the init with other
-        # sketches e.g. handdrawn and grayscale
-        self.transforms = BaseTransform(transforms=[DilateSketch(kernel_size=5)])
+        self.sketch_transform = SketchTransform()
 
         # init deepsdf
         self.deepsdf = DeepSDF.load_from_checkpoint(
@@ -79,15 +79,23 @@ class LatentOptimizer(LightningModule):
             self.init_retrieval_latents(
                 obj_id=prior_obj_id,
                 view_id=prior_view_id,
+                sketch_mode=sketch_mode,
+                retrieval_mode=retrieval_mode,
                 k=retrieval_k,
             )
         self.init_latent(
             name="latent",
             latent_init=latent_init,
             obj_id=prior_obj_id,
+            sketch_mode=sketch_mode,
         )
 
-    def get_latent(self, latent_init: str = "mean", obj_id: str = ""):
+    def get_latent(
+        self,
+        latent_init: str = "mean",
+        obj_id: str = "",
+        sketch_mode: int = 0,
+    ):
         if latent_init == "prior":
             prior_idx = self.metainfo.obj_id_to_label(obj_id=obj_id)
             return self.deepsdf.get_latent(prior_idx)
@@ -103,8 +111,9 @@ class LatentOptimizer(LightningModule):
             assert self.loss.support_latent
             label = self.metainfo.obj_id_to_label(obj_id)
             view_id = self.hparams["prior_view_id"]
-            sketch = self.metainfo.load_image(label, view_id, 0)  # sketch
-            loss_input = self.transforms(sketch)[None, ...].to(self.loss.device)
+            assert sketch_mode in [0, 3, 6]
+            sketch = self.metainfo.load_image(label, view_id, sketch_mode)  # sketch
+            loss_input = self.sketch_transform(sketch)[None, ...].to(self.loss.device)
             return self.loss.embedding(loss_input)[0]
 
         if latent_init == "mean":
@@ -120,6 +129,7 @@ class LatentOptimizer(LightningModule):
         latent_init: str = "mean",
         obj_id: str = "",
         name: str = "latent",
+        sketch_mode: int = 0,
     ):
         latent = self.get_latent(latent_init=latent_init, obj_id=obj_id)
         self.register_buffer(name, latent)
@@ -127,13 +137,16 @@ class LatentOptimizer(LightningModule):
     def init_retrieval_latents(
         self,
         obj_id: str,
-        view_id: int = 11,
-        k: int = 16,
+        view_id: int = 11,  # top right
+        sketch_mode: int = 0,  # synthetic sketch
+        retrieval_mode: int = 2,  # synthetic grayscale
+        k: int = 1,
     ):
         device = self.loss.device
         obj_id_label = int(self.metainfo.obj_id_to_label(obj_id))
-        sketch = self.metainfo.load_image(obj_id_label, view_id, 0)  # sketch
-        loss_input = self.transforms(sketch)[None, ...].to(device)
+        assert sketch_mode in [0, 3, 6]  # sketches
+        sketch = self.metainfo.load_image(obj_id_label, view_id, sketch_mode)
+        loss_input = self.sketch_transform(sketch)[None, ...].to(device)
         sketch_emb = self.loss.embedding(loss_input, mode="sketch")
 
         # get the loss from all objects in the train dataset
@@ -141,10 +154,11 @@ class LatentOptimizer(LightningModule):
         _loss = []
         for obj_id in tqdm(metainfo.obj_ids):
             label = int(metainfo.obj_id_to_label(obj_id))
-            normal = metainfo.load_image(label, view_id, 1)  # normal
-            loss_input = self.transforms(normal)[None, ...].to(device)
-            normal_emb = self.loss.embedding(loss_input, mode="normal")
-            loss = self.loss.compute(sketch_emb, normal_emb)
+            assert retrieval_mode in [0, 1, 2]  # synthetic
+            image = metainfo.load_image(label, view_id, retrieval_mode)
+            loss_input = self.sketch_transform(image)[None, ...].to(device)
+            loss_emb = self.loss.embedding(loss_input, mode="sketch")
+            loss = self.loss.compute(sketch_emb, loss_emb)
             _loss.append(loss)
         self.shape_loss = torch.concatenate(_loss)
 
@@ -198,3 +212,6 @@ class LatentOptimizer(LightningModule):
         image = image.detach().cpu().numpy()
         if isinstance(self.logger, WandbLogger):
             self.logger.log_image(key, [image])  # type: ignore
+
+    def log_silhouette(self, silhouette_output: dict, key: str):
+        self.log_image(key, self.deepsdf.silhouette_to_image(silhouette_output[key]))

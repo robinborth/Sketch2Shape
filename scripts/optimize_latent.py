@@ -11,11 +11,10 @@ from lightning.pytorch.loggers import Logger as LightningLogger
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig
 from torchmetrics.image.fid import FrechetInceptionDistance
-from torchvision.transforms import v2
 from tqdm import tqdm
 
 from lib.data.metainfo import MetaInfo
-from lib.data.transforms import BaseTransform, DilateSketch, ToSketch
+from lib.data.transforms import SketchTransform
 from lib.eval.chamfer_distance import ChamferDistance
 from lib.eval.clip_score import CLIPScore
 from lib.eval.earth_movers_distance import EarthMoversDistance
@@ -129,26 +128,24 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
             emd.update(mesh, surface_samples)
 
         # frechet inception distance and clip score
-        transforms = [ToSketch(), DilateSketch(kernel_size=5)]
-        sketch_transform = BaseTransform(normalize=False, transforms=transforms)
-        normal_transform = v2.Compose(transforms)
+        sketch_transform = SketchTransform(normalize=False)
         model.deepsdf.create_camera(azim=eval_azim, elev=eval_elev)
         log.info("==> start evaluate FID and CLIPScore ...")
         for idx, obj_id in tqdm(enumerate(obj_ids), total=len(obj_ids)):
             # gt sketch
-            image_id = f"{eval_view_id:05}"
-            gt_sketch = metainfo.load_sketch(obj_id, image_id)
+            label = metainfo.obj_id_to_label(obj_id)
+            gt_sketch = metainfo.load_image(label, eval_view_id, 0)
             gt_sketch = sketch_transform(gt_sketch)[None, ...]
             if cfg.model.latent_init == "retrieval":
-                retrieved_obj_id = metainfo.label_to_obj_id(retrieval_idxs[idx])
-                rendered_sketch = metainfo.load_sketch(retrieved_obj_id, image_id)
+                label = retrieval_idxs[idx]
+                rendered_sketch = metainfo.load_image(label, eval_view_id, 2)
                 rendered_sketch = sketch_transform(rendered_sketch)[None, ...]
             else:
                 # rendered sketch
                 model.latent = latents[idx]
-                rendered_normal = model.capture_camera_frame()
+                rendered_normal = model.capture_camera_frame("grayscale")
                 rendered_normal = rendered_normal.permute(2, 0, 1).detach().cpu()
-                rendered_sketch = normal_transform(rendered_normal)[None, ...]
+                rendered_sketch = sketch_transform(rendered_normal)[None, ...]
             # frechet inception distance
             fid.update(gt_sketch, real=True)
             fid.update(rendered_sketch, real=False)
