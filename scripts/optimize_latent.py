@@ -20,6 +20,7 @@ from lib.eval.chamfer_distance import ChamferDistance
 from lib.eval.clip_score import CLIPScore
 from lib.eval.earth_movers_distance import EarthMoversDistance
 from lib.render.utils import create_video
+from lib.render.video import extract_frames
 from lib.utils.config import instantiate_callbacks, log_hyperparameters
 
 
@@ -34,6 +35,8 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
     if obj_ids := cfg.get("obj_ids"):
         log.info(f"==> selecting specified obj_ids ({len(obj_ids)}) ...>")
     elif obj_dir := cfg.get("obj_dir"):
+        if cfg.get("input_video_path") is not None:
+            extract_frames(cfg)
         obj_ids = [str(path.resolve()) for path in Path(obj_dir).iterdir()]
         log.info(f"==> selecting specified sketches ({len(obj_ids)}) ...>")
     else:

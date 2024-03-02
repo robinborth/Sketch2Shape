@@ -12,18 +12,22 @@ loss_ckpt_path: ${paths.checkpoint_dir}/latent_siamese_sketch_grayscale_multi_vi
 # override the training settings
 save_latent: True
 train: False
-eval: False 
+eval: False
 save_mesh: False
 create_video: False
 
 # override the paths
 video_dir: ${data.data_dir}/demo
-video_path: ${video_dir}/demo.mp4
+output_video_path: ${video_dir}/demo.mp4
 obj_dir: ${video_dir}/sketch
-latent_dir: ${video_dir}/latent 
+latent_dir: ${video_dir}/latent
 frame_dir: ${video_dir}/frame
 paths:
   latent_dir: ${latent_dir}
+
+# video extraction
+input_video_path: null # provide as command line argument
+frames_to_extract: 150
 
 # the video settings
 video_camera:

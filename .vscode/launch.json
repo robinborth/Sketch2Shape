@@ -108,7 +108,8 @@
             "program": "scripts/optimize_sketch.py",
             "args": [
                 // "+experiment/optimize_sketch=chair_latent"
-                "+experiment/create_video=demo"
+                "+experiment/create_video=demo.yaml",
+                "+input_video_path=/home/korth/sketch2shape/demo_video/input_videos/initial.mov"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

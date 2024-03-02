@@ -1,8 +1,10 @@
 import os
 from pathlib import Path
 
+import cv2
 import numpy as np
 import torch
+from omegaconf import DictConfig
 from PIL import Image
 from tqdm import tqdm
 
@@ -72,3 +74,48 @@ class VideoCamera:
             f"-pix_fmt yuv420p {video_path}",
         ]
         os.system(" ".join(args))
+
+
+def extract_frames(
+    cfg: DictConfig,
+):
+    frames = []
+
+    num_frames_to_extract = cfg.get("frames_to_extract")
+
+    # Open the video file
+    video = cv2.VideoCapture(cfg.get("input_video_path"))
+
+    # Get the total number of frames in the video
+    total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    # Calculate the frame interval
+    frame_interval = max(total_frames // num_frames_to_extract, 1)
+
+    # Read frames at the specified interval
+    frame_count = 0
+    while video.isOpened() and frame_count < total_frames:
+        # Read the current frame
+        ret, frame = video.read()
+
+        # If the frame was read successfully
+        if ret:
+            # Add the frame to the list of frames
+            if frame_count % frame_interval == 0:
+                frames.append(frame)
+            frame_count += 1
+        else:
+            # Break the loop if the video is completed
+            break
+
+    # Release the video file
+    video.release()
+
+    print(f"Extracted {len(frames)} frames from video")
+
+    # create folder if it does not exist (in python)
+    os.makedirs(cfg.get("obj_dir"), exist_ok=True)
+
+    # save the frames to disk
+    for i, frame in enumerate(frames):
+        cv2.imwrite(f"{cfg.get('obj_dir')}/{i:05}.png", frame)
