@@ -2,7 +2,7 @@
 
 defaults:
   - data:
-  - dataset: shapnet_chair_4096
+  - dataset: shapenet_chair_4096
   - logger: default
   - hydra: default
   - paths: default

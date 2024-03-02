@@ -18,7 +18,7 @@ create_video: False
 
 # override the paths
 video_dir: ${data.data_dir}/demo
-output_video_path: ${video_dir}/demo.mp4
+output_video_path: ${video_dir}/
 obj_dir: ${video_dir}/sketch
 latent_dir: ${video_dir}/latent
 frame_dir: ${video_dir}/frame

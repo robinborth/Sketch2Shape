@@ -66,14 +66,58 @@ class VideoCamera:
             frames.append(Image.fromarray(frame))
         return frames
 
-    def create_video(self, image_dir: Path, video_path: str, framerate: int = 30):
-        image_folder_glob = (Path(image_dir) / "*.png").as_posix()
-        args: list[str] = [
-            f"ffmpeg -framerate {framerate}",
-            f'-pattern_type glob -i "{image_folder_glob}"',
-            f"-pix_fmt yuv420p {video_path}",
-        ]
-        os.system(" ".join(args))
+    def create_videos(
+        self,
+        image_dir: Path,
+        sketch_dir: Path,
+        video_path: str,
+        framerate: int = 10,
+        side_by_side: bool = True,
+    ):
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        fps = framerate
+
+        # load images into array
+        images = []
+        for image_path in sorted(Path(image_dir).iterdir()):
+            images.append(cv2.imread(image_path.as_posix()))
+        # load sketches into array
+        sketches = []
+        for sketch_path in sorted(Path(sketch_dir).iterdir()):
+            sketches.append(cv2.imread(sketch_path.as_posix()))
+
+        res_original = images[0].shape[:2][::-1]
+        print(f"Original resolution: {res_original}")
+
+        image_video_writer = cv2.VideoWriter(
+            video_path + "image.mp4", fourcc, fps, res_original
+        )
+        sketch_video_writer = cv2.VideoWriter(
+            video_path + "sketch.mp4", fourcc, fps, res_original
+        )
+
+        for i in range(len(images)):
+            image_video_writer.write(images[i])
+            sketch_video_writer.write(sketches[i])
+
+        image_video_writer.release()
+        sketch_video_writer.release()
+
+        # not working yet
+        if side_by_side:
+            # create side by side video
+            res_side_by_side = (res_original[0], res_original[1] * 2)
+            print(f"Side by side resolution: {res_side_by_side}")
+
+            side_by_side_video_writer = cv2.VideoWriter(
+                video_path + "side_by_side.mp4", fourcc, fps, res_side_by_side
+            )
+
+            for i in range(len(images)):
+                side_by_side_frame = np.concatenate([sketches[i], images[i]], axis=1)
+                side_by_side_video_writer.write(side_by_side_frame)
+
+            side_by_side_video_writer.release()
 
 
 def extract_frames(
@@ -118,4 +162,10 @@ def extract_frames(
 
     # save the frames to disk
     for i, frame in enumerate(frames):
+        cv2.imwrite(f"{cfg.get('obj_dir')}/{i:05}.png", frame)
+        cv2.imwrite(f"{cfg.get('obj_dir')}/{i:05}.png", frame)
+        cv2.imwrite(f"{cfg.get('obj_dir')}/{i:05}.png", frame)
+        cv2.imwrite(f"{cfg.get('obj_dir')}/{i:05}.png", frame)
+        cv2.imwrite(f"{cfg.get('obj_dir')}/{i:05}.png", frame)
+        cv2.imwrite(f"{cfg.get('obj_dir')}/{i:05}.png", frame)
         cv2.imwrite(f"{cfg.get('obj_dir')}/{i:05}.png", frame)
