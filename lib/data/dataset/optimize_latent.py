@@ -1,4 +1,5 @@
 import numpy as np
+from PIL import Image
 from torch.utils.data import Dataset
 from torchvision.transforms import v2
 
@@ -96,7 +97,8 @@ class SketchLatentOptimizerDataset(Dataset):
         azims: list[int] = [],
         elevs: list[int] = [],
         dist: float = 4.0,
-        sketch_id: int = 11,
+        sketch_id: int = 11,  # 0
+        sketch_mode: int = 0,  # 9
         size: int = 256,
         **kwargs,
     ):
@@ -119,10 +121,10 @@ class SketchLatentOptimizerDataset(Dataset):
                 data["camera_position"] = camera.camera_position()
                 data["world_to_camera"] = camera.get_world_to_camera()
                 data["camera_width"] = size
-                data["camera_height"] = size 
+                data["camera_height"] = size
                 data["camera_focal"] = size * 2
                 label = self.metainfo.obj_id_to_label(obj_id)
-                sketch = self.metainfo.load_image(label, sketch_id, 0)
+                sketch = self.metainfo.load_image(label, sketch_id, sketch_mode)
                 data["sketch"] = self.transforms(sketch)  # (3, W, H)
                 self.data.append(data)
 

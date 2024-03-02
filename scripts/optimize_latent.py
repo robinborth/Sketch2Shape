@@ -5,6 +5,7 @@ import hydra
 import lightning as L
 import open3d as o3d
 import pandas as pd
+import torch
 import wandb
 from lightning import Callback, LightningDataModule, LightningModule, Trainer
 from lightning.pytorch.loggers import Logger as LightningLogger
@@ -32,8 +33,10 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
     # specific obj_ids are selected
     if obj_ids := cfg.get("obj_ids"):
         log.info(f"==> selecting specified obj_ids ({len(obj_ids)}) ...>")
-    # obj_ids from the selected split
-    if obj_ids is None:
+    elif obj_dir := cfg.get("obj_dir"):
+        obj_ids = [str(path.resolve()) for path in Path(obj_dir).iterdir()]
+        log.info(f"==> selecting specified sketches ({len(obj_ids)}) ...>")
+    else:
         obj_ids = metainfo.obj_ids
         log.info(f"==> selecting obj_ids ({cfg.split}) ...>")
 
@@ -109,6 +112,14 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
                     mesh=mesh,
                     write_triangle_uvs=False,
                 )
+
+    # save the optimized latents
+    if cfg.save_latent:
+        log.info("==> save latents ...")
+        for frame_idx, latent in enumerate(latents):
+            path = Path(cfg.paths.latent_dir, f"{frame_idx:05}.pt")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            torch.save(latent.detach().cpu(), path)
 
     # evaluate the generated 3D shapes
     eval_view_id: int = 11

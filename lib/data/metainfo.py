@@ -47,6 +47,7 @@ class MetaInfo:
             "traverse_sketch": 0,
             "traverse_normal": 1,
             "traverse_grayscale": 1,
+            "hand_drawn_sketch": 0,
         }
 
         # mappings for the different image datasets
@@ -60,6 +61,7 @@ class MetaInfo:
             6: "traverse_sketch",
             7: "traverse_normal",
             8: "traverse_grayscale",
+            9: "hand_drawn_sketch",
         }
         self.image_type_2_mode = {v: k for k, v in self.mode_2_image_type.items()}
 
@@ -109,11 +111,11 @@ class MetaInfo:
     def obj_id_count(self):
         return len(self.obj_ids)
 
-    def label_to_obj_id(self, label: int) -> str:
+    def label_to_obj_id(self, label: int | str) -> str:
         return self._label_to_obj_id.get(label, None)
 
-    def obj_id_to_label(self, obj_id: str) -> int:
-        return self._obj_id_to_label.get(obj_id, -1)
+    def obj_id_to_label(self, obj_id: str) -> int | str:
+        return self._obj_id_to_label.get(obj_id, obj_id)
 
     #################################################################
     # Mesh: Loading and Storing Utils
@@ -236,7 +238,9 @@ class MetaInfo:
         path.parent.mkdir(parents=True, exist_ok=True)
         Image.fromarray(image).save(path)
 
-    def load_image(self, label: int, image_id: int, mode: int):
+    def load_image(self, label: int | str, image_id: int, mode: int):
+        if Path(str(label)).exists():
+            return Image.open(label)
         obj_id = self.label_to_obj_id(label)
         path = self.image_dir_path(obj_id, mode) / f"{image_id:05}.png"
         return Image.open(path)

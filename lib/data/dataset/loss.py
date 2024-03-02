@@ -29,31 +29,17 @@ class LossDataset(Dataset):
 
     def fetch(self, index):
         info = self.metainfo.get_loss(index)
-        obj_id = info["obj_id"]
         image_id = info["image_id"]
         label = info["label"]
-        image_type = self.metainfo.mode_2_image_type[info["mode"]]
-        type_idx = self.metainfo.mode_2_type_idx[info["mode"]]
+        mode = info["mode"]
+        image_type = self.metainfo.mode_2_image_type[mode]
+        type_idx = self.metainfo.image_type_2_type_idx[image_type]
 
-        if image_type == "sketch":
-            image = self.metainfo.load_sketch(obj_id, image_id)
-            if self.sketch_transform is not None:
-                image = self.sketch_transform(image)
-
-        if image_type == "rendered_sketch":
-            image = self.metainfo.load_rendered_sketch(obj_id, image_id)
-            if self.sketch_transform is not None:
-                image = self.sketch_transform(image)
-
-        if image_type == "normal":
-            image = self.metainfo.load_normal(obj_id, image_id)
-            if self.normal_transform is not None:
-                image = self.normal_transform(image)
-
-        if image_type == "rendered_normal":
-            image = self.metainfo.load_rendered_normal(obj_id, image_id)
-            if self.normal_transform is not None:
-                image = self.normal_transform(image)
+        image = self.metainfo.load_image(label, image_id, mode)
+        if type_idx == 0 and self.sketch_transform:
+            image = self.sketch_transform(image)
+        if type_idx == 1 and self.normal_transform:
+            image = self.normal_transform(image)
 
         return {
             "image": image,

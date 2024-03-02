@@ -1,0 +1,14 @@
+# @package _global_
+
+defaults:
+  - data:
+  - dataset: shapnet_chair_4096
+  - logger: default
+  - hydra: default
+  - paths: default
+  - optional local: default
+  - _self_
+
+seed: 123
+task_name: create_video
+tags: ["create_video"]

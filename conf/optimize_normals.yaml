@@ -20,6 +20,7 @@ obj_ids: ???  # overrids the split setting, make sure that obj_ids are only from
 train: True
 eval: True
 save_mesh: True
+save_latent: True
 create_video: True 
 deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 loss_ckpt_path: ${paths.checkpoint_dir}/latent_encoder.ckpt

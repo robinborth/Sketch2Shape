@@ -24,5 +24,8 @@ mesh_dir: ${paths.output_dir}/mesh
 # the path where the video will be saved
 video_dir: ${paths.output_dir}/video
 
+# the path where the video will be saved
+latent_dir: ${paths.output_dir}/latent
+
 # the path of the metrics in the latent optimization
 metrics_path: ${paths.output_dir}/metrics.csv
