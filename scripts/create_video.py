@@ -23,7 +23,7 @@ def create_video(cfg: DictConfig) -> None:
     log.info("==> save video ...")
     video_camera.create_videos(
         image_dir=cfg.frame_dir,
-        sketch_dir=cfg.frame_dir,
+        sketch_dir=cfg.obj_dir,
         video_path=cfg.output_video_path,
     )
 

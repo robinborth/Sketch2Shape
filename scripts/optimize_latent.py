@@ -37,7 +37,7 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
     elif obj_dir := cfg.get("obj_dir"):
         if cfg.get("input_video_path") is not None:
             extract_frames(cfg)
-        obj_ids = [str(path.resolve()) for path in Path(obj_dir).iterdir()]
+        obj_ids = sorted([str(path.resolve()) for path in Path(obj_dir).iterdir()])
         log.info(f"==> selecting specified sketches ({len(obj_ids)}) ...>")
     else:
         obj_ids = metainfo.obj_ids

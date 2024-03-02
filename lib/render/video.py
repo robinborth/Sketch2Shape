@@ -27,6 +27,7 @@ class VideoCamera:
         sphere_eps: float = 1e-01,
         normal_eps: float = 5e-03,
         mode: str = "grayscale",  # grayscale, normal
+        rotate: bool = False,
     ):
         # init deepsdf
         self.deepsdf = DeepSDF.load_from_checkpoint(
@@ -44,16 +45,17 @@ class VideoCamera:
         self.deepsdf.eval()
 
         self.latents = []
-        for latent_path in tqdm(list(Path(latent_dir).iterdir())):
+        for latent_path in tqdm(list(sorted(Path(latent_dir).iterdir()))):
             latent = torch.load(latent_path).to(self.deepsdf.device)
             self.latents.append(latent)
 
-        self.keystones = keystones
+        self.rotate = rotate
+        if self.rotate:
+            self.keystones = np.arange(0, 360, 20)
         self.mode = mode
 
     def create_camera(self, frame_idx: int):
-        # TODO self.keystones
-        azim = 40
+        azim = self.keystones[frame_idx % len(self.keystones)] if self.rotate else 40
         elev = -30
         self.deepsdf.create_camera(azim=azim, elev=elev)
 
@@ -86,14 +88,16 @@ class VideoCamera:
         for sketch_path in sorted(Path(sketch_dir).iterdir()):
             sketches.append(cv2.imread(sketch_path.as_posix()))
 
-        res_original = images[0].shape[:2][::-1]
-        print(f"Original resolution: {res_original}")
+        res_frames = images[0].shape[:2][::-1]
+        print(f"Frames resolution: {res_frames}")
+        res_sketch = sketches[0].shape[:2][::-1]
+        print(f"Sketch resolution: {res_sketch}")
 
         image_video_writer = cv2.VideoWriter(
-            video_path + "image.mp4", fourcc, fps, res_original
+            video_path + "image.mp4", fourcc, fps, res_frames
         )
         sketch_video_writer = cv2.VideoWriter(
-            video_path + "sketch.mp4", fourcc, fps, res_original
+            video_path + "sketch.mp4", fourcc, fps, res_sketch
         )
 
         for i in range(len(images)):
@@ -105,8 +109,8 @@ class VideoCamera:
 
         # not working yet
         if side_by_side:
-            # create side by side video
-            res_side_by_side = (res_original[0], res_original[1] * 2)
+            res = min(res_frames[0], res_sketch[0])
+            res_side_by_side = (res, res * 2)
             print(f"Side by side resolution: {res_side_by_side}")
 
             side_by_side_video_writer = cv2.VideoWriter(
@@ -114,7 +118,11 @@ class VideoCamera:
             )
 
             for i in range(len(images)):
-                side_by_side_frame = np.concatenate([sketches[i], images[i]], axis=1)
+                image_resized = cv2.resize(images[i], (res, res))
+                sketch_resized = cv2.resize(sketches[i], (res, res))
+                side_by_side_frame = np.concatenate(
+                    [sketch_resized, image_resized], axis=1
+                )
                 side_by_side_video_writer.write(side_by_side_frame)
 
             side_by_side_video_writer.release()
@@ -162,10 +170,4 @@ def extract_frames(
 
     # save the frames to disk
     for i, frame in enumerate(frames):
-        cv2.imwrite(f"{cfg.get('obj_dir')}/{i:05}.png", frame)
-        cv2.imwrite(f"{cfg.get('obj_dir')}/{i:05}.png", frame)
-        cv2.imwrite(f"{cfg.get('obj_dir')}/{i:05}.png", frame)
-        cv2.imwrite(f"{cfg.get('obj_dir')}/{i:05}.png", frame)
-        cv2.imwrite(f"{cfg.get('obj_dir')}/{i:05}.png", frame)
-        cv2.imwrite(f"{cfg.get('obj_dir')}/{i:05}.png", frame)
         cv2.imwrite(f"{cfg.get('obj_dir')}/{i:05}.png", frame)
