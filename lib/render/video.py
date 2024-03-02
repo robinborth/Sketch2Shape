@@ -110,7 +110,7 @@ class VideoCamera:
         # not working yet
         if side_by_side:
             res = min(res_frames[0], res_sketch[0])
-            res_side_by_side = (res, res * 2)
+            res_side_by_side = (res * 2, res)
             print(f"Side by side resolution: {res_side_by_side}")
 
             side_by_side_video_writer = cv2.VideoWriter(

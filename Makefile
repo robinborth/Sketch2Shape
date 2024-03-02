@@ -152,4 +152,4 @@ optimize_sketch_couch:
 
 create_demo_video:
 	python scripts/optimize_sketch.py +experiment/create_video=demo +input_video_path=/home/korth/sketch2shape/demo_video/input_videos/one.mov video_name=hard_chair
-	python scripts/create_video.py +experiment/create_video=demo
+	python scripts/create_video.py +experiment/create_video=demo video_name=hard_chair
