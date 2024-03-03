@@ -14,6 +14,10 @@ jupyter
 pandas
 rich
 
+# demo
+streamlit
+streamlit-drawable-canvas
+
 # test
 black
 flake8

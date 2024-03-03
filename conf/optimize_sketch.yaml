@@ -23,7 +23,7 @@ save_mesh: True
 save_latent: True
 create_video: True 
 deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
-loss_ckpt_path: ${paths.checkpoint_dir}/latent_encoder.ckpt
+loss_ckpt_path: ${paths.checkpoint_dir}/loss.ckpt
 
 trainer:
   num_sanity_val_steps: 0
