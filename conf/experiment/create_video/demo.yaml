@@ -17,7 +17,7 @@ save_mesh: False
 create_video: False
 
 # override the paths
-video_name: demo_v1 # create a new folder based on video_name for the demo
+video_name: demo # create a new folder based on video_name for the demo
 video_dir: ${data.data_dir}/demo
 output_video_path: ${video_dir}/${video_name}/
 obj_dir: ${video_dir}/${video_name}/sketch
@@ -28,14 +28,13 @@ paths:
 
 # video extraction
 input_video_path: null # provide as CLI
-frames_to_extract: 150
+frames_to_extract: 250
 
 # the video settings
 video_camera:
   _target_: lib.render.video.VideoCamera
   deepsdf_ckpt_path: ${deepsdf_ckpt_path}
   latent_dir: ${latent_dir}
-  keystones: null
   rotate: False
   rotation_step_size: 5
   rotate_end: True

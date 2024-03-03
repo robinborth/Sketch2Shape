@@ -18,7 +18,6 @@ class VideoCamera:
         deepsdf_ckpt_path: str = "deepsdf.ckpt",
         # video settings
         latent_dir: str = "/latent_dir",
-        keystones: dict = {},
         # rendering settings
         n_render_steps: int = 100,
         clamp_sdf: float = 0.1,
