@@ -36,4 +36,6 @@ video_camera:
   deepsdf_ckpt_path: ${deepsdf_ckpt_path}
   latent_dir: ${latent_dir}
   keystones: null
-  rotate: True
+  rotate: False
+  rotation_step_size: 5
+  rotate_end: True

@@ -28,6 +28,8 @@ class VideoCamera:
         normal_eps: float = 5e-03,
         mode: str = "grayscale",  # grayscale, normal
         rotate: bool = False,
+        rotation_step_size: int = 10,
+        rotate_end: bool = False,
     ):
         # init deepsdf
         self.deepsdf = DeepSDF.load_from_checkpoint(
@@ -49,15 +51,21 @@ class VideoCamera:
             latent = torch.load(latent_path).to(self.deepsdf.device)
             self.latents.append(latent)
 
-        self.rotate = rotate
-        if self.rotate:
-            self.keystones = np.arange(0, 360, 20)
         self.mode = mode
+        self.rotate = rotate
+        self.rotation_step_size = rotation_step_size
+        self.keystones = np.arange(0, 360, self.rotation_step_size)
+        self.rotate_end = rotate_end
 
     def create_camera(self, frame_idx: int):
         azim = self.keystones[frame_idx % len(self.keystones)] if self.rotate else 40
         elev = -30
         self.deepsdf.create_camera(azim=azim, elev=elev)
+
+    def get_camera_settings(self, frame_idx: int):
+        azim = self.keystones[frame_idx % len(self.keystones)] if self.rotate else 40
+        elev = -30
+        return azim, elev
 
     def create_frames(self) -> list:
         frames = []
@@ -66,6 +74,20 @@ class VideoCamera:
             image = self.deepsdf.capture_camera_frame(latent=latent, mode=self.mode)
             frame = (image.detach().cpu().numpy() * 255).astype(np.uint8)
             frames.append(Image.fromarray(frame))
+
+        if self.rotate_end:
+            # repeat previous frames for a bit
+            for _ in range(5):
+                frames.append(Image.fromarray(frame))
+            # do rotation
+            prev_azim, prev_elev = self.get_camera_settings(frame_idx=frame_idx)
+            circle = np.arange(prev_azim, prev_azim + 360, self.rotation_step_size)
+            for azim in circle:
+                self.deepsdf.create_camera(azim=azim % 360, elev=-30)
+                image = self.deepsdf.capture_camera_frame(latent=latent, mode=self.mode)
+                frame = (image.detach().cpu().numpy() * 255).astype(np.uint8)
+                frames.append(Image.fromarray(frame))
+
         return frames
 
     def create_videos(
@@ -102,7 +124,7 @@ class VideoCamera:
 
         for i in range(len(images)):
             image_video_writer.write(images[i])
-            sketch_video_writer.write(sketches[i])
+            sketch_video_writer.write(sketches[min(i, len(sketches) - 1)])
 
         image_video_writer.release()
         sketch_video_writer.release()
@@ -119,7 +141,9 @@ class VideoCamera:
 
             for i in range(len(images)):
                 image_resized = cv2.resize(images[i], (res, res))
-                sketch_resized = cv2.resize(sketches[i], (res, res))
+                sketch_resized = cv2.resize(
+                    sketches[min(i, len(sketches) - 1)], (res, res)
+                )
                 side_by_side_frame = np.concatenate(
                     [sketch_resized, image_resized], axis=1
                 )
