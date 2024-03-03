@@ -34,7 +34,7 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
     if obj_ids := cfg.get("obj_ids"):
         log.info(f"==> selecting specified obj_ids ({len(obj_ids)}) ...>")
     elif obj_dir := cfg.get("obj_dir"):
-        obj_ids = [str(path.resolve()) for path in Path(obj_dir).iterdir()]
+        obj_ids = [str(path.resolve()) for path in sorted(Path(obj_dir).iterdir())]
         log.info(f"==> selecting specified sketches ({len(obj_ids)}) ...>")
     else:
         obj_ids = metainfo.obj_ids
@@ -154,7 +154,10 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
             else:
                 # rendered sketch
                 model.latent = latents[idx]
-                rendered_normal = model.capture_camera_frame("grayscale")
+                rendered_normal = model.deepsdf.capture_camera_frame(
+                    latnet=model.latent,
+                    mode="grayscale",
+                )
                 rendered_normal = rendered_normal.permute(2, 0, 1).detach().cpu()
                 rendered_sketch = sketch_transform(rendered_normal)[None, ...]
             # frechet inception distance

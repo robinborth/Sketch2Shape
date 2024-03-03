@@ -1,0 +1,38 @@
+# @package _global_
+
+defaults:
+  - override /data: optimize_latent
+  - override /dataset: shapenet_chair_4096
+  - override /logger: wandb
+
+tags: ["optimize_sketch", "shapenet_chair_4096", "val_latent"]
+loss_ckpt_path: ${paths.checkpoint_dir}/latent_siamese_sketch_grayscale_multi_view_256.ckpt
+split: val
+eval: True 
+save_mesh: True 
+create_video: True 
+
+trainer:
+  max_epochs: 3
+  accumulate_grad_batches: 24
+
+data:
+  num_workers: 0
+  pin_memory: False
+  persistent_workers: False
+  size: 256
+  milestones: []
+  dataset:
+    azims: [70, 50, 30, 10, -20, -40, -60, -80]
+    elevs: [-45, -20, -5]
+
+model:
+  loss_weight: 1.0
+  reg_weight: 1.0
+  silhouette_weight: 100.0
+  optimizer:
+    lr: 1e-02
+  reg_loss: latent
+  latent_init: latent
+  silhouette_loss: l1 
+  loss_mode: l1 

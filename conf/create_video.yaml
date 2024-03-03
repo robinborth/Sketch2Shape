@@ -1,14 +1,60 @@
 # @package _global_
 
 defaults:
-  - data:
-  - dataset: shapnet_chair_4096
+  - data: optimize_latent
+  - dataset: shapenet_chair_4096
+  - model: optimize_latent
+  - trainer: default
   - logger: default
   - hydra: default
   - paths: default
+  - debug: null
   - optional local: default
   - _self_
 
 seed: 123
 task_name: create_video
 tags: ["create_video"]
+split: val  # train, train_latent, val, val_latent, test
+obj_ids: ???  # overrids the split setting, make sure that obj_ids are only from the same split.
+obj_dir: ???
+train: False
+eval: False
+save_mesh: False
+save_latent: True
+create_video: False
+deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
+loss_ckpt_path: ${paths.checkpoint_dir}/latent_siamese_sketch_grayscale_latent_multi_view_256.ckpt
+
+trainer:
+  num_sanity_val_steps: 0
+  reload_dataloaders_every_n_epochs: True
+  max_epochs: 20
+  accumulate_grad_batches: 8
+
+data:
+  size: 256
+  milestones: []
+  dataset:
+    _target_: lib.data.dataset.optimize_latent.SketchLatentOptimizerDataset
+    azims: ${data.preprocess_synthetic.azims}
+    elevs: ${data.preprocess_synthetic.elevs}
+  shuffle: True
+
+model:
+  # custom settings
+  _target_: lib.optimizer.sketch.SketchOptimizer
+  loss_weight: 1.0
+  silhouette_loss: none 
+  silhouette_weight: 1.0
+  # base settings
+  reg_loss: none
+  reg_weight: 2e-03
+  optimizer:
+    lr: 1e-02
+  scheduler: null
+  latent_init: latent
+  prior_obj_id: ""
+  prior_view_id: 11
+  retrieval_k: 16
+  capture_rate: 8

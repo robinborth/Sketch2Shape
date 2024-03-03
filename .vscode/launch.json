@@ -54,6 +54,17 @@
             "justMyCode": true,
         },
         {
+            "name": "Debug: Eval Triplet",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "scripts/train_loss.py",
+            "console": "integratedTerminal",
+            "args": [
+                "+experiment/train_loss=triplet_siamese_sketch_grayscale_multi_view_256"
+            ],
+            "justMyCode": true,
+        },
+        {
             "name": "Debug: Eval DeepSDF",
             "type": "debugpy",
             "request": "launch",

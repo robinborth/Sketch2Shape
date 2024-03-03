@@ -1,7 +1,9 @@
 import os
 from pathlib import Path
 
+import cv2
 import numpy as np
+from PIL import Image
 
 
 def get_translation(t):
@@ -63,3 +65,28 @@ def create_video(video_dir: Path, obj_id: str, framerate: int = 30):
         f"-pix_fmt yuv420p {video_path}",
     ]
     os.system(" ".join(args))
+
+
+def extract_frames_from_video(video_path: str, skip_frames: int = 0):
+    # Open the video file
+    video = cv2.VideoCapture(video_path)
+
+    # Read frames at the specified interval
+    frames = []
+    frame_count = 0
+    while video.isOpened():
+        ret, frame = video.read()
+        # If the frame was read successfully
+        if ret:
+            # Add the frame to the list of frames
+            if frame_count % (skip_frames + 1) == 0:
+                frames.append(Image.fromarray(frame))
+            frame_count += 1
+        else:
+            # Break the loop if the video is completed
+            break
+
+    # Release the video file
+    video.release()
+
+    return frames

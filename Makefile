@@ -34,12 +34,26 @@ abblation_latent_loss:
 	# python scripts/train_loss.py +experiment/train_loss=latent_tower_edge_grayscale_multi_view_256
 	# python scripts/train_loss.py +experiment/train_loss=latent_tower_sketch_grayscale_multi_view_256
 
-	python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_latent_256
+	# python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_latent_256
 	# python scripts/train_loss.py +experiment/train_loss=latent_tower_sketch_grayscale_latent_256
 
-	python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_latent_multi_view_256
+	# python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_latent_multi_view_256
 	# python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_latent_64
 	# python scripts/train_loss.py +experiment/train_loss=latent_siamese_sketch_grayscale_latent_128
+
+abblation:
+	python scripts/train_loss.py +experiment/train_loss=triplet_siamese_sketch_grayscale_multi_view_256
+
+	# python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_siamese_sketch_grayscale_multi_view_256.ckpt 
+	# python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_siamese_sketch_grayscale_latent_256.ckpt
+	# python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_siamese_sketch_grayscale_latent_multi_view_256.ckpt
+
+	# python scripts/eval_loss.py +experiment/eval_loss=latent_loss loss_ckpt_path=checkpoints/latent_siamese_sketch_grayscale_multi_view_256.ckpt 
+	# python scripts/eval_loss.py +experiment/eval_loss=latent_loss loss_ckpt_path=checkpoints/latent_siamese_sketch_grayscale_latent_256.ckpt 
+	# python scripts/eval_loss.py +experiment/eval_loss=latent_loss loss_ckpt_path=checkpoints/latent_siamese_sketch_grayscale_latent_multi_view_256.ckpt 
+
+	# python scripts/optimize_sketch.py +experiment/optimize_sketch=val_latent loss_ckpt_path=checkpoints/latent_siamese_sketch_grayscale_multi_view_256.ckpt 
+	# python scripts/optimize_sketch.py +experiment/optimize_sketch=val_latent loss_ckpt_path=checkpoints/latent_siamese_sketch_grayscale_latent_256.ckpt 
 
 train_triplet_loss:
 	python scripts/train_loss.py +experiment/train_loss=triplet_siamese_multi_view
@@ -55,13 +69,13 @@ eval_loss:
 eval_latent_deepsdf:
 	# python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_siamese_edge_normal_multi_view_256.ckpt +data/variants=sketch
 	# python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_siamese_edge_grayscale_multi_view_256.ckpt +data/variants=sketch
-	# python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_siamese_sketch_grayscale_multi_view_256.ckpt +data/variants=sketch
-	# python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_siamese_sketch_grayscale_latent_256.ckpt +data/variants=sketch
+	python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_siamese_sketch_grayscale_multi_view_256.ckpt +data/variants=sketch
+	python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_siamese_sketch_grayscale_latent_256.ckpt +data/variants=sketch
 	# python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_tower_edge_normal_multi_view_256.ckpt +data/variants=sketch
 	# python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_tower_edge_grayscale_multi_view_256.ckpt +data/variants=sketch
 	# python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_tower_sketch_grayscale_multi_view_256.ckpt +data/variants=sketch
 	# python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_tower_sketch_grayscale_latent_256.ckpt +data/variants=sketch
-	# python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_siamese_sketch_grayscale_latent_multi_view_256.ckpt +data/variants=sketch
+	python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_siamese_sketch_grayscale_latent_multi_view_256.ckpt +data/variants=sketch
 	# python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_siamese_sketch_grayscale_latent_64.ckpt +data/variants=sketch_64
 	# python scripts/optimize_deepsdf.py +experiment/baseline=latent_loss loss_ckpt_path=checkpoints/latent_siamese_sketch_grayscale_latent_128.ckpt +data/variants=sketch_128
 

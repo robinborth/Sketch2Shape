@@ -1,0 +1,35 @@
+# @package _global_
+
+defaults:
+  - override /data: optimize_latent
+  - override /dataset: shapenet_chair_4096
+  # - override /logger: wandb
+
+tags: ["create_video", "shapenet_chair_4096", "main_demo"]
+
+# override the paths
+video_dir: ${data.data_dir}/demo/main_demo
+input_video_path: ${video_dir}/sketch.mp4
+output_video_path: ${video_dir}/image.mp4
+input_output_video_path: ${video_dir}/sketch_image.mp4
+obj_dir: ${video_dir}/sketch
+latent_dir: ${video_dir}/latent 
+image_dir: ${video_dir}/image
+sketch_image_dir: ${video_dir}/sketch_image
+paths:
+  latent_dir: ${latent_dir}
+
+# the video settings
+preprocess_video: False 
+capture_video: True
+skip_frames: 2
+video_camera:
+  _target_: lib.render.video.VideoCamera
+  deepsdf_ckpt_path: ${deepsdf_ckpt_path}
+  latent_dir: ${latent_dir}
+  sketch_dir: ${obj_dir}
+  azim: 40
+  elev: -30
+  rotate_at_frame: [10, 36, 41, 45, 52] 
+  rotation_step_size: 10
+  rotation_wait_frames: 5
