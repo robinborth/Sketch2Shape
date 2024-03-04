@@ -1,0 +1,12 @@
+# @package _global_
+
+defaults:
+  - override /dataset: shapenet_chair_4096
+  - override /logger: wandb
+  - override /model: triplet_siamese 
+
+task_name: train_triplet_loss
+tags: ["train_loss", "shapenet_chair_4096", "triplet_synthetic"]
+  
+data:
+  train_modes: [0, 2, 3, 5, 6, 8]

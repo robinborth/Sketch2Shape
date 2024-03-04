@@ -24,18 +24,30 @@ def preprocess(cfg: DictConfig) -> None:
         sdf.metainfo.save_sdf_samples(obj_id, sdf_samples)
         sdf.metainfo.save_surface_samples(obj_id, surface_samples)
 
+    if cfg.get("deepsdf_ckpt_path") is None:
+        return
+
     logger.debug("==> initializing synthethic images ...")
     synthetic = hydra.utils.instantiate(cfg.data.preprocess_synthetic)()
     logger.debug("==> start preprocessing synthethic images ...")
     for obj_id in tqdm(list(synthetic.obj_ids_iter())):
-        norms, sketchs, grays = synthetic.preprocess(obj_id)
+        norms, sketchs, grays, latents, config = synthetic.preprocess(obj_id)
         for image_id, (norm, sketch, gray) in enumerate(zip(norms, sketchs, grays)):
             synthetic.metainfo.save_image(obj_id, sketch, image_id, 0)
             synthetic.metainfo.save_image(obj_id, norm, image_id, 1)
             synthetic.metainfo.save_image(obj_id, gray, image_id, 2)
+        if len(config) != 0:
+            synthetic.metainfo.save_config(obj_id, config, 0)
+        if len(latents) != 0:
+            synthetic.metainfo.save_latents(obj_id, latents, 0)
 
-    if cfg.get("deepsdf_ckpt_path") is None:
-        return
+    logger.debug("==> initializing synthethic evaluation images ...")
+    eval_synthetic = hydra.utils.instantiate(cfg.data.preprocess_eval_synthetic)()
+    logger.debug("==> start preprocessing synthethic evaluation images ...")
+    for obj_id in tqdm(list(eval_synthetic.obj_ids_iter())):
+        _, sketchs, _, _, _ = eval_synthetic.preprocess(obj_id)
+        for image_id, sketch in enumerate(sketchs):
+            eval_synthetic.metainfo.save_image(obj_id, sketch, image_id, 9)
 
     for split in ["train_latent", "val_latent"]:
         logger.debug(f"==> initializing renderings for {split} ...")

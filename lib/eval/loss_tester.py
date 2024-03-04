@@ -23,7 +23,7 @@ class LossTester(LightningModule):
         index_mode: str = "synthetic_grayscale",  # normal, sketch
         query_mode: str = "synthetic_sketch",  # normal, sketch
         sketch_mode: int = 0,  # synthetic sketch
-        retrieval_mode: int = 2,  # synthetic grayscale
+        retrieval_mode: int = 2,  # synthetic sketches
         obj_capture_image_id: int = 11,  # (azims=40, elev=-30)
         obj_capture_rate: int = 16,
     ):

@@ -3,7 +3,8 @@
 _target_: lib.data.datamodule.loss.LossDataModule
 # settings
 data_dir: ${paths.data_dir}/${data.dataset_name}
-modes: [0, 1]
+train_modes: [0, 2]
+eval_modes: [0, 2]
 latent: False
 # training
 batch_size: 256
@@ -30,9 +31,30 @@ dataset:
     _target_: lib.data.transforms.BaseTransform
     mean: 0.5
     std: 0.5
-    transforms: []
+    transforms:
+      - _target_: torchvision.transforms.v2.Resize
+        size: [256, 256]
+      - _target_: torchvision.transforms.v2.RandomRotation
+        degrees: 5 
+        fill: 1.0
+      - _target_: torchvision.transforms.v2.RandomChoice
+        transforms:
+          - _target_: lib.data.transforms.DilateSketch
+            kernel_size: 1
+          - _target_: lib.data.transforms.DilateSketch
+            kernel_size: 3
+          - _target_: lib.data.transforms.DilateSketch
+            kernel_size: 5
+          - _target_: lib.data.transforms.DilateSketch
+            kernel_size: 7
+          - _target_: lib.data.transforms.DilateSketch
+            kernel_size: 9
+      - _target_: torchvision.transforms.v2.RandomHorizontalFlip
   normal_transform:
     _target_: lib.data.transforms.BaseTransform
     mean: 0.5
     std: 0.5
-    transforms: []
+    transforms:
+      - _target_: torchvision.transforms.v2.Resize
+        size: [256, 256]
+      - _target_: torchvision.transforms.v2.RandomHorizontalFlip

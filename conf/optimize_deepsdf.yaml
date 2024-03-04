@@ -17,13 +17,14 @@ task_name: optimize_deepsdf
 tags: ["optimize_deepsdf"]
 split: val  # train, train_latent, val, val_latent, test
 obj_ids: ???  # overrids the split setting, make sure that obj_ids are only from the same split.
+obj_dir: ???
 train: True
 eval: True
 save_mesh: True
 save_latent: True
 create_video: True 
 deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
-loss_ckpt_path: ${paths.checkpoint_dir}/latent_encoder.ckpt
+loss_ckpt_path: ${paths.checkpoint_dir}/loss.ckpt
 
 trainer:
   num_sanity_val_steps: 0

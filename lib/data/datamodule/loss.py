@@ -12,7 +12,8 @@ class LossDataModule(LightningDataModule):
         self,
         # settings
         data_dir: str = "data/",
-        modes: list[int] = [0, 1],
+        train_modes: list[int] = [0, 2],
+        eval_modes: list[int] = [0, 2],
         latent: bool = False,
         # training
         batch_size: int = 32,
@@ -32,14 +33,13 @@ class LossDataModule(LightningDataModule):
 
     def setup(self, stage: str):
         data_dir = self.hparams["data_dir"]
-        modes = self.hparams["modes"]
         if stage in ["fit", "all"]:
             split = "train_latent" if self.hparams["latent"] else "train"
             self.train_metainfo = MetaInfo(data_dir=data_dir, split=split)
             self.train_dataset = self.hparams["dataset"](
                 data_dir=data_dir,
                 split=split,
-                modes=modes,
+                modes=self.hparams["train_modes"],
             )
         if stage in ["validate", "fit", "all"]:
             split = "val_latent" if self.hparams["latent"] else "val"
@@ -47,18 +47,18 @@ class LossDataModule(LightningDataModule):
             self.val_dataset = self.hparams["dataset"](
                 data_dir=data_dir,
                 split=split,
-                modes=modes,
+                modes=self.hparams["eval_modes"],
             )
         if stage in ["test", "all"]:
             self.test_metainfo = MetaInfo(data_dir=data_dir, split="test")
             self.test_dataset = self.hparams["dataset"](
                 data_dir=data_dir,
                 split="test",
-                modes=modes,
+                modes=self.hparams["eval_modes"],
             )
 
     def train_dataloader(self) -> DataLoader:
-        self.train_metainfo.load_loss(modes=self.hparams["modes"])
+        self.train_metainfo.load_loss(modes=self.hparams["train_modes"])
         labels = self.train_metainfo.loss_labels
         sampler = self.hparams["train_sampler"](labels=labels)
         return DataLoader(
@@ -73,7 +73,7 @@ class LossDataModule(LightningDataModule):
         )
 
     def val_dataloader(self) -> DataLoader:
-        self.val_metainfo.load_loss(modes=self.hparams["modes"])
+        self.val_metainfo.load_loss(modes=self.hparams["eval_modes"])
         labels = self.val_metainfo.loss_labels
         sampler = self.hparams["eval_sampler"](labels=labels)
         return DataLoader(
@@ -87,7 +87,7 @@ class LossDataModule(LightningDataModule):
         )
 
     def test_dataloader(self) -> DataLoader:
-        self.test_metainfo.load_loss(modes=self.hparams["modes"])
+        self.test_metainfo.load_loss(modes=self.hparams["eval_modes"])
         labels = self.test_metainfo.loss_labels
         sampler = self.hparams["eval_sampler"](labels=labels)
         return DataLoader(

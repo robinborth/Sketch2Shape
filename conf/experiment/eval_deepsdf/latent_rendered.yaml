@@ -1,0 +1,15 @@
+# @package _global_
+
+defaults:
+  - override /data: optimize_latent
+  - override /dataset: shapenet_chair_4096 
+  - override /logger: wandb
+
+tags: ["eval_deepsdf", "shapenet_chair_4096", "latent_rendered"]
+loss_ckpt_path: ${paths.checkpoint_dir}/latent_rendered.ckpt
+
+train: False
+create_video: False
+model:
+  _target_: lib.optimizer.latent.LatentOptimizer
+  latent_init: latent

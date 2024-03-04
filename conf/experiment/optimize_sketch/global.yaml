@@ -1,0 +1,13 @@
+# @package _global_
+
+defaults:
+  - override /data: optimize_latent
+  - override /dataset: shapenet_chair_4096 
+  - override /logger: wandb
+
+tags: ["optimize_sketch", "shapenet_chair_4096", "optimize_global"]
+model:
+  loss_mode: l1 
+  loss_weight: 1.0
+  reg_loss: latent 
+  reg_weight: 1.0

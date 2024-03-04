@@ -1,5 +1,6 @@
 from typing import Callable, Optional
 
+import numpy as np
 from torch.utils.data import Dataset
 
 from lib.data.metainfo import MetaInfo
@@ -17,10 +18,11 @@ class LossDataset(Dataset):
         split: Optional[str] = None,
         modes: list[int] = [0, 1],
         sketch_transform: Optional[Callable] = None,
-        normal_transform: Optional[Callable] = None,
+        image_transform: Optional[Callable] = None,
     ):
+        self.modes = modes
         self.sketch_transform = sketch_transform
-        self.normal_transform = normal_transform
+        self.image_transform = image_transform
         self.metainfo = MetaInfo(data_dir=data_dir, split=split)
         self.metainfo.load_loss(modes=modes)
 
@@ -38,8 +40,8 @@ class LossDataset(Dataset):
         image = self.metainfo.load_image(label, image_id, mode)
         if type_idx == 0 and self.sketch_transform:
             image = self.sketch_transform(image)
-        if type_idx == 1 and self.normal_transform:
-            image = self.normal_transform(image)
+        if type_idx == 1 and self.image_transform:
+            image = self.image_transform(image)
 
         return {
             "image": image,
@@ -64,10 +66,20 @@ class LatentLossDataset(LossDataset):
             checkpoint_path=deepsdf_ckpt_path,
             map_location="cpu",
         )
+        self.load_latents(modes=self.modes)
+
+    def load_latents(self, modes):
+        data = []
+        for mode in modes:
+            for obj_id in self.metainfo.obj_ids:
+                latents = self.metainfo.load_latents(obj_id, mode=mode)
+                data.append(latents)
+        self._latents = np.stack(data)
+
+    def get_latent(self, index: int):
+        return self._latents[index]
 
     def __getitem__(self, index):
         item = self.fetch(index)
-        label = item["label"]
-        latent = self.deepsdf.lat_vecs.weight[label].detach().cpu().numpy().flatten()
-        item["latent"] = latent
+        item["latent"] = self.get_latent(index)
         return item

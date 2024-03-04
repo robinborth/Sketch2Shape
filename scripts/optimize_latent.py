@@ -122,13 +122,10 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
             torch.save(latent.detach().cpu(), path)
 
     # evaluate the generated 3D shapes
-    eval_view_id: int = 11
-    eval_azim: float = 40
-    eval_elev: float = -30
     if cfg.eval:
         model.deepsdf.eval()
-        cd = ChamferDistance(num_samples=2048)
-        emd = EarthMoversDistance(num_samples=2048)
+        cd = ChamferDistance(num_samples=30000)
+        emd = EarthMoversDistance(num_samples=4096)
         fid = FrechetInceptionDistance(feature=2048, normalize=True)
         clip = CLIPScore()
 
@@ -139,32 +136,31 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
             emd.update(mesh, surface_samples)
 
         # frechet inception distance and clip score
+        azims = cfg.data.preprocess_eval_synthetic.azims
+        elevs = cfg.data.preprocess_eval_synthetic.elev
         sketch_transform = SketchTransform(normalize=False)
-        model.deepsdf.create_camera(azim=eval_azim, elev=eval_elev)
         log.info("==> start evaluate FID and CLIPScore ...")
         for idx, obj_id in tqdm(enumerate(obj_ids), total=len(obj_ids)):
-            # gt sketch
-            label = metainfo.obj_id_to_label(obj_id)
-            gt_sketch = metainfo.load_image(label, eval_view_id, 0)
-            gt_sketch = sketch_transform(gt_sketch)[None, ...]
-            if cfg.model.latent_init == "retrieval":
-                label = retrieval_idxs[idx]
-                rendered_sketch = metainfo.load_image(label, eval_view_id, 2)
-                rendered_sketch = sketch_transform(rendered_sketch)[None, ...]
-            else:
-                # rendered sketch
-                model.latent = latents[idx]
-                rendered_normal = model.deepsdf.capture_camera_frame(
-                    latnet=model.latent,
-                    mode="grayscale",
-                )
-                rendered_normal = rendered_normal.permute(2, 0, 1).detach().cpu()
-                rendered_sketch = sketch_transform(rendered_normal)[None, ...]
-            # frechet inception distance
-            fid.update(gt_sketch, real=True)
-            fid.update(rendered_sketch, real=False)
-            # clip score
-            clip.update(gt_sketch, rendered_sketch)
+            for eval_view_id, (eval_azim, eval_elev) in enumerate(zip(azims, elevs)):
+                model.deepsdf.create_camera(azim=eval_azim, elev=eval_elev)
+                # gt sketch
+                label = metainfo.obj_id_to_label(obj_id)
+                gt_sketch = metainfo.load_image(label, eval_view_id, 9)
+                gt_sketch = sketch_transform(gt_sketch)[None, ...]
+                if cfg.model.latent_init == "retrieval":
+                    label = retrieval_idxs[idx]
+                    rendered_sketch = metainfo.load_image(label, eval_view_id, 9)
+                    rendered_sketch = sketch_transform(rendered_sketch)[None, ...]
+                else:
+                    model.latent = latents[idx]
+                    rendered_normal = model.capture_camera_frame(mode="normal")
+                    rendered_normal = rendered_normal.permute(2, 0, 1).detach().cpu()
+                    rendered_sketch = sketch_transform(rendered_normal)[None, ...]
+                # frechet inception distance
+                fid.update(gt_sketch, real=True)
+                fid.update(rendered_sketch, real=False)
+                # clip score
+                clip.update(gt_sketch, rendered_sketch)
 
         log.info("==> save metrics ...")
         metrics = {

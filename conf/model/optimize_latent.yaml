@@ -16,15 +16,19 @@ scheduler:
   gamma: 0.5
 # init settings: random, mean, prior, prior(idx), retrieval, latent
 latent_init: mean
+prior_obj_id: "" 
+# default hand drawn settings
+prior_mode: 10  # 9, 10
+prior_view_id: 0  # 6, 0
 # regularization settings: none, prior, retrieval
 reg_loss: none
 reg_weight: 1e-5
 # retrieval settings for init and prior
-prior_obj_id: "" 
-prior_view_id: 11
+retrieval_mode: 9
+retrieval_view_id: 6
 retrieval_k: 16
 # mesh settings
-mesh_resolution: 128
+mesh_resolution: 256
 mesh_chunk_size: 65536
 # rendering settings
 n_render_steps: 100

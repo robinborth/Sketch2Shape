@@ -23,7 +23,7 @@ save_mesh: True
 save_latent: True
 create_video: True 
 deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
-loss_ckpt_path: ${paths.checkpoint_dir}/latent_encoder.ckpt
+loss_ckpt_path: ${paths.checkpoint_dir}/loss.ckpt
 
 trainer:
   num_sanity_val_steps: 0
@@ -36,16 +36,16 @@ data:
   milestones: []
   dataset:
     _target_: lib.data.dataset.optimize_latent.NormalLatentOptimizerDataset
-    azims: ${data.preprocess_synthetic.azims}
-    elevs: ${data.preprocess_synthetic.elevs}
+    azims: ${data.preprocess_eval_synthetic.azims}
+    elevs: ${data.preprocess_eval_synthetic.elevs}
   shuffle: True
 
 model:
   # custom settings
   _target_: lib.optimizer.normals.NormalsOptimizer
-  # base settings
   reg_loss: prior
   reg_weight: 1e-01
+  # base settings
   optimizer:
     lr: 5e-03
   scheduler:

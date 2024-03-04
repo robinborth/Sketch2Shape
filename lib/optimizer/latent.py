@@ -22,15 +22,16 @@ class LatentOptimizer(LightningModule):
         scheduler=None,
         # init settings: random, mean, prior, prior(idx), retrieval, latent
         latent_init: str = "mean",
-        sketch_mode: int = 0,  # synthetic sketch
-        retrieval_mode: int = 2,  # synthetic grayscale
+        prior_mode: int = 10,  # hand drawn
+        prior_obj_id: str = "",
+        prior_view_id: int = 0,
         # regularization settings: none, prior, retrieval, latent
         reg_loss: str = "none",
         reg_weight: float = 1e-5,
         # retrieval settings for init and prior
-        prior_obj_id: str = "",
-        prior_view_id: int = 11,
+        retrieval_mode: int = 9,  # synthetic sketch
         retrieval_k: int = 16,
+        retrieval_view_id: int = 6,
         # mesh settings
         mesh_resolution: int = 128,
         mesh_chunk_size: int = 65536,
@@ -77,27 +78,28 @@ class LatentOptimizer(LightningModule):
         # retrieve the latent code based on the sketch
         if latent_init.startswith("retrieval") or reg_loss.startswith("retrieval"):
             self.init_retrieval_latents(
-                obj_id=prior_obj_id,
-                view_id=prior_view_id,
-                sketch_mode=sketch_mode,
+                prior_obj_id=prior_obj_id,
+                prior_view_id=prior_view_id,
+                prior_mode=prior_mode,
                 retrieval_mode=retrieval_mode,
-                k=retrieval_k,
+                retrieval_view_id=retrieval_view_id,
+                retrieval_k=retrieval_k,
             )
         self.init_latent(
             name="latent",
             latent_init=latent_init,
-            obj_id=prior_obj_id,
-            sketch_mode=sketch_mode,
+            prior_obj_id=prior_obj_id,
+            prior_mode=prior_mode,
         )
 
     def get_latent(
         self,
         latent_init: str = "mean",
-        obj_id: str = "",
-        sketch_mode: int = 0,
+        prior_obj_id: str = "",
+        prior_mode: int = 0,
     ):
         if latent_init == "prior":
-            prior_idx = self.metainfo.obj_id_to_label(obj_id=obj_id)
+            prior_idx = self.metainfo.obj_id_to_label(obj_id=prior_obj_id)
             return self.deepsdf.get_latent(prior_idx)
 
         if match := re.match(r"prior\((\d+)\)", latent_init):
@@ -109,10 +111,10 @@ class LatentOptimizer(LightningModule):
 
         if latent_init == "latent":
             assert self.loss.support_latent
-            label = self.metainfo.obj_id_to_label(obj_id)
+            label = self.metainfo.obj_id_to_label(prior_obj_id)
             view_id = self.hparams["prior_view_id"]
-            assert sketch_mode in [0, 3, 6]
-            sketch = self.metainfo.load_image(label, view_id, sketch_mode)  # sketch
+            assert prior_mode in [0, 3, 6, 9, 10]
+            sketch = self.metainfo.load_image(label, view_id, prior_mode)  # sketch
             loss_input = self.sketch_transform(sketch)[None, ...].to(self.loss.device)
             return self.loss.embedding(loss_input)[0]
 
@@ -127,25 +129,30 @@ class LatentOptimizer(LightningModule):
     def init_latent(
         self,
         latent_init: str = "mean",
-        obj_id: str = "",
+        prior_obj_id: str = "",
+        prior_mode: int = 0,
         name: str = "latent",
-        sketch_mode: int = 0,
     ):
-        latent = self.get_latent(latent_init=latent_init, obj_id=obj_id)
+        latent = self.get_latent(
+            latent_init=latent_init,
+            prior_obj_id=prior_obj_id,
+            prior_mode=prior_mode,
+        )
         self.register_buffer(name, latent)
 
     def init_retrieval_latents(
         self,
-        obj_id: str,
-        view_id: int = 11,  # top right
-        sketch_mode: int = 0,  # synthetic sketch
+        prior_obj_id: str,
+        prior_view_id: int = 11,  # top right
+        prior_mode: int = 0,  # synthetic sketch
         retrieval_mode: int = 2,  # synthetic grayscale
-        k: int = 1,
+        retrieval_view_id: int = 2,  # synthetic grayscale
+        retrieval_k: int = 1,
     ):
         device = self.loss.device
-        obj_id_label = int(self.metainfo.obj_id_to_label(obj_id))
-        assert sketch_mode in [0, 3, 6]  # sketches
-        sketch = self.metainfo.load_image(obj_id_label, view_id, sketch_mode)
+        obj_id_label = int(self.metainfo.obj_id_to_label(prior_obj_id))
+        assert prior_mode in [0, 3, 6]  # sketches
+        sketch = self.metainfo.load_image(obj_id_label, prior_view_id, prior_mode)
         loss_input = self.sketch_transform(sketch)[None, ...].to(device)
         sketch_emb = self.loss.embedding(loss_input, mode="sketch")
 
@@ -155,7 +162,7 @@ class LatentOptimizer(LightningModule):
         for obj_id in tqdm(metainfo.obj_ids):
             label = int(metainfo.obj_id_to_label(obj_id))
             assert retrieval_mode in [0, 1, 2]  # synthetic
-            image = metainfo.load_image(label, view_id, retrieval_mode)
+            image = metainfo.load_image(label, retrieval_view_id, retrieval_mode)
             loss_input = self.sketch_transform(image)[None, ...].to(device)
             loss_emb = self.loss.embedding(loss_input, mode="sketch")
             loss = self.loss.compute(sketch_emb, loss_emb)
@@ -164,7 +171,7 @@ class LatentOptimizer(LightningModule):
 
         # don't include the latent code that we want to optimize for
         idx = torch.argsort(self.shape_loss)
-        retrieval_idx = idx[idx != obj_id_label][:k]
+        retrieval_idx = idx[idx != obj_id_label][:retrieval_k]
         retrieval_latents = self.deepsdf.lat_vecs.weight[retrieval_idx]
         self.register_buffer("retrieval_latents", retrieval_latents)
         self.retrieval_idx = retrieval_idx

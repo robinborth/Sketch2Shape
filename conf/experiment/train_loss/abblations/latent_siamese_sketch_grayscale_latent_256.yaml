@@ -22,6 +22,9 @@ data:
     deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
     sketch_transform:
       transforms:
+        - _target_: torchvision.transforms.v2.Resize
+          size: [256, 256]
+          antialias: True 
         - _target_: torchvision.transforms.v2.RandomRotation
           degrees: 5 
           fill: 1.0

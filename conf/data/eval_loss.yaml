@@ -3,7 +3,8 @@
 _target_: lib.data.datamodule.loss_tester.LossTesterDataModule
 # paths
 data_dir: ${paths.data_dir}/${data.dataset_name}
-modes: [0, 2]
+train_modes: [0, 2]
+eval_modes: [0, 2]
 latent: True
 # training
 batch_size: 1

@@ -82,10 +82,15 @@ class PreprocessMesh:
 class PreprocessSynthetic:
     # processing settings
     data_dir: str = "/data"
+    deepsdf_ckpt_path: str = "deepsdf.ckpt"
     skip: bool = True
+    n_renderings: int = 10
     # camera settings
-    azims: list[int] = field(default_factory=list)
-    elevs: list[int] = field(default_factory=list)
+    random: bool = True
+    azims: list[float] = field(default_factory=list)
+    azim_std: float = 22.5
+    elev: float = -20
+    elev_std: float = 5
     dist: float = 4.0
     width: int = 256
     height: int = 256
@@ -102,6 +107,10 @@ class PreprocessSynthetic:
 
     def __post_init__(self):
         self.metainfo = MetaInfo(data_dir=self.data_dir)
+        self.deepsdf = DeepSDF.load_from_checkpoint(self.deepsdf_ckpt_path)
+        self.deepsdf.freeze()
+        self.deepsdf.eval()
+        self.max_label = len(self.deepsdf.lat_vecs.weight)
 
     def obj_ids_iter(self):
         if not self.skip:
@@ -109,14 +118,11 @@ class PreprocessSynthetic:
             return
 
         for obj_id in self.metainfo.obj_ids:
-            sketches_dir = self.metainfo.image_dir_path(obj_id=obj_id, mode=0)
-            normals_dir = self.metainfo.image_dir_path(obj_id=obj_id, mode=1)
-            grayscale_dir = self.metainfo.image_dir_path(obj_id=obj_id, mode=2)
-            if (
-                not sketches_dir.exists()
-                or not normals_dir.exists()
-                or not grayscale_dir.exists()
-            ):
+            if self.random:
+                config_path = self.metainfo.config_path(obj_id=obj_id, mode=0)
+            else:
+                config_path = self.metainfo.config_path(obj_id=obj_id, mode=9)
+            if not config_path.exists():
                 yield obj_id
 
     def image_to_sketch(self, images: np.ndarray):
@@ -143,18 +149,30 @@ class PreprocessSynthetic:
         return normals
 
     def render_normals(self, mesh: o3d.geometry.TriangleMesh):
+        if self.random:
+            elevs = [self.elev for _ in range(self.n_renderings)]
+        else:
+            elevs = self.elev  # type: ignore
+
         _mesh = o3d.t.geometry.TriangleMesh.from_legacy(mesh)
         scene = o3d.t.geometry.RaycastingScene()
         _ = scene.add_triangles(_mesh)
 
-        _points = []
         _normals = []
         _masks = []
+        _azims = []
+        _elevs = []
         for azim in self.azims:
-            for elev in self.elevs:
+            for elev in elevs:
+                if self.random:
+                    random_azim = np.random.normal(azim, self.azim_std)
+                    random_elev = np.random.normal(elev, self.elev_std)
+                else:
+                    random_azim = azim
+                    random_elev = elev
                 camera = Camera(
-                    azim=azim,
-                    elev=elev,
+                    azim=random_azim,
+                    elev=random_elev,
                     dist=self.dist,
                     width=self.width,
                     height=self.height,
@@ -177,16 +195,14 @@ class PreprocessSynthetic:
                 outside_mask = (normals * rays).sum(axis=-1) > 0
                 normals[outside_mask] = -normals[outside_mask]
 
-                # update the points
-                points = points + t_hit[..., None] * rays
-
-                _points.append(points)
                 _normals.append(normals)
                 _masks.append(mask)
+                _azims.append(random_azim)
+                _elevs.append(random_elev)
 
-        return np.stack(_points), np.stack(_normals), np.stack(_masks)
+        return np.stack(_normals), np.stack(_masks), _azims, _elevs
 
-    def normals_to_grayscales(self, normals: np.ndarray):
+    def normals_to_grayscales(self, normals: np.ndarray, azims, elevs):
         """Transforms the normal after render_normals to grayscale."
 
         Args:
@@ -197,29 +213,53 @@ class PreprocessSynthetic:
         """
         grayscales = []
         view_id = 0
-        for azim in self.azims:
-            for elev in self.elevs:
-                normal = normals[view_id]
-                camera_position = Camera(azim=azim, elev=elev).camera_position()
-                mask = normal.sum(-1) > 2.95
-                N = (normal - 0.5) / 0.5
-                L = camera_position / np.linalg.norm(camera_position)
-                grayscale = np.zeros(normal.shape)
-                grayscale += self.ambient
-                grayscale += self.diffuse * (N @ L)[..., None]
-                grayscale[mask, :] = 1.0
-                grayscale = np.clip(grayscale, 0, 1)
-                grayscales.append(grayscale)
-                view_id += 1
+        for azim, elev in zip(azims, elevs):
+            normal = normals[view_id].reshape(self.width, self.height, -1)
+            camera_position = Camera(azim=azim, elev=elev).camera_position()
+            mask = normal.sum(-1) == 0
+            L = camera_position / np.linalg.norm(camera_position)
+            grayscale = np.zeros(normal.shape)
+            grayscale += self.ambient
+            grayscale += self.diffuse * (normal @ L)[..., None]
+            grayscale[mask, :] = 1.0
+            grayscale = np.clip(grayscale, 0, 1)
+            grayscales.append(grayscale)
+            view_id += 1
         return (np.stack(grayscales) * 255).astype(np.uint8)
 
     def preprocess(self, obj_id: str):
         mesh = self.metainfo.load_normalized_mesh(obj_id=obj_id)
-        _, normals, masks = self.render_normals(mesh=mesh)
-        grayscales = self.normals_to_grayscales(normals)
+        normals, masks, azims, elevs = self.render_normals(mesh=mesh)
+        grayscales = self.normals_to_grayscales(normals, azims=azims, elevs=elevs)
         normals = self.normals_to_image(normals=normals, mask=masks)
         sketches = self.image_to_sketch(normals)
-        return normals, sketches, grayscales
+
+        label = self.metainfo.obj_id_to_label(obj_id=obj_id)
+        latents = []
+        configs = []
+        if label < self.max_label:
+            for idx, (azim, elev) in enumerate(zip(azims, elevs)):
+                latent = self.deepsdf.lat_vecs.weight[label]
+                latents.append(latent.detach().cpu().numpy())
+                config = dict(
+                    image_id=f"{idx:05}",
+                    source_obj_id=obj_id,
+                    target_obj_id=obj_id,
+                    t=0.0,
+                    azim=azim,
+                    elev=elev,
+                    dist=self.dist,
+                    width=self.width,
+                    height=self.height,
+                    focal=self.focal,
+                    sphere_eps=self.sphere_eps,
+                    ambient=self.ambient,
+                    diffuse=self.diffuse,
+                )
+                configs.append(config)
+        latents = np.stack(latents)
+        configs = pd.DataFrame(configs)
+        return normals, sketches, grayscales, latents, configs
 
 
 @dataclass

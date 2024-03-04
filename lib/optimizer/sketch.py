@@ -6,7 +6,7 @@ from lib.optimizer.latent import LatentOptimizer
 class SketchOptimizer(LatentOptimizer):
     def __init__(
         self,
-        loss_mode: str = "l1",
+        loss_mode: str = "l1",  # none, l1
         loss_weight: float = 1.0,
         silhouette_loss: str = "l1",  # none, l1
         silhouette_weight: float = 1.0,
@@ -43,8 +43,11 @@ class SketchOptimizer(LatentOptimizer):
         grayscale = self.deepsdf.image_to_siamese(rendered_grayscale)  # (1, 3, H, W)
         grayscale_emb = self.loss.embedding(grayscale, mode="grayscale")  # (1, D)
         # calculate the loss between the sketch and the grayscale image
-        loss = self.loss.compute(sketch_emb, grayscale_emb).clone()
-        loss *= self.hparams["loss_weight"]
+        if self.hparams["loss_mode"] == "none":
+            loss = torch.tensor(0.0).to(self.device)
+        else:
+            loss = self.loss.compute(sketch_emb, grayscale_emb).clone()
+            loss *= self.hparams["loss_weight"]
         self.log("optimize/loss", loss)
 
         ############################################################

@@ -24,6 +24,8 @@ preprocess_mesh:
 
 ########################################################################
 # Preprocessing Synthetic 
+# azims: [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340]
+# elevs: [-50, -30, -10, 10, 30]
 ########################################################################
 
 preprocess_synthetic:
@@ -31,15 +33,52 @@ preprocess_synthetic:
   _partial_: True
   # processing settings
   data_dir: ${data.data_dir}
+  deepsdf_ckpt_path: ${deepsdf_ckpt_path} 
   skip: True
+  n_renderings: 10
   # camera settings
-  azims: [0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340]
-  elevs: [-50, -30, -10, 10, 30]
+  random: True
+  azims: [-90.0, -45.0, 0.0, 45.0, 90.0]
+  azim_std: 22.5
+  elev: -20.0
+  elev_std: 5.0
   dist: ${data.camera_dist} 
   width: ${data.camera_width} 
   height: ${data.camera_height} 
   focal: ${data.camera_focal} 
   sphere_eps: ${data.camera_sphere_eps} 
+  # grayscale settings
+  ambient: 0.2
+  diffuse: 0.5
+  # sketch settings
+  t_lower: 100
+  t_upper: 150
+  aperture_size: 3  # 3, 5, 7
+  l2_gradient: True
+
+########################################################################
+# Preprocessing Eval Synthetic 
+########################################################################
+
+preprocess_eval_synthetic:
+  _target_: lib.data.preprocess.PreprocessSynthetic
+  _partial_: True
+  # processing settings
+  data_dir: ${data.data_dir}
+  deepsdf_ckpt_path: ${deepsdf_ckpt_path} 
+  skip: True
+  # camera settings
+  random: False
+  azims: [-90, -45, 0, 45, 90] 
+  elev: [-30, -10]
+  dist: ${data.camera_dist} 
+  width: ${data.camera_width} 
+  height: ${data.camera_height} 
+  focal: ${data.camera_focal} 
+  sphere_eps: ${data.camera_sphere_eps} 
+  # grayscale settings
+  ambient: 0.2
+  diffuse: 0.5
   # sketch settings
   t_lower: 100
   t_upper: 150

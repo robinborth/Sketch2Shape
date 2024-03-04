@@ -5,7 +5,7 @@ defaults:
     - train_loss
     - eval_loss
   - dataset: shapenet_chair_4096
-  - model: siamese 
+  - model: latent_siamese 
   - callbacks: 
     - default
     - early_stopping
@@ -24,18 +24,8 @@ tags: ["train_loss"]
 train: True
 eval: True
 ckpt_path: ???
-deepsdf_ckpt_path: ???
 loss_ckpt_path: ???
-
-# DEBUG Settings
-# trainer:
-#   max_epochs: 1
-#   check_val_every_n_epoch: 1
-# data:
-#   train_sampler:
-#     sample_steps: 1
-# model:
-#   capture_rate: 1
+deepsdf_ckpt_path: ???
 
 trainer:
   max_epochs: 20

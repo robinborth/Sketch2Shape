@@ -17,6 +17,7 @@ task_name: optimize_sketch
 tags: ["optimize_sketch"]
 split: val  # train, train_latent, val, val_latent, test
 obj_ids: ???  # overrids the split setting, make sure that obj_ids are only from the same split.
+obj_dir: ???
 train: True
 eval: True
 save_mesh: True
@@ -28,32 +29,33 @@ loss_ckpt_path: ${paths.checkpoint_dir}/loss.ckpt
 trainer:
   num_sanity_val_steps: 0
   reload_dataloaders_every_n_epochs: True
-  max_epochs: 20
-  accumulate_grad_batches: 8
+  max_epochs: 3
+  accumulate_grad_batches: 24
 
 data:
+  num_workers: 0
+  pin_memory: False
+  persistent_workers: False
   size: 256
   milestones: []
   dataset:
     _target_: lib.data.dataset.optimize_latent.SketchLatentOptimizerDataset
-    azims: ${data.preprocess_synthetic.azims}
-    elevs: ${data.preprocess_synthetic.elevs}
+    azims: [70, 50, 30, 10, -20, -40, -60, -80]
+    elevs: [-45, -20, -5]
   shuffle: True
 
 model:
   # custom settings
   _target_: lib.optimizer.sketch.SketchOptimizer
+  loss_mode: none
   loss_weight: 1.0
   silhouette_loss: none 
   silhouette_weight: 1.0
+  reg_loss: none 
+  reg_weight: 1.0
   # base settings
-  reg_loss: none
-  reg_weight: 2e-03
   optimizer:
     lr: 1e-02
   scheduler: null
   latent_init: latent
-  prior_obj_id: ""
-  prior_view_id: 11
-  retrieval_k: 16
   capture_rate: 8

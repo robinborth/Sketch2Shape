@@ -38,6 +38,7 @@ class MetaInfo:
 
         # mappings for the tower loss network
         self.image_type_2_type_idx = {
+            # train
             "synthetic_sketch": 0,
             "synthetic_normal": 1,
             "synthetic_grayscale": 1,
@@ -47,11 +48,14 @@ class MetaInfo:
             "traverse_sketch": 0,
             "traverse_normal": 1,
             "traverse_grayscale": 1,
-            "hand_drawn_sketch": 0,
+            # eval
+            "eval_synthetic_drawn": 0,
+            "eval_hand_drawn": 0,
         }
 
         # mappings for the different image datasets
         self.mode_2_image_type = {
+            # train
             0: "synthetic_sketch",
             1: "synthetic_normal",
             2: "synthetic_grayscale",
@@ -61,7 +65,9 @@ class MetaInfo:
             6: "traverse_sketch",
             7: "traverse_normal",
             8: "traverse_grayscale",
-            9: "hand_drawn_sketch",
+            # eval
+            9: "eval_synthetic_drawn",
+            10: "eval_hand_drawn",
         }
         self.image_type_2_mode = {v: k for k, v in self.mode_2_image_type.items()}
 
