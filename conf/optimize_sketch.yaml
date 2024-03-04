@@ -51,7 +51,7 @@ model:
   loss_weight: 1.0
   silhouette_loss: none 
   silhouette_weight: 1.0
-  reg_loss: none 
+  reg_loss: none
   reg_weight: 1.0
   # base settings
   optimizer:

@@ -34,8 +34,12 @@ class BaseTransform:
 
 
 class SketchTransform(BaseTransform):
-    def __init__(self, normalize: bool = True):
-        transforms = [v2.Resize((256, 256)), ToSketch(), DilateSketch(kernel_size=5)]
+    def __init__(self, normalize: bool = True, kernel_size: int = 5):
+        transforms = [
+            v2.Resize((256, 256)),
+            ToSketch(),
+            DilateSketch(kernel_size=kernel_size),
+        ]
         super().__init__(normalize=normalize, transforms=transforms)
 
 
