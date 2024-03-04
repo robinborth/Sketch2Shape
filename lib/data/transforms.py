@@ -35,8 +35,7 @@ class BaseTransform:
 
 class SketchTransform(BaseTransform):
     def __init__(self, normalize: bool = True):
-        # transforms = [v2.Resize((256, 256)), ToSketch(), DilateSketch(kernel_size=5)]
-        transforms = [v2.Resize((256, 256))]
+        transforms = [v2.Resize((256, 256)), ToSketch(), DilateSketch(kernel_size=5)]
         super().__init__(normalize=normalize, transforms=transforms)
 
 

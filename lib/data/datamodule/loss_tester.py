@@ -1,5 +1,3 @@
-from typing import Callable, Optional
-
 from lightning import LightningDataModule
 from torch.utils.data import DataLoader, default_collate
 
@@ -9,7 +7,7 @@ class LossTesterDataModule(LightningDataModule):
         self,
         # paths
         data_dir: str = "data/",
-        modes: list[int] = [0, 1],
+        modes: list[int] = [0],
         latent: bool = False,
         # training
         batch_size: int = 32,

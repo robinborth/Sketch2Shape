@@ -20,11 +20,9 @@ class LossTester(LightningModule):
         self,
         loss_ckpt_path: str = "loss.ckpt",
         data_dir: str = "/data",
-        index_mode: str = "synthetic_grayscale",  # normal, sketch
-        query_mode: str = "synthetic_sketch",  # normal, sketch
-        sketch_mode: int = 0,  # synthetic sketch
-        retrieval_mode: int = 2,  # synthetic sketches
-        obj_capture_image_id: int = 11,  # (azims=40, elev=-30)
+        index_mode: int = 0,  # synthetic sketch
+        query_mode: int = 0,  # synthetic sketches
+        obj_capture_image_id: int = 30,  # (azims=45, elev=-20)
         obj_capture_rate: int = 16,
     ):
         super().__init__()
@@ -36,16 +34,19 @@ class LossTester(LightningModule):
         self._labels: list[int] = []
         self._image_ids: list[int] = []
 
+        index_image_type = self.metainfo.mode_2_image_type[index_mode]
+        self.index_type_idx = self.metainfo.image_type_2_type_idx[index_image_type]
         self.index_mode = index_mode
-        self.index_type_idx = self.metainfo.image_type_2_type_idx[self.index_mode]
+
+        query_image_type = self.metainfo.mode_2_image_type[query_mode]
+        self.query_type_idx = self.metainfo.image_type_2_type_idx[query_image_type]
         self.query_mode = query_mode
-        self.query_type_idx = self.metainfo.image_type_2_type_idx[self.query_mode]
+
         self.obj_capture_rate = obj_capture_rate
         self.obj_capture_image_id = obj_capture_image_id
-        self.sketch_mode = sketch_mode
-        self.retrieval_mode = retrieval_mode
 
         self.l2_dist = MeanMetric()
+        self.recall_at_10_count = MeanMetric()
         self.recall_at_1_object = MeanMetric()
         self.recall_at_5_object = MeanMetric()
         self.recall_at_1_percent = MeanMetric()
@@ -128,6 +129,8 @@ class LossTester(LightningModule):
         if _type == "percent":
             percent = int(n) * 0.01
             k = self.k_for_total_percent(percent=percent)
+        if _type == "count":
+            k = n
         labels = self.labels[idx[:, :k]]
         retrievals_matrix = labels == gt_labels.reshape(-1, 1)
         return retrievals_matrix.sum(axis=1) / self.num_views_per_object
@@ -157,6 +160,7 @@ class LossTester(LightningModule):
 
         # calculate the metrics
         for metric_name in [
+            "recall_at_10",
             "recall_at_1_object",
             "recall_at_5_object",
             "recall_at_1_percent",
@@ -191,13 +195,13 @@ class LossTester(LightningModule):
             index_images = {}
             # fetch the sketch from the current batch
 
-            sketch = self.metainfo.load_image(gt_label, gt_image_id, self.sketch_mode)
+            sketch = self.metainfo.load_image(gt_label, gt_image_id, self.query_mode)
             plot_single_image(sketch)
             index_images["query/sketch"] = wandb.Image(plt)
             # fetch the top k retrieved normal images from the dataset
             images = []
             for label, image_id in zip(_labels_at_1_object, _image_ids_at_1_object):
-                normal = self.metainfo.load_image(label, image_id, self.retrieval_mode)
+                normal = self.metainfo.load_image(label, image_id, self.index_mode)
                 normal = self.transform(normal)
                 if gt_label != label:  # color background back of wrong labels
                     background = normal.mean(0) > 0.99

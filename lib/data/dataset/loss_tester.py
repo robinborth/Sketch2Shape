@@ -13,10 +13,10 @@ class LossTesterDataset(Dataset):
         split: Optional[str] = None,
         modes: list[int] = [0, 1],
         sketch_transform: Optional[Callable] = None,
-        normal_transform: Optional[Callable] = None,
+        image_transform: Optional[Callable] = None,
     ):
         self.sketch_transform = sketch_transform
-        self.normal_transform = normal_transform
+        self.image_transform = image_transform
         self.metainfo = MetaInfo(data_dir=data_dir, split=split)
         self.metainfo.load_loss(modes=modes)
         self.labels = np.unique(self.metainfo.loss_labels, return_inverse=True)[1]
@@ -43,8 +43,8 @@ class LossTesterDataset(Dataset):
             image = self.metainfo.load_image(label, image_id, mode)
             if type_idx == 0 and self.sketch_transform:
                 image = self.sketch_transform(image)
-            if type_idx == 1 and self.normal_transform:
-                image = self.normal_transform(image)
+            if type_idx == 1 and self.image_transform:
+                image = self.image_transform(image)
 
             data.append(
                 {

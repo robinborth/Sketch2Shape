@@ -1,0 +1,10 @@
+# @package _global_
+
+defaults:
+  - override /dataset: shapenet_chair_4096
+  - override /model: latent_siamese 
+  - override /logger: wandb
+
+loss_ckpt_path: ${paths.checkpoint_dir}/latent_traverse.ckpt
+tags: ["eval_loss", "shapenet_chair_4096", "latent_traverse"]
+
