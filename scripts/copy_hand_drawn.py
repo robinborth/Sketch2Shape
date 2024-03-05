@@ -53,7 +53,7 @@ def main(cfg: DictConfig) -> None:
         )
 
         hand_drawn = final_transform(bbox)
-        out_path = shapes_path / obj_id / "hand_drawn_sketch" / "00001.png"
+        out_path = shapes_path / obj_id / "eval_hand_drawn" / "00000.png"
         out_path.parent.mkdir(parents=True, exist_ok=True)
         hand_drawn.save(out_path)
 
