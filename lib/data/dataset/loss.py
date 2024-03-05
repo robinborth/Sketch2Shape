@@ -74,7 +74,7 @@ class LatentLossDataset(LossDataset):
             for obj_id in self.metainfo.obj_ids:
                 latents = self.metainfo.load_latents(obj_id, mode=mode)
                 data.append(latents)
-        self._latents = np.stack(data)
+        self._latents = np.concatenate(data)
 
     def get_latent(self, index: int):
         return self._latents[index]

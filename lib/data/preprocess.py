@@ -257,8 +257,8 @@ class PreprocessSynthetic:
                     diffuse=self.diffuse,
                 )
                 configs.append(config)
-        latents = np.stack(latents)
-        configs = pd.DataFrame(configs)
+            latents = np.stack(latents)
+            configs = pd.DataFrame(configs)
         return normals, sketches, grayscales, latents, configs
 
 

@@ -4,7 +4,7 @@ _target_: lib.data.datamodule.loss.LossDataModule
 # settings
 data_dir: ${paths.data_dir}/${data.dataset_name}
 train_modes: [0, 2]
-eval_modes: [0]
+eval_modes: [0, 2]
 latent: False
 # training
 batch_size: 256

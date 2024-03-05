@@ -22,7 +22,7 @@ seed: 123
 task_name: train_loss
 tags: ["train_loss"]
 train: True
-eval: True
+eval: False
 ckpt_path: ???
 loss_ckpt_path: ???
 deepsdf_ckpt_path: ???

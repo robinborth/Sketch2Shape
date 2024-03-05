@@ -15,7 +15,7 @@
             "request": "launch",
             "program": "scripts/train_loss.py",
             "args": [
-                "+experiment/train_loss=siamese_shapenet_chair_4096",
+                "+experiment/train_loss=latent_synthetic",
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
@@ -26,7 +26,7 @@
             "request": "launch",
             "program": "scripts/train_loss.py",
             "args": [
-                "+experiment/train_loss=latent_siamese_multi_view",
+                "+experiment/train_loss=latent_rendered",
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
