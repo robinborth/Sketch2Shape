@@ -1,8 +1,10 @@
+import itertools
 from logging import Logger
 from pathlib import Path
 
 import hydra
 import lightning as L
+import numpy as np
 import open3d as o3d
 import pandas as pd
 import torch
@@ -15,7 +17,7 @@ from torchmetrics.image.fid import FrechetInceptionDistance
 from tqdm import tqdm
 
 from lib.data.metainfo import MetaInfo
-from lib.data.transforms import SketchTransform
+from lib.data.transforms import BaseTransform, SketchTransform
 from lib.eval.chamfer_distance import ChamferDistance
 from lib.eval.clip_score import CLIPScore
 from lib.eval.earth_movers_distance import EarthMoversDistance
@@ -51,11 +53,14 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
         cfg.model.prior_obj_id = obj_id
         model: LightningModule = hydra.utils.instantiate(cfg.model)
 
+        log.info("==> initializing logger ...")
+        if cfg.train:
+            logger: LightningLogger = hydra.utils.instantiate(cfg.logger)
+        else:
+            logger = L.pytorch.loggers.CSVLogger(cfg.paths.output_dir)
+
         log.info("==> initializing callbacks ...")
         callbacks: list[Callback] = instantiate_callbacks(cfg.get("callbacks"))
-
-        log.info("==> initializing logger ...")
-        logger: LightningLogger = hydra.utils.instantiate(cfg.logger)
 
         log.info(f"==> initializing trainer <{cfg.trainer._target_}>")
         trainer: Trainer = hydra.utils.instantiate(
@@ -94,24 +99,33 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
         if cfg.model.latent_init == "retrieval":
             retrieval_idxs.append(model.retrieval_idx[0])
 
+    if cfg.eval:
+        eval_logger: WandbLogger = hydra.utils.instantiate(cfg.logger)
+
     # create the meshes
     meshes = []
     if cfg.eval or cfg.save_mesh:
         log.info("==> create meshes ...")
-        for obj_id in obj_ids:
+        for idx, obj_id in enumerate(obj_ids):
             if cfg.model.latent_init == "retrieval":
-                mesh = metainfo.load_normalized_mesh(obj_id=obj_id)
+                label = retrieval_idxs[idx].item()
+                retrieval_obj_id = metainfo.label_to_obj_id(label)
+                mesh = metainfo.load_normalized_mesh(obj_id=retrieval_obj_id)
             else:
+                model.latent = latents[idx]
                 mesh = model.to_mesh()
             meshes.append(mesh)
             if cfg.save_mesh:
-                path = Path(cfg.paths.mesh_dir, f"{obj_id}.obj")
+                file_name = Path(obj_id).stem
+                path = Path(cfg.paths.mesh_dir, f"{file_name}.obj")
                 path.parent.mkdir(parents=True, exist_ok=True)
                 o3d.io.write_triangle_mesh(
                     path.as_posix(),
                     mesh=mesh,
                     write_triangle_uvs=False,
                 )
+                if cfg.eval:
+                    eval_logger.experiment.log({"mesh": [wandb.Object3D(open(path))]})
 
     # save the optimized latents
     if cfg.save_latent:
@@ -123,10 +137,19 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
 
     # evaluate the generated 3D shapes
     if cfg.eval:
+        logger = hydra.utils.instantiate(cfg.logger)
+        azims = cfg.data.preprocess_eval_synthetic.azims
+        elevs = cfg.data.preprocess_eval_synthetic.elev
+        sketch_transform = SketchTransform(normalize=False)
+        drawn_transform = BaseTransform(normalize=False)
         model.deepsdf.eval()
+
         cd = ChamferDistance(num_samples=30000)
         emd = EarthMoversDistance(num_samples=4096)
-        fid = FrechetInceptionDistance(feature=2048, normalize=True)
+        fids = []  # calculate the fid per view independently
+        for _ in itertools.product(azims, elevs):
+            fid = FrechetInceptionDistance(feature=2048, normalize=True)
+            fids.append(fid)
         clip = CLIPScore()
 
         log.info("==> start evaluate CD and EMD ...")
@@ -136,20 +159,19 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
             emd.update(mesh, surface_samples)
 
         # frechet inception distance and clip score
-        azims = cfg.data.preprocess_eval_synthetic.azims
-        elevs = cfg.data.preprocess_eval_synthetic.elev
-        sketch_transform = SketchTransform(normalize=False)
         log.info("==> start evaluate FID and CLIPScore ...")
         for idx, obj_id in tqdm(enumerate(obj_ids), total=len(obj_ids)):
-            for eval_view_id, (eval_azim, eval_elev) in enumerate(zip(azims, elevs)):
-                model.deepsdf.create_camera(azim=eval_azim, elev=eval_elev)
+            label = metainfo.obj_id_to_label(obj_id)
+            drawn = drawn_transform(metainfo.load_image(label, 0, 10))[None, ...]
+            for view_id, (azim, elev) in enumerate(itertools.product(azims, elevs)):
+                model.deepsdf.create_camera(azim=azim, elev=elev)
                 # gt sketch
                 label = metainfo.obj_id_to_label(obj_id)
-                gt_sketch = metainfo.load_image(label, eval_view_id, 9)
+                gt_sketch = metainfo.load_image(label, view_id, 9)
                 gt_sketch = sketch_transform(gt_sketch)[None, ...]
                 if cfg.model.latent_init == "retrieval":
-                    label = retrieval_idxs[idx]
-                    rendered_sketch = metainfo.load_image(label, eval_view_id, 9)
+                    label = retrieval_idxs[idx].item()
+                    rendered_sketch = metainfo.load_image(label, view_id, 9)
                     rendered_sketch = sketch_transform(rendered_sketch)[None, ...]
                 else:
                     model.latent = latents[idx]
@@ -157,17 +179,21 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
                     rendered_normal = rendered_normal.permute(2, 0, 1).detach().cpu()
                     rendered_sketch = sketch_transform(rendered_normal)[None, ...]
                 # frechet inception distance
-                fid.update(gt_sketch, real=True)
-                fid.update(rendered_sketch, real=False)
+                fids[view_id].update(gt_sketch, real=True)
+                fids[view_id].update(rendered_sketch, real=False)
                 # clip score
                 clip.update(gt_sketch, rendered_sketch)
+                # log the rendered sketch
+                image = [torch.concatenate([drawn, gt_sketch, rendered_sketch], dim=-1)]
+                eval_logger.log_image(f"drawn_gt_rendered_{view_id}", image, step=idx)
 
         log.info("==> save metrics ...")
         metrics = {
             "CD": cd.compute().item(),
             "EMD": emd.compute().item(),
-            "FID": fid.compute().item(),
+            "FID": np.mean([fid.compute().item() for fid in fids]),
             "CLIPScore": clip.compute().item(),
         }
         df = pd.DataFrame([metrics])
         df.to_csv(cfg.paths.metrics_path, index=False)
+        eval_logger.log_metrics(metrics)

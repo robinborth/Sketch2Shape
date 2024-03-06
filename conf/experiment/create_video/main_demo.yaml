@@ -18,10 +18,12 @@ image_dir: ${video_dir}/image
 sketch_image_dir: ${video_dir}/sketch_image
 paths:
   latent_dir: ${latent_dir}
+  mesh_dir: ${video_dir}/mesh
 
 # the video settings
-preprocess_video: False 
-capture_video: True
+
+preprocess_video: True 
+capture_video: False
 skip_frames: 2
 video_camera:
   _target_: lib.render.video.VideoCamera

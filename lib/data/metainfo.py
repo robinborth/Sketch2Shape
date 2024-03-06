@@ -18,6 +18,10 @@ class MetaInfo:
         self.metainfo_path = self.data_dir / "metainfo.csv"
         try:
             metainfo = pd.read_csv(self.metainfo_path)
+            _obj_ids = metainfo["obj_id"].to_list()
+            _labels = metainfo["label"].to_list()
+            self._obj_id_to_label = {o: l for o, l in zip(_obj_ids, _labels)}
+            self._label_to_obj_id = {l: o for o, l in zip(_obj_ids, _labels)}
             if split is not None:
                 if split in ["train_latent", "val_latent"]:  # optimize direct latent
                     val_count = (metainfo["split"] == "val").sum()
@@ -30,9 +34,6 @@ class MetaInfo:
                 else:
                     metainfo = metainfo[metainfo["split"] == split]
             self._obj_ids = metainfo["obj_id"].to_list()
-            self._labels = metainfo["label"].to_list()
-            self._obj_id_to_label = {o: l for o, l in zip(self._obj_ids, self._labels)}
-            self._label_to_obj_id = {l: o for o, l in zip(self._obj_ids, self._labels)}
         except Exception as e:
             logger.error("Not able to load dataset_splits file.")
 

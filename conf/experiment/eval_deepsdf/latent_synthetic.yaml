@@ -3,13 +3,16 @@
 defaults:
   - override /data: optimize_latent
   - override /dataset: shapenet_chair_4096 
-  - override /logger: wandb
 
 tags: ["eval_deepsdf", "shapenet_chair_4096", "latent_synthetic"]
 loss_ckpt_path: ${paths.checkpoint_dir}/latent_synthetic.ckpt
 
+split: test
 train: False
 create_video: False
+
 model:
   _target_: lib.optimizer.latent.LatentOptimizer
   latent_init: latent
+  prior_mode: 10
+  prior_view_id: 0

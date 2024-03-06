@@ -18,7 +18,7 @@ create_mesh: False
 create_video: True
 compute_loss: False
 deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
-loss_ckpt_path: ${paths.checkpoint_dir}/loss.ckpt
+loss_ckpt_path: ${paths.checkpoint_dir}/latent_traverse.ckpt
 traversal_steps: 20
 
 trainer:

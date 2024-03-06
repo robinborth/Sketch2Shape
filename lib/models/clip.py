@@ -7,7 +7,7 @@ class CLIP(LightningModule):
     def __init__(self, model_name: str = "openai/clip-vit-large-patch14"):
         super().__init__()
         self.model = CLIPModel.from_pretrained(model_name)
-        self.processor = CLIPProcessor.from_pretrained(model_name)
+        self.processor = CLIPProcessor.from_pretrained(model_name, do_rescale=False)
 
     def forward(self, batch, *args, **kwargs):
         inputs = self.processor(

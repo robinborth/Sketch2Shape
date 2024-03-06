@@ -16,7 +16,7 @@ seed: 123
 task_name: eval_loss
 tags: ["eval_loss"]
 deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
-loss_ckpt_path: ${paths.checkpoint_dir}/loss.ckpt
+loss_ckpt_path: ${paths.checkpoint_dir}/latent_traverse.ckpt
 
 trainer:
   max_epochs: 1

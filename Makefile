@@ -45,18 +45,27 @@ abblation_train_loss:
 	python scripts/train_loss.py +experiment/train_loss=latent_traverse
 	python scripts/train_loss.py +experiment/train_loss=triplet_traverse
 
-eval_datasets:
-	python scripts/eval_deepsdf.py +experiment/eval_deepsdf=latent_synthetic
-	python scripts/eval_deepsdf.py +experiment/eval_deepsdf=latent_rendered
-	python scripts/eval_deepsdf.py +experiment/eval_deepsdf=latent_traverse
+eval_deepsdf:
+	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_synthetic debug=obj_ids
+	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_rendered debug=obj_ids
+	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_traverse debug=obj_ids
+	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=triplet_traverse debug=obj_ids
 
-eval_method:
-	python scripts/eval_deepsdf.py +experiment/eval_deepsdf=triplet_traverse
-	python scripts/eval_deepsdf.py +experiment/eval_deepsdf=latent_traverse
+eval_optimize:
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=silhouette
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=global
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=full
 
+
+########################################################################
+# Report 
+########################################################################
+
+main_demo:
+	python scripts/create_video.py +experiment/create_video=main_demo
+
+multi_view:
+	python scripts/optimize_sketch.py +experiment/create_video=multi_view_demo
 
 ########################################################################
 # Debug Abblations

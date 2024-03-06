@@ -151,7 +151,7 @@ class LatentOptimizer(LightningModule):
     ):
         device = self.loss.device
         obj_id_label = int(self.metainfo.obj_id_to_label(prior_obj_id))
-        assert prior_mode in [0, 3, 6]  # sketches
+        assert prior_mode in [0, 3, 6, 9, 10]  # sketches
         sketch = self.metainfo.load_image(obj_id_label, prior_view_id, prior_mode)
         loss_input = self.sketch_transform(sketch)[None, ...].to(device)
         sketch_emb = self.loss.embedding(loss_input, mode="sketch")
@@ -161,7 +161,6 @@ class LatentOptimizer(LightningModule):
         _loss = []
         for obj_id in tqdm(metainfo.obj_ids):
             label = int(metainfo.obj_id_to_label(obj_id))
-            assert retrieval_mode in [0, 1, 2]  # synthetic
             image = metainfo.load_image(label, retrieval_view_id, retrieval_mode)
             loss_input = self.sketch_transform(image)[None, ...].to(device)
             loss_emb = self.loss.embedding(loss_input, mode="sketch")

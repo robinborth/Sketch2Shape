@@ -5,7 +5,7 @@ defaults:
   - dataset: shapenet_chair_4096 
   - model: optimize_latent
   - trainer: default
-  - logger: default
+  - logger: wandb 
   - hydra: default
   - paths: default
   - debug: null
@@ -24,7 +24,7 @@ save_mesh: True
 save_latent: True
 create_video: True 
 deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
-loss_ckpt_path: ${paths.checkpoint_dir}/loss.ckpt
+loss_ckpt_path: ${paths.checkpoint_dir}/latent_traverse.ckpt
 
 trainer:
   num_sanity_val_steps: 0

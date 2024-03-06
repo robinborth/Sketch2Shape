@@ -1,0 +1,18 @@
+# @package _global_
+
+defaults:
+  - override /data: optimize_latent
+  - override /dataset: shapenet_chair_4096 
+
+tags: ["create_video", "shapenet_chair_4096", "multi_view_demo"]
+multi_view_dir: ${data.data_dir}/multi_view
+obj_dir: ${multi_view_dir}/sketch
+paths:
+  mesh_dir: ${multi_view_dir}/mesh
+
+train: False
+eval: False
+save_mesh: True 
+save_latent: False 
+create_video: False
+

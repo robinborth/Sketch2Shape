@@ -18,8 +18,8 @@ scheduler:
 latent_init: mean
 prior_obj_id: "" 
 # default hand drawn settings
-prior_mode: 10  # 9, 10
-prior_view_id: 0  # 6, 0
+prior_mode: 9  # 9, 10
+prior_view_id: 6  # 6, 0
 # regularization settings: none, prior, retrieval
 reg_loss: none
 reg_weight: 1e-5
