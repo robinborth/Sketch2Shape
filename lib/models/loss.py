@@ -59,7 +59,7 @@ class Loss(LightningModule):
             type_idx = torch.ones(images.shape[0], device=images.device)
         return self.forward(images, type_idx=type_idx)
 
-    def compute(self, emb_0, emb_1):
+    def compute(self, emb_0, emb_1, mode=None):
         """Calculate the loss between two embeddings.
 
         Args:
@@ -70,9 +70,10 @@ class Loss(LightningModule):
             torch.tensor: The loss value based on a distance or similarity, where lower
             describes that the embeddings are closer.
         """
-        if self.hparams["mode"] == "cosine":
+        mode = mode or self.hparams["mode"]
+        if mode == "cosine":
             return 1.0 - cosine_similarity(emb_0, emb_1)
-        if self.hparams["mode"] == "l1":
+        if mode == "l1":
             return torch.nn.functional.l1_loss(emb_0, emb_1)
         raise NotImplementedError()
 

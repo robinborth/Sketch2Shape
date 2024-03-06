@@ -46,10 +46,10 @@ abblation_train_loss:
 	python scripts/train_loss.py +experiment/train_loss=triplet_traverse
 
 eval_deepsdf:
-	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_synthetic debug=obj_ids
-	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_rendered debug=obj_ids
-	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_traverse debug=obj_ids
-	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=triplet_traverse debug=obj_ids
+	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=triplet_traverse
+	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_traverse
+	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_rendered
+	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_synthetic 
 
 eval_optimize:
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=silhouette

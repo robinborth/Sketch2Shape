@@ -141,7 +141,6 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
         azims = cfg.data.preprocess_eval_synthetic.azims
         elevs = cfg.data.preprocess_eval_synthetic.elev
         sketch_transform = SketchTransform(normalize=False)
-        drawn_transform = BaseTransform(normalize=False)
         model.deepsdf.eval()
 
         cd = ChamferDistance(num_samples=30000)
@@ -162,7 +161,7 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
         log.info("==> start evaluate FID and CLIPScore ...")
         for idx, obj_id in tqdm(enumerate(obj_ids), total=len(obj_ids)):
             label = metainfo.obj_id_to_label(obj_id)
-            drawn = drawn_transform(metainfo.load_image(label, 0, 10))[None, ...]
+            drawn = sketch_transform(metainfo.load_image(label, 0, 10))[None, ...]
             for view_id, (azim, elev) in enumerate(itertools.product(azims, elevs)):
                 model.deepsdf.create_camera(azim=azim, elev=elev)
                 # gt sketch

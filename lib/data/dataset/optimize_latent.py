@@ -97,8 +97,8 @@ class SketchLatentOptimizerDataset(Dataset):
         azims: list[int] = [],
         elevs: list[int] = [],
         dist: float = 4.0,
-        sketch_id: int = 11,  # 0
-        sketch_mode: int = 0,  # 9
+        view_id: int = 6,  # 0
+        mode: int = 9,  # 9
         size: int = 256,
         **kwargs,
     ):
@@ -124,7 +124,7 @@ class SketchLatentOptimizerDataset(Dataset):
                 data["camera_height"] = size
                 data["camera_focal"] = size * 2
                 label = self.metainfo.obj_id_to_label(obj_id)
-                sketch = self.metainfo.load_image(label, sketch_id, sketch_mode)
+                sketch = self.metainfo.load_image(label, view_id, mode)
                 data["sketch"] = self.transforms(sketch)  # (3, W, H)
                 self.data.append(data)
 

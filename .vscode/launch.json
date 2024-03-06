@@ -60,10 +60,22 @@
             "program": "scripts/optimize_deepsdf.py",
             "console": "integratedTerminal",
             "args": [
-                "+experiment/eval_deepsdf=triplet_traverse",
+                "+experiment/eval_deepsdf=latent_traverse",
                 "debug=obj_ids"
             ],
             "justMyCode": true,
+        },
+        {
+            "name": "Debug: Optimize Sketch",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "scripts/optimize_sketch.py",
+            "args": [
+                "+experiment/optimize_sketch=silhouette",
+                "debug=obj_ids"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false,
         },
         {
             "name": "Debug: Copy Shapenet",
@@ -98,18 +110,6 @@
             "program": "scripts/optimize_normals.py",
             "args": [
                 "+experiment/optimize_normals=chair_train_mean",
-            ],
-            "console": "integratedTerminal",
-            "justMyCode": false,
-        },
-        {
-            "name": "Debug: Optimize Sketch",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "scripts/optimize_sketch.py",
-            "args": [
-                "+experiment/optimize_sketch=latent_traverse"
-                // "+experiment/create_video=demo"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

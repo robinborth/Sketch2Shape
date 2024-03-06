@@ -6,10 +6,19 @@ defaults:
   - override /logger: wandb
 
 tags: ["optimize_sketch", "shapenet_chair_4096", "optimize_full"]
+
+split: test
+data:
+  dataset:
+    mode: 10
+    view_id: 0
+
 model:
   loss_mode: l1 
   loss_weight: 1.0
-  silhouette_loss: l1 
+  silhouette_loss: silhouette 
   silhouette_weight: 1.0
   reg_loss: latent
   reg_weight: 1.0
+  prior_mode: 10
+  prior_view_id: 0

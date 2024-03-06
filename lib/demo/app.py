@@ -13,7 +13,7 @@ realtime_update = st.sidebar.checkbox("Update in realtime", True)
 
 
 model = create_model(
-    loss_ckpt_path="/home/borth/sketch2shape/checkpoints/loss.ckpt",
+    loss_ckpt_path="/home/borth/sketch2shape/checkpoints/latent_traverse.ckpt",
     deepsdf_ckpt_path="/home/borth/sketch2shape/checkpoints/deepsdf.ckpt",
 )
 transform = SketchTransform()
@@ -28,12 +28,20 @@ canvas_result = st_canvas(
     drawing_mode="freedraw",
     key="canvas",
 )
+button = st.button("clear_canvas")
+if button:
+    print("clear")
 sketch = st_canvas_to_sketch(canvas_result)
 
 # Update the model
 if sketch is not None:
     sketch_input = transform(sketch)[None, ...].to("cuda")
     model.latent = model.loss.embedding(sketch_input, mode="sketch")[0]
+
+    # draw the input
+    st.image(sketch)
+    st.image(model.deepsdf.loss_input_to_image(sketch_input).detach().cpu().numpy())
+
     with torch.no_grad():
         points, surface_mask = model.deepsdf.sphere_tracing(
             latent=model.latent,
@@ -55,6 +63,7 @@ if sketch is not None:
             weight_blur_kernal_size=9,
             weight_blur_sigma=9.0,
         )
+
     col1, col2, col3 = st.columns(3)
     with col1:
         st.image(normals.detach().cpu().numpy())
