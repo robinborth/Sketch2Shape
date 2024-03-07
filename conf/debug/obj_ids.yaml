@@ -1,7 +1,18 @@
 # @package _global_
 
 obj_ids:
-  - 4159903eaecd9560fdac1e69603928f
+  # test  
+  - 2a9cac5daa8e99cbd9b53420a5458c53
+  - 799de8b0527ea329c725388bb41d64e3
+  - 6b64af50e21c0006f91663a74ccd2338
+  - a5a2d09e5384237869513d0907f19c8f
+  - 2a9cac5daa8e99cbd9b53420a5458c53
+  - 3de9a7a40851ceb971a782a4379556c7
+  - 5e685e076287215be8f8c11a24c52ebb
+
+
+
+  # - 4159903eaecd9560fdac1e69603928f
   # - b36ec4a65d474384629bdb3bad305eb4
   # - 25d40c79ac57891cfebad4f49b26ec52
   # - c967b1e07ef7fc0bebc740fe800c0367
@@ -25,4 +36,4 @@ obj_ids:
   # - de3e082195346ca419fb4103277a6b93
 
 model:
-  mesh_resolution: 128
+  mesh_resolution: 256 
