@@ -18,6 +18,38 @@ def create_model(loss_ckpt_path: str, deepsdf_ckpt_path: str) -> SketchOptimizer
     return model
 
 
+def real_time_inference(model, sketch):
+    model.latent = model.loss.embedding(sketch, mode="sketch")[0]
+    model_input = model.deepsdf.loss_input_to_image(sketch)
+    with torch.no_grad():
+        points, surface_mask = model.deepsdf.sphere_tracing(
+            latent=model.latent,
+            points=model.deepsdf.camera_points,
+            mask=model.deepsdf.camera_mask,
+            rays=model.deepsdf.camera_rays,
+        )
+        normals = model.deepsdf.render_normals(
+            points=points,
+            latent=model.latent,
+            mask=surface_mask,
+        )
+        grayscale = model.deepsdf.normal_to_grayscale(normal=normals)
+        silhouette = model.deepsdf.render_silhouette(
+            normals=normals,
+            points=points,
+            latent=model.latent,
+            proj_blur_eps=0.7,
+            weight_blur_kernal_size=9,
+            weight_blur_sigma=9.0,
+        )
+    return {
+        "normals": normals.detach().cpu().numpy(),
+        "grayscale": grayscale.detach().cpu().numpy(),
+        "silhouette": silhouette["final_silhouette"].detach().cpu().numpy(),
+        "model_input": model_input.detach().cpu().numpy(),
+    }
+
+
 def st_canvas_to_sketch(canvas_result):
     padding = 0.1
     if canvas_result.image_data is not None:
