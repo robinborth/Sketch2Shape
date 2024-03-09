@@ -102,6 +102,11 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
     if cfg.eval:
         eval_logger: WandbLogger = hydra.utils.instantiate(cfg.logger)
 
+    # prepare for evaluation
+    model = model.to("cuda")
+    for idx, latent in enumerate(latents):
+        latents[idx] = latent.to("cuda")
+
     # create the meshes
     meshes = []
     if cfg.eval or cfg.save_mesh:
@@ -174,7 +179,17 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
                     rendered_sketch = sketch_transform(rendered_sketch)[None, ...]
                 else:
                     model.latent = latents[idx]
-                    rendered_normal = model.capture_camera_frame(mode="normal")
+                    points, surface_mask = model.deepsdf.sphere_tracing(
+                        latent=model.latent,
+                        points=model.deepsdf.camera_points,
+                        mask=model.deepsdf.camera_mask,
+                        rays=model.deepsdf.camera_rays,
+                    )
+                    rendered_normal = model.deepsdf.render_normals(
+                        points=points,
+                        latent=model.latent,
+                        mask=surface_mask,
+                    )
                     rendered_normal = rendered_normal.permute(2, 0, 1).detach().cpu()
                     rendered_sketch = sketch_transform(rendered_normal)[None, ...]
                 # frechet inception distance
@@ -196,3 +211,8 @@ def optimize_latent(cfg: DictConfig, log: Logger) -> None:
         df = pd.DataFrame([metrics])
         df.to_csv(cfg.paths.metrics_path, index=False)
         eval_logger.log_metrics(metrics)
+
+    # detach
+    model = model.to("cpu")
+    for idx, latent in enumerate(latents):
+        latents[idx] = latent.to("cpu")

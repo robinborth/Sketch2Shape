@@ -5,9 +5,9 @@ defaults:
   - override /dataset: shapenet_chair_4096 
   - override /logger: wandb
 
-tags: ["optimize_sketch", "shapenet_chair_4096", "optimize_silhouette"]
+tags: ["optimize_sketch", "shapenet_chair_4096", "optimize_regularize"]
 
 model:
   loss_mode: none
   silhouette_loss: silhouette 
-  reg_loss: none 
+  reg_loss: latent

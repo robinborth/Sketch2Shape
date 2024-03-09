@@ -51,11 +51,19 @@ eval_deepsdf:
 	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_rendered
 	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_synthetic 
 
-eval_optimize:
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=silhouette
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=global
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=full
+eval_deepsdf_edge_map:
+	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=triplet_traverse model.prior_mode=9 model.prior_view_id=6
+	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_traverse model.prior_mode=9 model.prior_view_id=6
 
+eval_optimize_report:
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize debug=obj_ids
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize mode=10 view_id=0 debug=obj_ids
+
+eval_optimize:
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize mode=10 view_id=0
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=silhouette
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=silhouette mode=10 view_id=0
 
 ########################################################################
 # Report 
@@ -70,6 +78,24 @@ multi_view:
 ########################################################################
 # Debug Abblations
 ########################################################################
+
+abblation_optimize:
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=silhouette debug=obj_ids model.optimizer.lr=5e-03
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=silhouette debug=obj_ids model.optimizer.lr=1e-02
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=silhouette debug=obj_ids model.optimizer.lr=5e-02
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=silhouette debug=obj_ids model.optimizer.lr=1e-01
+
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize debug=obj_ids model.optimizer.lr=1e-02 model.reg_weight=5e-03
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize debug=obj_ids model.optimizer.lr=1e-02 model.reg_weight=1e-02
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize debug=obj_ids model.optimizer.lr=1e-02 model.reg_weight=3e-02
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize debug=obj_ids model.optimizer.lr=1e-02 model.reg_weight=5e-02
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize debug=obj_ids model.optimizer.lr=1e-02 model.reg_weight=1e-01
+	
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize debug=obj_ids model.optimizer.lr=1e-01 model.reg_weight=5e-03
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize debug=obj_ids model.optimizer.lr=1e-01 model.reg_weight=1e-02
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize debug=obj_ids model.optimizer.lr=1e-01 model.reg_weight=3e-02
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize debug=obj_ids model.optimizer.lr=1e-01 model.reg_weight=5e-02
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize debug=obj_ids model.optimizer.lr=1e-01 model.reg_weight=1e-01
 
 eval_loss:
 	python scripts/eval_loss.py +experiment/eval_loss=resnet18

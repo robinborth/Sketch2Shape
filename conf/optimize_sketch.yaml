@@ -15,22 +15,24 @@ defaults:
 seed: 123
 task_name: optimize_sketch
 tags: ["optimize_sketch"]
-split: val  # train, train_latent, val, val_latent, test
+split: test # train, train_latent, val, val_latent, test
 obj_ids: ???  # overrids the split setting, make sure that obj_ids are only from the same split.
 obj_dir: ???
 train: True
-eval: True
+eval: True 
 save_mesh: True
 save_latent: True
-create_video: True 
+create_video: False 
 deepsdf_ckpt_path: ${paths.checkpoint_dir}/deepsdf.ckpt
 loss_ckpt_path: ${paths.checkpoint_dir}/latent_traverse.ckpt
+mode: 9  # 10
+view_id: 6  # 0
 
 trainer:
   num_sanity_val_steps: 0
-  reload_dataloaders_every_n_epochs: True
-  max_epochs: 3
-  accumulate_grad_batches: 24
+  reload_dataloaders_every_n_epochs: False 
+  max_epochs: 5
+  accumulate_grad_batches: 12
 
 data:
   num_workers: 0
@@ -40,22 +42,30 @@ data:
   milestones: []
   dataset:
     _target_: lib.data.dataset.optimize_latent.SketchLatentOptimizerDataset
-    azims: [70, 50, 30, 10, -20, -40, -60, -80]
-    elevs: [-45, -20, -5]
+    # azims: [45] 
+    # elevs: [-20]
+    # azims: [90, 45, 0, -45, -90]
+    # elevs: [-20]
+    azims: [80, 50, 30, -10, -40, -60]
+    elevs: [-45, -15]
+    mode: ${mode}
+    view_id: ${view_id}
   shuffle: True
 
 model:
   # custom settings
   _target_: lib.optimizer.sketch.SketchOptimizer
-  loss_mode: none
-  loss_weight: 1.0
-  silhouette_loss: none 
+  loss_mode: l1
+  loss_weight: 5e-02
+  silhouette_loss: silhouette
   silhouette_weight: 1.0
-  reg_loss: none
-  reg_weight: 1.0
+  reg_loss: latent
+  reg_weight: 3e-02
   # base settings
   optimizer:
-    lr: 1e-02
+    lr: 5e-03
   scheduler: null
   latent_init: latent
-  capture_rate: 8
+  capture_rate: 12
+  prior_mode: ${mode}
+  prior_view_id: ${view_id}

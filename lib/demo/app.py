@@ -30,18 +30,22 @@ with st.sidebar:
         realtime_update = st.checkbox("Update in realtime", True)
 
 # Create a canvas component
-st.text("Sketch:")
-canvas_result = st_canvas(
-    initial_drawing=initial_drawing,
-    stroke_width=stroke_width,
-    stroke_color=stroke_color,
-    background_image=background_image,
-    update_streamlit=realtime_update,
-    width=256,
-    height=256,
-    drawing_mode="freedraw",
-    key="canvas",
-)
+col1, col2 = st.columns(2)
+
+with col1:
+    st.text("Sketch:")
+    canvas_result = st_canvas(
+        initial_drawing=initial_drawing,
+        stroke_width=stroke_width,
+        stroke_color=stroke_color,
+        background_image=background_image,
+        update_streamlit=realtime_update,
+        width=256,
+        height=256,
+        drawing_mode="freedraw",
+        key="canvas",
+    )
+
 sketch = st_canvas_to_sketch(canvas_result)
 with input_output_expander:
     file_name = st.text_input("Filename:", value="sketch_0")
@@ -67,13 +71,13 @@ if sketch is not None:
     sketch_input = transform(sketch)[None, ...].to("cuda")
     out = real_time_inference(model, sketch_input)
     # draw the input
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.text("Model Input:")
-        st.image(out["model_input"])
+    # col1, col2, col3 = st.columns(3)
+    # with col1:
+    #     st.text("Model Input:")
+    #     st.image(out["model_input"])
+    # with col2:
+    #     st.text("Rendered Normal:")
+    #     st.image(out["normals"])
     with col2:
-        st.text("Rendered Normal:")
-        st.image(out["normals"])
-    with col3:
         st.text("Rendered Grayscale:")
         st.image(out["grayscale"])
