@@ -56,7 +56,7 @@ model:
   # custom settings
   _target_: lib.optimizer.sketch.SketchOptimizer
   loss_mode: l1
-  loss_weight: 5e-02
+  loss_weight: 5e-03
   silhouette_loss: silhouette
   silhouette_weight: 1.0
   reg_loss: latent

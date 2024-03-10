@@ -39,31 +39,38 @@ train_triplet_loss:
 # Report Abblations
 ########################################################################
 
-abblation_train_loss:
+train_loss_report:
 	python scripts/train_loss.py +experiment/train_loss=latent_synthetic
 	python scripts/train_loss.py +experiment/train_loss=latent_rendered
 	python scripts/train_loss.py +experiment/train_loss=latent_traverse
 	python scripts/train_loss.py +experiment/train_loss=triplet_traverse
 
-eval_deepsdf:
-	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=triplet_traverse
-	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_traverse
+eval_deepsdf_report:
+	# dataset
 	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_rendered
 	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_synthetic 
-
-eval_deepsdf_edge_map:
+	# handdrawn
+	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=triplet_traverse
+	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_traverse
+	# sketch
 	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=triplet_traverse model.prior_mode=9 model.prior_view_id=6
 	python scripts/optimize_deepsdf.py +experiment/eval_deepsdf=latent_traverse model.prior_mode=9 model.prior_view_id=6
 
-eval_optimize_report:
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize debug=obj_ids
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize mode=10 view_id=0 debug=obj_ids
+debug_eval_optimize_report:
+	# silhouette
+	# python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize debug=obj_ids
+	# python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize mode=10 view_id=0 debug=obj_ids
+	# global
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=global debug=obj_ids
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=global mode=10 view_id=0 debug=obj_ids
 
-eval_optimize:
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize mode=10 view_id=0
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=silhouette
-	python scripts/optimize_sketch.py +experiment/optimize_sketch=silhouette mode=10 view_id=0
+eval_optimize_report:
+    # silhouette
+	# python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize
+	# python scripts/optimize_sketch.py +experiment/optimize_sketch=regularize mode=10 view_id=0
+	# global
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=global
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=global mode=10 view_id=0
 
 ########################################################################
 # Report 
@@ -79,7 +86,15 @@ multi_view:
 # Debug Abblations
 ########################################################################
 
-abblation_optimize:
+abblation_optimize_global:
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=global debug=obj_ids model.loss_weight=5e-03
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=global debug=obj_ids model.loss_weight=1e-02
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=global debug=obj_ids model.loss_weight=5e-02
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=global debug=obj_ids model.loss_weight=1e-01
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=global debug=obj_ids model.loss_weight=5e-01
+	python scripts/optimize_sketch.py +experiment/optimize_sketch=global debug=obj_ids model.loss_weight=1.0
+
+abblation_optimize_silhouette:
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=silhouette debug=obj_ids model.optimizer.lr=5e-03
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=silhouette debug=obj_ids model.optimizer.lr=1e-02
 	python scripts/optimize_sketch.py +experiment/optimize_sketch=silhouette debug=obj_ids model.optimizer.lr=5e-02

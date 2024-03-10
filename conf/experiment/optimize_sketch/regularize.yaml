@@ -10,4 +10,4 @@ tags: ["optimize_sketch", "shapenet_chair_4096", "optimize_regularize"]
 model:
   loss_mode: none
   silhouette_loss: silhouette 
-  reg_loss: latent
+  reg_loss: latent 

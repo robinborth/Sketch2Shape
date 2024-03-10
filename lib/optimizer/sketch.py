@@ -10,6 +10,7 @@ class SketchOptimizer(LatentOptimizer):
         loss_weight: float = 1.0,
         silhouette_loss: str = "silhouette",  # none, silhouette
         silhouette_weight: float = 1.0,
+        verbose: bool = True,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -47,7 +48,8 @@ class SketchOptimizer(LatentOptimizer):
         else:
             loss = self.loss.compute(sketch_emb, grayscale_emb, loss_mode).clone()
             loss *= self.hparams["loss_weight"]
-        self.log("optimize/loss", loss)
+        if self.hparams["verbose"]:
+            self.log("optimize/loss", loss)
 
         ############################################################
         # Silhouette
@@ -94,7 +96,8 @@ class SketchOptimizer(LatentOptimizer):
             silhouette_error_map = silhouette_loss.clone()  # (H, W)
             silhouette_loss = silhouette_loss[batch["mask"].reshape(H, W)]
             silhouette_loss *= self.hparams["silhouette_weight"]
-            self.log("optimize/silhouette_loss", silhouette_loss.mean())
+            if self.hparams["verbose"]:
+                self.log("optimize/silhouette_loss", silhouette_loss.mean())
 
         ############################################################
         # Regularization
@@ -112,41 +115,32 @@ class SketchOptimizer(LatentOptimizer):
                 reg_loss = ((self.latent.clone() - mean) / std).pow(2)
             elif self.hparams["reg_loss"] == "latent":
                 reg_loss = self.loss.compute(sketch_emb, self.latent[None, ...])
-            # self.log("optimize/reg_loss_abs_max", torch.abs(reg_loss).max())
             reg_loss *= self.hparams["reg_weight"]
-            self.log("optimize/reg_loss", reg_loss.mean())
+            if self.hparams["verbose"]:
+                self.log("optimize/reg_loss", reg_loss.mean())
 
         ############################################################
         # Total Loss
         ############################################################
 
         total_loss = reg_loss.mean() + loss.mean() + silhouette_loss.mean()
-        self.log("optimize/total_loss", total_loss, prog_bar=True)
+        if self.hparams["verbose"]:
+            self.log("optimize/total_loss", total_loss, prog_bar=True)
 
         latent_norm = torch.norm(self.latent, dim=-1)
-        self.log("optimize/latent_norm", latent_norm)
+        if self.hparams["verbose"]:
+            self.log("optimize/latent_norm", latent_norm)
 
         ############################################################
         # Visualize the different images
         ############################################################
-
-        self.log_image("handdrawn", self.deepsdf.loss_input_to_image(sketch))
-        self.log_image("grayscale", self.deepsdf.loss_input_to_image(grayscale))
-        if self.hparams["silhouette_loss"] != "none":
-            if "silhouette" in batch:
-                self.log_image("silhouette", silhouette)
-                # self.log_image("silhouette_error_map", silhouette_error_map)
-            else:
-                # out["silhouette_error_map"] = silhouette_error_map
-                self.log_image("normal", self.deepsdf.loss_input_to_image(normal))
-                # self.log_silhouette(out, "min_sdf")
-                # self.log_silhouette(out, "base_silhouette")
-                # self.log_silhouette(out, "extra_silhouette")
-                # self.log_silhouette(out, "proj_silhouette")
-                # self.log_silhouette(out, "proj_blur_silhouette")
-                # self.log_silhouette(out, "base_blur_silhouette")
-                # self.log_silhouette(out, "weighted_silhouette")
-                self.log_silhouette(out, "final_silhouette")
-                # self.log_silhouette(out, "silhouette_error_map")
-
+        if self.hparams["verbose"]:
+            self.log_image("handdrawn", self.deepsdf.loss_input_to_image(sketch))
+            self.log_image("grayscale", self.deepsdf.loss_input_to_image(grayscale))
+            if self.hparams["silhouette_loss"] != "none":
+                if "silhouette" in batch:
+                    self.log_image("silhouette", silhouette)
+                else:
+                    self.log_image("normal", self.deepsdf.loss_input_to_image(normal))
+                    self.log_silhouette(out, "final_silhouette")
         return total_loss

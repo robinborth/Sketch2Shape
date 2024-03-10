@@ -133,3 +133,50 @@ class SketchLatentOptimizerDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.data[idx]
+
+
+############################################################
+# Inference Optimization Datasets
+############################################################
+
+
+class InferenceOptimizerDataset(Dataset):
+    def __init__(
+        self,
+        sketch: Image,
+        silhouettes: list = [],
+        azims: list[int] = [],
+        elevs: list[int] = [],
+        dist: float = 4.0,
+        size: int = 256,
+        **kwargs,
+    ):
+        self.data = []
+        self.transforms = SketchTransform()
+        for azim, elev, silhouette in zip(azims, elevs, silhouettes):
+            data = {}
+            camera = Camera(
+                azim=azim,
+                elev=elev,
+                dist=dist,
+                height=size,
+                width=size,
+                focal=size * 2,
+            )
+            points, rays, mask = camera.unit_sphere_intersection_rays()
+            data["points"], data["rays"], data["mask"] = points, rays, mask
+            data["camera_position"] = camera.camera_position()
+            data["world_to_camera"] = camera.get_world_to_camera()
+            data["camera_width"] = size
+            data["camera_height"] = size
+            data["camera_focal"] = size * 2
+            data["sketch"] = self.transforms(sketch)  # (3, H, W)
+            silhouette = np.array(silhouette).sum(-1) < 600
+            data["silhouette"] = silhouette.astype(np.float32)
+            self.data.append(data)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx]
