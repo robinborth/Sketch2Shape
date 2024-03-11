@@ -225,6 +225,7 @@ if st.session_state.silhouettes:
             silhouettes=silhouettes,
             azims=st.session_state.azims,
             elevs=st.session_state.elevs,
+            focal=int(zoom * 512),
         )
         dataloader = DataLoader(dataset, batch_size=1)
 

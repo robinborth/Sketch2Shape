@@ -147,8 +147,9 @@ class InferenceOptimizerDataset(Dataset):
         silhouettes: list = [],
         azims: list[int] = [],
         elevs: list[int] = [],
-        dist: float = 4.0,
+        focal: int = 512,
         size: int = 256,
+        dist: float = 4.0,
         **kwargs,
     ):
         self.data = []
@@ -161,7 +162,7 @@ class InferenceOptimizerDataset(Dataset):
                 dist=dist,
                 height=size,
                 width=size,
-                focal=size * 2,
+                focal=focal,
             )
             points, rays, mask = camera.unit_sphere_intersection_rays()
             data["points"], data["rays"], data["mask"] = points, rays, mask
@@ -169,7 +170,7 @@ class InferenceOptimizerDataset(Dataset):
             data["world_to_camera"] = camera.get_world_to_camera()
             data["camera_width"] = size
             data["camera_height"] = size
-            data["camera_focal"] = size * 2
+            data["camera_focal"] = focal
             data["sketch"] = self.transforms(sketch)  # (3, H, W)
             silhouette = np.array(silhouette).sum(-1) < 600
             data["silhouette"] = silhouette.astype(np.float32)
