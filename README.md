@@ -2,7 +2,7 @@
 
 ![Model Architecture](https://github.com/robinborth/sketch2shape/blob/main/docs/static/images/model_architecture.jpg?raw=true)
 
-A project to utilize differentialbe rendering to optimize the latent code from DeepSDF. The loss signal is computed with a Siamese Neuronal Network trained on the ShapeNetV2 dataset. You can download the ShapeNetV2 dataset on Huggingface [here](https://huggingface.co/datasets/ShapeNet/ShapeNetCore) (requires to get approved)).
+A project to utilize differentialbe rendering to optimize the latent code from DeepSDF. The loss signal is computed with a Siamese Neuronal Network trained on the ShapeNetV2 dataset. 
 
 ## Requirenments
 
@@ -23,7 +23,7 @@ pip install -e .
 
 ## Data Preprocessing
 
-In order to use the training and evaluation scripts, you need to have the data set up. There are two
+In order to use the training and evaluation scripts, you need to have the data set up. You can download the ShapeNetV2 dataset on Huggingface [here](https://huggingface.co/datasets/ShapeNet/ShapeNetCore) (requires to get approved)). There are two
 steps that you need to follow.
 
 ### 1) Copy Shapenet
