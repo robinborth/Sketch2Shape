@@ -22,8 +22,9 @@ from lib.demo.utils import (
 # Static configs
 #################################################################
 
-checkpoints_folder = "/home/borth/sketch2shape/checkpoints/"
-temp_folder = "/home/borth/sketch2shape/temp/"
+OPTIMIZE_EPOCHS = 5
+CHECKPOINTS_FOLDER = "/home/borth/sketch2shape/checkpoints/"
+TEMP_FOLDER = "/home/borth/sketch2shape/temp/"
 
 #################################################################
 # States
@@ -31,9 +32,6 @@ temp_folder = "/home/borth/sketch2shape/temp/"
 
 if "silhouettes" not in st.session_state:
     st.session_state.silhouettes = []
-
-if "optimize_images" not in st.session_state:
-    st.session_state.optimize_image = None
 
 if "azims" not in st.session_state:
     st.session_state.azims = []
@@ -78,13 +76,13 @@ with st.sidebar:
     with input_output_expander:
         # checkpoints
         deepsdf_ckpt = st.selectbox("DeepSDF checkpoint", ["deepsdf.ckpt"])
-        deepsdf_ckpt_path = Path(checkpoints_folder, deepsdf_ckpt or "deepsdf.ckpt")
+        deepsdf_ckpt_path = Path(CHECKPOINTS_FOLDER, deepsdf_ckpt or "deepsdf.ckpt")
         loss_ckpt = st.selectbox(
             "Encoder checkpoint",
             ["latent_synthetic.ckpt", "latent_rendered.ckpt", "latent_traverse.ckpt"],
             index=2,
         )
-        loss_ckpt_path = Path(checkpoints_folder, loss_ckpt or "latent_traverse.ckpt")
+        loss_ckpt_path = Path(CHECKPOINTS_FOLDER, loss_ckpt or "latent_traverse.ckpt")
         # Settings for the background
         bg_image = st.file_uploader("Upload background:", type=["png", "jpg"])
         default_background = v2.functional.to_pil_image(np.ones((256, 256, 3)))
@@ -143,7 +141,7 @@ with input_output_expander:
     if st.button("Prepare mesh"):
         with st.spinner("Preparing mesh..."):
             mesh = model.to_mesh()
-        path = Path(temp_folder, "tmp_mesh.obj")
+        path = Path(TEMP_FOLDER, "tmp_mesh.obj")
         o3d.io.write_triangle_mesh(str(path), mesh=mesh, write_triangle_uvs=False)
         with open(path) as data:
             download_sketch_button = st.download_button(
@@ -161,7 +159,7 @@ silhouette = None
 if valid_main_sketch and inference_model:
     sketch_input = model.sketch_transform(main_sketch)[None, ...]
     out = real_time_inference(model, sketch_input)
-    background = (out["normals"] * 255).astype(np.uint8)
+    background = (out["normal"] * 255).astype(np.uint8)
     with real_time_col2:
         st.text("Rendered Normal:")
         silhouette_canvas = st_canvas(
@@ -214,6 +212,13 @@ if st.session_state.silhouettes:
             st.image(sil)
 
     if st.button("Optimize"):
+        # streamlit output
+        st.text("Optimize Results:")
+        optimize_progress_bar = st.progress(0, text="Optimize Latent Code ...")
+        output_cols = st.columns(OPTIMIZE_EPOCHS)
+        debug_cols = st.columns(OPTIMIZE_EPOCHS)
+
+        # preparing the dataset
         silhouettes = [Image.fromarray(sil) for sil in st.session_state.silhouettes]
         dataset = InferenceOptimizerDataset(
             sketch=Image.fromarray(main_sketch),
@@ -222,9 +227,10 @@ if st.session_state.silhouettes:
             elevs=st.session_state.elevs,
         )
         dataloader = DataLoader(dataset, batch_size=1)
+
+        # optimization loop
         optimizer = model.configure_optimizers()
-        max_epochs = 10
-        for epoch in range(max_epochs):
+        for epoch in range(OPTIMIZE_EPOCHS):
             for idx, batch in enumerate(dataloader):
                 for key in batch.keys():
                     batch[key] = batch[key].to(model.device)
@@ -233,6 +239,19 @@ if st.session_state.silhouettes:
             optimizer.step()
             optimizer.zero_grad()
 
-            st.text("Optimize Results:")
-            optimize_image = model.capture_camera_frame()
-            st.image(optimize_image)
+            # update progress bar
+            percentage = (epoch + 1) * (100 // OPTIMIZE_EPOCHS)
+            optimize_progress_bar.progress(percentage, text="Optimize Latent Code ...")
+
+            # update the images
+            optimize_output = real_time_inference(model=model)
+            with output_cols[epoch]:
+                optimize_image = (optimize_output["normal"] * 255).astype(np.uint8)
+                st_optimize_image = st.image(optimize_image)
+            if visualize_model_input:
+                with debug_cols[epoch]:
+                    optimize_image = (optimize_output["sdf"] * 255).astype(np.uint8)
+                    st_optimize_image = st.image(optimize_image)
+
+        # clear the progress bar state
+        optimize_progress_bar.empty()

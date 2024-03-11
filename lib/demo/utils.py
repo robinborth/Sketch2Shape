@@ -25,10 +25,10 @@ def create_model(
         latent_init="mean",
         loss_mode="none",
         reg_loss="latent",
-        reg_weight=3e-02,
+        reg_weight=1e-02,
         silhouette_loss="silhouette",
         silhouette_weight=1.0,
-        optimizer=partial(Adam, lr=5e-02),
+        optimizer=partial(Adam, lr=1e-02),
         verbose=False,
     ).to("cuda")
     return model
@@ -77,10 +77,13 @@ def optimize_model(
     wandb.finish()
 
 
-def real_time_inference(model, sketch):
-    model = model.to("cuda")
-    model.latent = model.loss.embedding(sketch.to("cuda"), mode="sketch")[0]
-    model_input = model.deepsdf.loss_input_to_image(sketch)
+def real_time_inference(model, sketch=None):
+    out = {}
+    if sketch is not None:
+        # model = model.to("cuda")
+        model.latent = model.loss.embedding(sketch.to("cuda"), mode="sketch")[0]
+        model_input = model.deepsdf.loss_input_to_image(sketch)
+        out["model_input"] = model_input.detach().cpu().numpy()
     with torch.no_grad():
         points, surface_mask = model.deepsdf.sphere_tracing(
             latent=model.latent,
@@ -102,13 +105,15 @@ def real_time_inference(model, sketch):
             weight_blur_kernal_size=9,
             weight_blur_sigma=9.0,
         )
-    return {
-        "normals": normals.detach().cpu().numpy(),
-        "grayscale": grayscale.detach().cpu().numpy(),
-        "sdf": silhouette["min_sdf"].detach().cpu().numpy(),
-        "silhouette": silhouette["final_silhouette"].detach().cpu().numpy(),
-        "model_input": model_input.detach().cpu().numpy(),
-    }
+    out.update(
+        {
+            "normal": normals.detach().cpu().numpy(),
+            "grayscale": grayscale.detach().cpu().numpy(),
+            "sdf": silhouette["min_sdf"].detach().cpu().numpy(),
+            "silhouette": silhouette["final_silhouette"].detach().cpu().numpy(),
+        }
+    )
+    return out
 
 
 def center_with_padding(
