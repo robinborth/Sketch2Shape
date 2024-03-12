@@ -2,7 +2,7 @@
 
 ![Model Architecture](https://github.com/robinborth/sketch2shape/blob/main/docs/static/images/model_architecture.jpg?raw=true)
 
-A project to utilize differentialbe rendering to optimize the latent code from DeepSDF. The loss signal is computed with a Siamese Neuronal Network trained on the ShapeNetV2 dataset. 
+A project to utilize differentialbe rendering to optimize the latent code from DeepSDF. 
 
 ## Requirenments
 
