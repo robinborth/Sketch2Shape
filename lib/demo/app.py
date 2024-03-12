@@ -22,6 +22,7 @@ from lib.demo.utils import (
 # Static configs
 #################################################################
 
+IMAGE_UPDATE_STEP_SIZE = 1
 OPTIMIZE_EPOCHS = 5
 CHECKPOINTS_FOLDER = "/home/borth/sketch2shape/checkpoints/"
 TEMP_FOLDER = "/home/borth/sketch2shape/temp/"
@@ -215,8 +216,8 @@ if st.session_state.silhouettes:
         # streamlit output
         st.text("Optimize Results:")
         optimize_progress_bar = st.progress(0, text="Optimize Latent Code ...")
-        output_cols = st.columns(OPTIMIZE_EPOCHS)
-        debug_cols = st.columns(OPTIMIZE_EPOCHS)
+        output_cols = st.columns(OPTIMIZE_EPOCHS // IMAGE_UPDATE_STEP_SIZE)
+        debug_cols = st.columns(OPTIMIZE_EPOCHS // IMAGE_UPDATE_STEP_SIZE)
 
         # preparing the dataset
         silhouettes = [Image.fromarray(sil) for sil in st.session_state.silhouettes]
@@ -245,14 +246,16 @@ if st.session_state.silhouettes:
             optimize_progress_bar.progress(percentage, text="Optimize Latent Code ...")
 
             # update the images
-            optimize_output = real_time_inference(model=model)
-            with output_cols[epoch]:
-                optimize_image = (optimize_output["normal"] * 255).astype(np.uint8)
-                st_optimize_image = st.image(optimize_image)
-            if visualize_model_input:
-                with debug_cols[epoch]:
-                    optimize_image = (optimize_output["sdf"] * 255).astype(np.uint8)
+            if epoch % IMAGE_UPDATE_STEP_SIZE == IMAGE_UPDATE_STEP_SIZE - 1:
+                update_idx = epoch // IMAGE_UPDATE_STEP_SIZE
+                optimize_output = real_time_inference(model=model)
+                with output_cols[update_idx]:
+                    optimize_image = (optimize_output["normal"] * 255).astype(np.uint8)
                     st_optimize_image = st.image(optimize_image)
+                if visualize_model_input:
+                    with debug_cols[update_idx]:
+                        optimize_image = (optimize_output["sdf"] * 255).astype(np.uint8)
+                        st_optimize_image = st.image(optimize_image)
 
         # clear the progress bar state
         optimize_progress_bar.empty()

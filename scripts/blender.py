@@ -11,7 +11,7 @@ import trimesh
 
 temp_folder = Path("/home/borth/sketch2shape/temp")
 blender_path = temp_folder / "video.blend"
-source_folder = temp_folder / "demo"
+source_folder = temp_folder / "marlene"
 mesh_folder = source_folder / "mesh"
 output_folder = source_folder / "output"
 stl_folder = source_folder / "stls"
@@ -57,9 +57,10 @@ for filename in sorted(os.listdir(mesh_folder)):
     # Number of frames to capture
     num_frames = 72
     # angle_increment = 360 / num_frames
-    # starting_z = replacement_object.rotation_euler.z
     for i in range(num_frames):
-        replacement_object.rotation_euler.z = math.radians(i * (360 / num_frames))
+        replacement_object.rotation_euler.z = math.radians(
+            270 - (i * (360 / num_frames))
+        )
         bpy.ops.render.render(write_still=True)
         output_path = (
             output_folder / f"video_frames/{filename.split('.')[0]}/{i:05}.png"
