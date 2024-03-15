@@ -1,4 +1,4 @@
-# Sketch2Shape: Generating 3D representations of single-view hand-drawn sketches
+# Sketch2Shape: Single-View Sketch-Based 3D Reconstruction via Multi-View Differentiable Rendering
 
 ![Model Architecture](https://github.com/robinborth/sketch2shape/blob/main/docs/static/images/model_architecture.jpg?raw=true)
 
