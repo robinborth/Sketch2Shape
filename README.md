@@ -2,7 +2,7 @@
 
 ![Model Architecture](https://github.com/robinborth/sketch2shape/blob/main/docs/static/images/model_architecture.jpg?raw=true)
 
-A project to utilize differentialbe rendering to optimize the latent code from DeepSDF. The project page can be found ![robinborth.github.io/Sketch2Shape/](robinborth.github.io/Sketch2Shape/).
+A project to utilize differentialbe rendering to optimize the latent code from DeepSDF. The project page can be found [robinborth.github.io/Sketch2Shape/](https://robinborth.github.io/Sketch2Shape/).
 
 ## Requirenments
 
