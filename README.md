@@ -8,7 +8,7 @@
     <br>
     <sup>1</sup>Technical University of Munich 
   </p>
-  <h3 align="center"><a href="https://github.com/robinborth/sketch2shape">Code</a> | <a href="https://github.com/robinborth/sketch2shape/blob/main/report.pdf">Report</a> | <a href="https://robinborth.github.com/Sketch2Shape/">Project Page</a> </h3>
+  <h3 align="center"><a href="https://github.com/robinborth/sketch2shape">Code</a> | <a href="https://github.com/robinborth/sketch2shape/blob/main/report.pdf">Report</a> | <a href="https://robinborth.github.io/Sketch2Shape/">Project Page</a> </h3>
   <div align="center"></div>
 </p>
 
