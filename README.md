@@ -1,8 +1,20 @@
-# Sketch2Shape: Single-View Sketch-Based 3D Reconstruction via Multi-View Differentiable Rendering
+<!-- # Sketch2Shape: Single-View Sketch-Based 3D Reconstruction via Multi-View Differentiable Rendering -->
+
+<p align="center">
+  <h1 align="center">Sketch2Shape: Single-View Sketch-Based 3D Reconstruction via Multi-View Differentiable Rendering</h1>
+  <p align="center">
+    <a href="https://robinborth.github.io/">Robin Borth</a><sup>1</sup></span>, 
+    <a href="https://danielkorth.io/">Daniel Korth</a><sup>1</sup>
+    <br>
+    <sup>1</sup>Technical University of Munich 
+  </p>
+  <h3 align="center"><a href="https://github.com/robinborth/sketch2shape">Code</a> | <a href="https://github.com/robinborth/sketch2shape/blob/main/report.pdf">Report</a> | <a href="https://robinborth.github.io/Sketch2Shape/">Project Page</a> </h3>
+  <div align="center"></div>
+</p>
 
 ![Model Architecture](https://github.com/robinborth/sketch2shape/blob/main/docs/static/images/model_architecture.jpg?raw=true)
 
-A project to utilize differentialbe rendering to optimize the latent code from DeepSDF. The project page can be found [robinborth.github.io/Sketch2Shape/](https://robinborth.github.io/Sketch2Shape/).
+A project utilizing DeepSDF and differentiable rendering for 3D reconstruction based on a sketch input. The project was supervised by Prof. Matthias Niessner.
 
 ## Requirenments
 
@@ -46,7 +58,7 @@ python scripts/train_deepsdf.py +experiment/train_deepsdf=shapenet_chair_4096
 In order to use the training and evaluation scripts, you need to have the data set up. You can download the ShapeNetV2 dataset on Huggingface [here](https://huggingface.co/datasets/ShapeNet/ShapeNetCore) (requires to get approved)). There are two
 steps that you need to follow.
 
-### 1) Copy Shapenet
+### 1) Copy ShapeNet
 
 This is the simplest way to setup the data folder for the general preprocessing. You do not need to have a shapenet folder, you can simply use your own skripts, but you need to make sure that the data folder has the following structure, e.g. for `shapnet_chair_4096` it would look like that:
 
@@ -91,7 +103,7 @@ In order to evaluate the performance on real-world hand-drawn sketches we provid
 python scripts/copy_hand_drawn.py dataset=shapenet_chair_4096 +source=data/shapenet_chair_4096/handdrawn
 ```
 
-### 3) Data Preprocessing DeepSDF
+### 3) Data Preprocessing for DeepSDF
 
 After the data is stored correct you can utilize the data preprocessing script. In order to preprocess the the data you can run:
 
@@ -114,7 +126,7 @@ This will normalize the meshes into a unit shere and make them watertight. After
         metainfo.csv
 ```
 
-### 4) Data Preprocessing Encoder
+### 4) Data Preprocessing for Encoder
 
 After the deepsdf auto-decoder was trained, you can create the trainings data for the encoder. This creates sketch/latent pairs with the respective camera settings. There are three different images that you can generate `sketch`, `normal` and `grayscale` images. Further you can create the images from the ground truth mesh or render with sphere tracing the latent code from deepsdf. We differentiate between `synthetic`, `rendered` and `traverse`. Where the first is simply rendering from the ground truth mesh. We can also traverse between latent codes and then render the traversed latent code in order to generate sketch/latent pairs, this increases the diversity of unique latent codes.
 
@@ -275,7 +287,7 @@ In order to see the implementation details for evaluation please refere to `scri
 
 - Chamfer Distance (CD)
 - Earth Mover's Distance (EMD)
-- Frechet Inception Distance (FIC)
+- Frechet Inception Distance (FID)
 - CLIPScore
 
 ### Retrieval Baseline
@@ -323,8 +335,10 @@ python -m streamlit run lib/demo/app.py
 Note if you run the applciation on a server you need to use a ssh tunnel to access the application on your browser:
 
 ```bash
-ssh -L 8000:127.0.0.1:8501 borth@tuini15-vc04.vc.in.tum.de
+ssh -L 8000:127.0.0.1:8501 [username]@[server address]
 ```
+
+Replace `[username]` and `[server address]` with your credentials.
 
 ## BibTeX
 
